@@ -138,6 +138,105 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_answers: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          is_correct: boolean
+          question_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          question_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_index: number
+          question: string
+          quiz_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_index: number
+          question: string
+          quiz_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          question?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          created_at: string | null
+          id: string
+          lesson_id: string
+          passing_score: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lesson_id: string
+          passing_score?: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lesson_id?: string
+          passing_score?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_progress: {
         Row: {
           completed: boolean | null
@@ -173,6 +272,114 @@ export type Database = {
           },
         ]
       }
+      user_quiz_attempts: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          passed: boolean
+          quiz_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          passed: boolean
+          quiz_id: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          passed?: boolean
+          quiz_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quiz_responses: {
+        Row: {
+          answer_id: string
+          attempt_id: string
+          created_at: string | null
+          id: string
+          is_correct: boolean
+          question_id: string
+        }
+        Insert: {
+          answer_id: string
+          attempt_id: string
+          created_at?: string | null
+          id?: string
+          is_correct: boolean
+          question_id: string
+        }
+        Update: {
+          answer_id?: string
+          attempt_id?: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quiz_responses_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quiz_responses_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "user_quiz_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quiz_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -183,9 +390,16 @@ export type Database = {
         Returns: undefined
       }
       generate_certificate_number: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -312,6 +526,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

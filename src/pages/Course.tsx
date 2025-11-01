@@ -3,9 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { VideoPlayer } from "@/components/course/VideoPlayer";
+import { QuizTaker } from "@/components/quiz/QuizTaker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Circle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -170,37 +172,56 @@ const Course = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
               {currentLesson && (
-                <>
-                  <VideoPlayer 
-                    youtubeUrl={currentLesson.youtube_url}
-                    title={currentLesson.title}
-                  />
+                <Tabs defaultValue="video" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="video">Vídeo</TabsTrigger>
+                    <TabsTrigger value="quiz">Prova</TabsTrigger>
+                  </TabsList>
                   
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{currentLesson.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Button
-                        onClick={() => toggleLessonComplete(currentLesson.id)}
-                        variant={completedLessons.has(currentLesson.id) ? "secondary" : "default"}
-                        className="w-full"
-                      >
-                        {completedLessons.has(currentLesson.id) ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Marcar como não concluída
-                          </>
-                        ) : (
-                          <>
-                            <Circle className="w-4 h-4 mr-2" />
-                            Marcar como concluída
-                          </>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </>
+                  <TabsContent value="video">
+                    <div className="space-y-4">
+                      <VideoPlayer 
+                        youtubeUrl={currentLesson.youtube_url}
+                        title={currentLesson.title}
+                      />
+                      
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>{currentLesson.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Button
+                            onClick={() => toggleLessonComplete(currentLesson.id)}
+                            variant={completedLessons.has(currentLesson.id) ? "secondary" : "default"}
+                            className="w-full"
+                          >
+                            {completedLessons.has(currentLesson.id) ? (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Marcar como não concluída
+                              </>
+                            ) : (
+                              <>
+                                <Circle className="w-4 h-4 mr-2" />
+                                Marcar como concluída
+                              </>
+                            )}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="quiz">
+                    <QuizTaker 
+                      lessonId={currentLesson.id} 
+                      onComplete={() => {
+                        toast.success("Prova concluída!");
+                        loadCourse();
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
               )}
             </div>
 

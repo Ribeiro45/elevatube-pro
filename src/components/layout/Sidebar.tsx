@@ -1,13 +1,15 @@
-import { Home, BookOpen, LogOut, Menu, Award } from "lucide-react";
+import { Home, BookOpen, LogOut, Menu, Award, Users, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export const Sidebar = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { isAdmin } = useAdmin();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -23,6 +25,11 @@ export const Sidebar = () => {
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "Meus Cursos", path: "/dashboard" },
     { icon: Award, label: "Certificados", path: "/certificates" },
+  ];
+
+  const adminMenuItems = [
+    { icon: Users, label: "Painel Admin", path: "/admin/dashboard" },
+    { icon: Settings, label: "Gerenciar Cursos", path: "/admin/courses" },
   ];
 
   return (
@@ -68,6 +75,32 @@ export const Sidebar = () => {
             </Link>
           );
         })}
+        
+        {isAdmin && (
+          <>
+            {!collapsed && <div className="border-t border-sidebar-border my-2" />}
+            {adminMenuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                    isActive 
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  )}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
