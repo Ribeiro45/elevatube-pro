@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CourseCard } from "@/components/course/CourseCard";
+import { OverallProgress } from "@/components/dashboard/OverallProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User } from "@supabase/supabase-js";
 
@@ -30,6 +31,7 @@ const Dashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
+  const [certificatesCount, setCertificatesCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,15 +60,17 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
-      const [coursesRes, lessonsRes, progressRes] = await Promise.all([
+      const [coursesRes, lessonsRes, progressRes, certificatesRes] = await Promise.all([
         supabase.from("courses").select("*"),
         supabase.from("lessons").select("*"),
         supabase.from("user_progress").select("*"),
+        supabase.from("certificates").select("id", { count: 'exact' }),
       ]);
 
       if (coursesRes.data) setCourses(coursesRes.data);
       if (lessonsRes.data) setLessons(lessonsRes.data);
       if (progressRes.data) setProgress(progressRes.data);
+      if (certificatesRes.count !== null) setCertificatesCount(certificatesRes.count);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -93,16 +97,34 @@ const Dashboard = () => {
     };
   };
 
+  const completedLessonsCount = progress.filter(p => p.completed).length;
+  const completedCoursesCount = courses.filter(course => {
+    const stats = getCourseStats(course.id);
+    return stats.progress === 100;
+  }).length;
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       
       <main className="flex-1 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8 animate-fade-in">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="animate-fade-in">
             <h1 className="text-4xl font-bold mb-2">Meus Cursos</h1>
             <p className="text-muted-foreground">Continue seu aprendizado de onde parou</p>
           </div>
+
+          {loading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            <OverallProgress
+              totalCourses={courses.length}
+              completedCourses={completedCoursesCount}
+              totalLessons={lessons.length}
+              completedLessons={completedLessonsCount}
+              certificates={certificatesCount}
+            />
+          )}
 
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

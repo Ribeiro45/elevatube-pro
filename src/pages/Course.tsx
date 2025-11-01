@@ -109,6 +109,14 @@ const Course = () => {
         
         setCompletedLessons(prev => new Set(prev).add(lessonId));
         toast.success("Aula marcada como concluída!");
+        
+        // Check if course is complete and issue certificate
+        if (user?.id && id) {
+          await supabase.rpc('check_and_issue_certificate', {
+            p_user_id: user.id,
+            p_course_id: id
+          });
+        }
       }
     } catch (error) {
       console.error("Error updating progress:", error);

@@ -1,4 +1,4 @@
-import { Home, BookOpen, LogOut, Menu } from "lucide-react";
+import { Home, BookOpen, LogOut, Menu, Award } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ export const Sidebar = () => {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "Meus Cursos", path: "/dashboard" },
+    { icon: Award, label: "Certificados", path: "/certificates" },
   ];
 
   return (
