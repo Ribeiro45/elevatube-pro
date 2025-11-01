@@ -1,88 +1,197 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, BookOpen, BarChart3, Award } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/dashboard");
+      } else {
+        setIsLoading(false);
       }
     });
   }, [navigate]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: "Cursos Completos",
+      description: "Acesse uma biblioteca completa de cursos em vídeo"
+    },
+    {
+      icon: TrendingUp,
+      title: "Acompanhe seu Progresso",
+      description: "Monitore seu desenvolvimento em tempo real"
+    },
+    {
+      icon: Award,
+      title: "Certificados",
+      description: "Receba certificados ao concluir os cursos"
+    },
+    {
+      icon: Users,
+      title: "Aprendizado Colaborativo",
+      description: "Aprenda junto com outros colaboradores"
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
+      {/* Header */}
+      <header className="border-b border-border/40 backdrop-blur-sm bg-background/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-xl" />
-            <span className="text-xl font-bold">Plataforma de Cursos</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+              Plataforma de Cursos
+            </span>
           </div>
-          <Button onClick={() => navigate("/auth")} variant="default">
+          <Button onClick={() => navigate("/auth")} size="lg">
             Entrar
+            <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 animate-fade-in">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Aprenda no seu ritmo
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8 animate-fade-in">
+            <div className="inline-block">
+              <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
+                Plataforma de Aprendizado
+              </span>
+            </div>
+            <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+              Transforme seu
+              <span className="block bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                Conhecimento
+              </span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Acesse cursos de qualidade, acompanhe seu progresso e desenvolva suas habilidades
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Acesse cursos de alta qualidade, acompanhe seu progresso e obtenha certificados reconhecidos.
             </p>
-            <Button 
-              size="lg"
-              onClick={() => navigate("/auth")}
-              className="bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity text-lg px-8"
-            >
-              Começar agora
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                onClick={() => navigate("/auth")} 
+                size="lg"
+                className="text-lg px-8 py-6 group"
+              >
+                Começar Agora
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="text-lg px-8 py-6"
+                onClick={() => navigate("/auth")}
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Ver Demo
+              </Button>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {[
-              {
-                icon: BookOpen,
-                title: "Cursos variados",
-                description: "Acesse uma biblioteca completa de conteúdos educacionais"
-              },
-              {
-                icon: BarChart3,
-                title: "Acompanhe seu progresso",
-                description: "Visualize seu avanço e mantenha-se motivado"
-              },
-              {
-                icon: Award,
-                title: "Aprenda fazendo",
-                description: "Conteúdo prático e direto ao ponto"
-              }
-            ].map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div 
-                  key={index}
-                  className="p-6 rounded-2xl border bg-card hover:shadow-lg transition-all duration-300 animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-primary" />
+          <div className="relative animate-scale-in">
+            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-primary-glow/20 rounded-3xl blur-2xl"></div>
+            <Card className="relative border-2 border-border/50 backdrop-blur-sm bg-card/50">
+              <CardContent className="p-8">
+                <div className="space-y-6">
+                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-xl flex items-center justify-center">
+                    <Play className="w-16 h-16 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <div className="space-y-4">
+                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-1/2 animate-pulse delay-75"></div>
+                    <div className="h-4 bg-muted rounded w-2/3 animate-pulse delay-150"></div>
+                  </div>
                 </div>
-              );
-            })}
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* Features Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16 space-y-4">
+          <h2 className="text-4xl font-bold">Por que escolher nossa plataforma?</h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Recursos poderosos para acelerar seu aprendizado
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feature, index) => (
+            <Card 
+              key={index}
+              className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50 animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CardContent className="p-6 space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary-glow/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <Card className="relative overflow-hidden border-2 border-border/50">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/10"></div>
+          <CardContent className="relative p-12 text-center space-y-6">
+            <h2 className="text-4xl font-bold">Pronto para começar?</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Junte-se a centenas de colaboradores que já estão transformando suas carreiras
+            </p>
+            <Button 
+              onClick={() => navigate("/auth")}
+              size="lg"
+              className="text-lg px-10 py-6"
+            >
+              Criar Conta Grátis
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border/40 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-lg"></div>
+              <span className="font-semibold">Plataforma de Cursos</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              © 2025 Todos os direitos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
