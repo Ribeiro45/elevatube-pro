@@ -30,6 +30,7 @@ export const Sidebar = () => {
   const adminMenuItems = [
     { icon: Users, label: "Painel Admin", path: "/admin/dashboard" },
     { icon: Settings, label: "Gerenciar Cursos", path: "/admin/courses" },
+    { icon: Users, label: "Gerenciar Usuários", path: "/admin/users" },
   ];
 
   return (
