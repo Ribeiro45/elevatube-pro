@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, ShieldOff, Key, Search } from "lucide-react";
+import { Shield, ShieldOff, Key, Search, Edit, Trash2, Award } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -24,6 +24,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 
 interface UserWithRole {
@@ -32,6 +42,8 @@ interface UserWithRole {
   full_name: string | null;
   created_at: string;
   is_admin: boolean;
+  completed_lessons: number;
+  total_certificates: number;
 }
 
 const AdminUsers = () => {
@@ -41,6 +53,11 @@ const AdminUsers = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [editName, setEditName] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,15 +84,32 @@ const AdminUsers = () => {
 
       if (rolesError) throw rolesError;
 
+      // Get progress count for each user
+      const { data: progressData } = await supabase
+        .from("user_progress")
+        .select("user_id, completed");
+
+      // Get certificates count
+      const { data: certificatesData } = await supabase
+        .from("certificates")
+        .select("user_id");
+
       const adminIds = new Set(roles?.map((r) => r.user_id) || []);
 
-      const usersWithRoles: UserWithRole[] = profiles?.map((profile) => ({
-        id: profile.id,
-        email: profile.id, // Email não está disponível via profiles
-        full_name: profile.full_name,
-        created_at: profile.created_at,
-        is_admin: adminIds.has(profile.id),
-      })) || [];
+      const usersWithRoles: UserWithRole[] = profiles?.map((profile) => {
+        const userProgress = progressData?.filter(p => p.user_id === profile.id && p.completed) || [];
+        const userCerts = certificatesData?.filter(c => c.user_id === profile.id) || [];
+        
+        return {
+          id: profile.id,
+          email: profile.id,
+          full_name: profile.full_name,
+          created_at: profile.created_at,
+          is_admin: adminIds.has(profile.id),
+          completed_lessons: userProgress.length,
+          total_certificates: userCerts.length,
+        };
+      }) || [];
 
       setUsers(usersWithRoles);
     } catch (error) {
@@ -93,7 +127,6 @@ const AdminUsers = () => {
   const toggleAdminRole = async (userId: string, isCurrentlyAdmin: boolean) => {
     try {
       if (isCurrentlyAdmin) {
-        // Remove admin role
         const { error } = await supabase
           .from("user_roles")
           .delete()
@@ -107,7 +140,6 @@ const AdminUsers = () => {
           description: "Acesso de administrador foi removido.",
         });
       } else {
-        // Add admin role
         const { error } = await supabase
           .from("user_roles")
           .insert({ user_id: userId, role: "admin" });
@@ -126,6 +158,69 @@ const AdminUsers = () => {
       toast({
         title: "Erro ao alterar permissão",
         description: "Não foi possível alterar a permissão do usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditUser = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setEditName(user.full_name || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: editName })
+        .eq("id", selectedUser.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário atualizado",
+        description: "Dados do usuário foram atualizados com sucesso.",
+      });
+
+      setEditDialogOpen(false);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário deletado",
+        description: "O usuário foi removido com sucesso.",
+      });
+
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast({
+        title: "Erro ao deletar",
+        description: "Não foi possível deletar o usuário.",
         variant: "destructive",
       });
     }
@@ -188,16 +283,16 @@ const AdminUsers = () => {
         <div className="max-w-7xl mx-auto p-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Gerenciar Usuários</h1>
+              <h1 className="text-3xl font-bold mb-2">Painel de Administração</h1>
               <p className="text-muted-foreground">
-                Controle de acesso e permissões
+                Controle total sobre usuários e permissões
               </p>
             </div>
             <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <Key className="w-4 h-4" />
-                  Trocar Senha
+                  Trocar Minha Senha
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -265,8 +360,10 @@ const AdminUsers = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
-                      <TableHead>ID do Usuário</TableHead>
-                      <TableHead>Cadastrado em</TableHead>
+                      <TableHead>ID</TableHead>
+                      <TableHead className="text-center">Aulas</TableHead>
+                      <TableHead className="text-center">Certificados</TableHead>
+                      <TableHead>Cadastrado</TableHead>
                       <TableHead>Permissão</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -279,6 +376,15 @@ const AdminUsers = () => {
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {user.id.slice(0, 8)}...
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">{user.completed_lessons}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center gap-1">
+                            <Award className="h-4 w-4 text-yellow-500" />
+                            {user.total_certificates}
+                          </span>
                         </TableCell>
                         <TableCell>
                           {new Date(user.created_at).toLocaleDateString("pt-BR")}
@@ -297,13 +403,33 @@ const AdminUsers = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant={user.is_admin ? "destructive" : "default"}
-                            size="sm"
-                            onClick={() => toggleAdminRole(user.id, user.is_admin)}
-                          >
-                            {user.is_admin ? "Remover Admin" : "Tornar Admin"}
-                          </Button>
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditUser(user)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={user.is_admin ? "destructive" : "default"}
+                              size="sm"
+                              onClick={() => toggleAdminRole(user.id, user.is_admin)}
+                            >
+                              {user.is_admin ? "Remover Admin" : "Tornar Admin"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setUserToDelete(user);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -314,6 +440,60 @@ const AdminUsers = () => {
           </Card>
         </div>
       </div>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Modifique as informações do usuário abaixo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nome Completo</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Nome do usuário"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso irá permanentemente deletar o usuário{' '}
+              <strong>{userToDelete?.full_name}</strong> e todos os seus dados associados 
+              (progresso, certificados, etc).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteUser} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar Usuário
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
