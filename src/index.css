@@ -17,9 +17,9 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 15%;
 
-    --primary: 214 100% 47%;
+    --primary: 210 100% 20%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 214 100% 60%;
+    --primary-glow: 210 100% 30%;
 
     --secondary: 220 14% 96%;
     --secondary-foreground: 220 15% 15%;
@@ -27,33 +27,33 @@ All colors MUST be HSL.
     --muted: 220 14% 96%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 142 76% 36%;
+    --accent: 25 95% 53%;
     --accent-foreground: 0 0% 100%;
-    --accent-glow: 142 76% 50%;
+    --accent-glow: 25 95% 63%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 214 100% 47%;
+    --ring: 210 100% 20%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 220 20% 98%;
-    --sidebar-foreground: 220 15% 25%;
-    --sidebar-primary: 214 100% 47%;
+    --sidebar-background: 210 100% 20%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 100% 97%;
-    --sidebar-accent-foreground: 214 100% 47%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 214 100% 47%;
+    --sidebar-accent: 210 100% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 100% 15%;
+    --sidebar-ring: 25 95% 53%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(214 100% 47%), hsl(214 100% 60%));
-    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 50%));
-    --shadow-sm: 0 2px 8px hsl(214 100% 47% / 0.1);
-    --shadow-md: 0 4px 16px hsl(214 100% 47% / 0.15);
-    --shadow-lg: 0 8px 32px hsl(214 100% 47% / 0.2);
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 20%), hsl(210 100% 30%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 95% 63%));
+    --shadow-sm: 0 2px 8px hsl(210 100% 20% / 0.1);
+    --shadow-md: 0 4px 16px hsl(210 100% 20% / 0.15);
+    --shadow-lg: 0 8px 32px hsl(210 100% 20% / 0.2);
   }
 
   .dark {
@@ -66,9 +66,9 @@ All colors MUST be HSL.
     --popover: 220 20% 12%;
     --popover-foreground: 220 10% 95%;
 
-    --primary: 214 100% 60%;
-    --primary-foreground: 220 25% 8%;
-    --primary-glow: 214 100% 70%;
+    --primary: 210 100% 30%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 210 100% 40%;
 
     --secondary: 220 18% 18%;
     --secondary-foreground: 220 10% 95%;
@@ -76,31 +76,31 @@ All colors MUST be HSL.
     --muted: 220 18% 18%;
     --muted-foreground: 220 10% 65%;
 
-    --accent: 142 76% 50%;
+    --accent: 25 95% 53%;
     --accent-foreground: 220 25% 8%;
-    --accent-glow: 142 76% 60%;
+    --accent-glow: 25 95% 63%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 220 10% 95%;
 
     --border: 220 18% 22%;
     --input: 220 18% 22%;
-    --ring: 214 100% 60%;
+    --ring: 210 100% 30%;
 
-    --sidebar-background: 220 22% 10%;
-    --sidebar-foreground: 220 10% 90%;
-    --sidebar-primary: 214 100% 60%;
-    --sidebar-primary-foreground: 220 25% 8%;
-    --sidebar-accent: 220 18% 18%;
-    --sidebar-accent-foreground: 214 100% 60%;
-    --sidebar-border: 220 18% 22%;
-    --sidebar-ring: 214 100% 60%;
+    --sidebar-background: 210 100% 15%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 100% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 100% 10%;
+    --sidebar-ring: 25 95% 53%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(214 100% 60%), hsl(214 100% 70%));
-    --gradient-accent: linear-gradient(135deg, hsl(142 76% 50%), hsl(142 76% 60%));
-    --shadow-sm: 0 2px 8px hsl(214 100% 60% / 0.2);
-    --shadow-md: 0 4px 16px hsl(214 100% 60% / 0.3);
-    --shadow-lg: 0 8px 32px hsl(214 100% 60% / 0.4);
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 30%), hsl(210 100% 40%));
+    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 95% 63%));
+    --shadow-sm: 0 2px 8px hsl(210 100% 30% / 0.2);
+    --shadow-md: 0 4px 16px hsl(210 100% 30% / 0.3);
+    --shadow-lg: 0 8px 32px hsl(210 100% 30% / 0.4);
   }
 }
 

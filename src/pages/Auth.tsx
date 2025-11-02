@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import logoNewStandard from '@/assets/logo-newstandard.png';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -25,36 +26,32 @@ const Auth = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-glow/5 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-gradient-to-br from-primary via-primary-glow to-accent relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-glow/20 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 border-b border-border/40 backdrop-blur-sm bg-background/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/")}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold hidden sm:block">Plataforma de Cursos</span>
-          </div>
-        </div>
+      {/* Header with Logo */}
+      <header className="relative z-10 p-6 flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate('/')}
+          className="text-white hover:bg-white/20"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <img src={logoNewStandard} alt="New Standard" className="h-12 w-auto object-contain" />
+        <h1 className="text-2xl font-bold text-white">New Standard</h1>
       </header>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-73px)] p-4 py-12">
-        <AuthForm />
+      {/* Main content */}
+      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-88px)] p-4">
+        <div className="w-full max-w-md">
+          <AuthForm />
+        </div>
       </div>
     </div>
   );
