@@ -21,15 +21,27 @@ const Index = () => {
       }
     });
 
-    // Check initial dark mode state
-    const isDark = document.documentElement.classList.contains('dark');
+    // Check initial dark mode state from localStorage
+    const savedTheme = localStorage.getItem('theme');
+    const isDark = savedTheme === 'dark' || (!savedTheme && document.documentElement.classList.contains('dark'));
     setIsDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [navigate]);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    document.documentElement.classList.toggle('dark');
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   };
 
   if (isLoading) {
@@ -125,7 +137,7 @@ const Index = () => {
                 variant="outline" 
                 size="lg"
                 className="text-lg px-8 py-6"
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate("/demo")}
               >
                 <Play className="w-5 h-5 mr-2" />
                 Ver Demo
