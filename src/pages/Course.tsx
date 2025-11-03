@@ -94,21 +94,39 @@ const Course = () => {
           quizzesRes.data?.map(q => [q.module_id, true]) || []
         );
 
-        // Organize lessons by module
-        const modulesWithLessons = modulesRes.data.map(module => ({
-          ...module,
-          lessons: lessonsRes.data
-            .filter(l => l.module_id === module.id)
-            .sort((a, b) => a.order_index - b.order_index),
-          hasQuiz: moduleQuizMap.has(module.id),
-        }));
+        if (modulesRes.data.length > 0) {
+          // Organize lessons by module
+          const modulesWithLessons = modulesRes.data.map(module => ({
+            ...module,
+            lessons: lessonsRes.data
+              .filter(l => l.module_id === module.id)
+              .sort((a, b) => a.order_index - b.order_index),
+            hasQuiz: moduleQuizMap.has(module.id),
+          }));
 
-        setModules(modulesWithLessons);
+          setModules(modulesWithLessons);
 
-        // Set first lesson as current
-        const firstModule = modulesWithLessons[0];
-        if (firstModule?.lessons.length > 0) {
-          setCurrentLesson(firstModule.lessons[0]);
+          // Set first lesson as current
+          const firstModule = modulesWithLessons[0];
+          if (firstModule?.lessons.length > 0) {
+            setCurrentLesson(firstModule.lessons[0]);
+          }
+        } else {
+          // Fallback: Create a default module with all lessons if no modules exist
+          const defaultModule = {
+            id: 'default',
+            title: 'Aulas',
+            description: '',
+            order_index: 0,
+            lessons: lessonsRes.data.sort((a, b) => a.order_index - b.order_index),
+            hasQuiz: false,
+          };
+          
+          setModules([defaultModule]);
+          
+          if (lessonsRes.data.length > 0) {
+            setCurrentLesson(lessonsRes.data[0]);
+          }
         }
       }
 
@@ -192,11 +210,11 @@ const Course = () => {
         <div className="max-w-7xl mx-auto space-y-6">
           <Button 
             variant="ghost" 
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/my-courses")}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar para cursos
+            Voltar para meus cursos
           </Button>
 
           <div className="animate-fade-in">
