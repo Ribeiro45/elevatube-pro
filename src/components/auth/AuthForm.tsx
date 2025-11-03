@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { z } from "zod";
+import logoAcademyNoBg from "@/assets/logo-academy-no-bg.png";
 
 const authSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -87,13 +88,13 @@ export const AuthForm = () => {
     <div className="w-full max-w-md mx-auto space-y-6 animate-scale-in">
       {/* Logo/Header */}
       <div className="text-center space-y-2 animate-fade-in">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-glow mb-4 shadow-lg">
-          <Sparkles className="w-8 h-8 text-primary-foreground" />
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white mb-4 shadow-lg p-4">
+          <img src={logoAcademyNoBg} alt="New Academy" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-          Bem-vindo
+        <h1 className="text-3xl font-bold text-white">
+          New Academy
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-white/80">
           Entre ou crie sua conta para começar
         </p>
       </div>

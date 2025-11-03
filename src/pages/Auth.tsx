@@ -43,8 +43,7 @@ const Auth = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <img src={logoNewStandard} alt="New Standard" className="h-12 w-auto object-contain" />
-        <h1 className="text-2xl font-bold text-white">New Standard</h1>
+        <img src={logoNewStandard} alt="New Academy" className="h-12 w-auto object-contain" />
       </header>
 
       {/* Main content */}
