@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Award, Users, Settings, LogOut, Moon, Sun, Upload, Shield, Library } from 'lucide-react';
+import { Home, BookOpen, Award, Users, Settings, LogOut, Moon, Sun, Upload, Shield, Library, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -120,6 +120,7 @@ export const Sidebar = () => {
     { icon: Library, label: 'Meus Cursos', path: '/my-courses' },
     { icon: BookOpen, label: 'Cursos', path: '/courses' },
     { icon: Award, label: 'Certificados', path: '/certificates' },
+    { icon: User, label: 'Meu Perfil', path: '/profile' },
   ];
 
   const adminMenuItems = [
@@ -153,23 +154,18 @@ export const Sidebar = () => {
         {/* User Info */}
         {!collapsed && (
           <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="relative group cursor-pointer" onClick={() => setShowSettings(true)}>
-                <Avatar className="h-10 w-10">
-                  {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {userName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Upload size={16} className="text-white" />
-                </div>
-              </div>
+            <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <Avatar className="h-10 w-10">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {userName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="text-sidebar-foreground">
                 <p className="font-medium">{userName}</p>
-                <p className="text-xs text-muted-foreground">Editar perfil</p>
+                <p className="text-xs text-muted-foreground">Ver perfil</p>
               </div>
-            </div>
+            </Link>
           </div>
         )}
 

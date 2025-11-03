@@ -83,6 +83,7 @@ const MyCourses = () => {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const [enrollmentsRes, lessonsRes, progressRes] = await Promise.all([
         supabase.from("enrollments").select("course_id, courses(*)"),
         supabase.from("lessons").select("*"),

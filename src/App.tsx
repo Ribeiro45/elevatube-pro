@@ -11,6 +11,7 @@ import MyCourses from "./pages/MyCourses";
 import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Certificates from "./pages/Certificates";
+import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCourses from "./pages/admin/AdminCourses";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/courses" element={<Courses />} />
           <Route path="/course/:id" element={<Course />} />
           <Route path="/certificates" element={<Certificates />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/courses" element={<AdminRoute><AdminCourses /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
