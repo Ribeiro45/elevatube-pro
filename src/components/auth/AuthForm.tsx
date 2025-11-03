@@ -88,8 +88,8 @@ export const AuthForm = () => {
     <div className="w-full max-w-md mx-auto space-y-6 animate-scale-in">
       {/* Logo/Header */}
       <div className="text-center space-y-2 animate-fade-in">
-        <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white mb-4 shadow-lg p-4">
-          <img src={logoN} alt="New Academy" className="w-full h-full object-contain" />
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white mb-4 shadow-lg overflow-hidden">
+          <img src={logoN} alt="New Academy" className="w-full h-full object-cover" />
         </div>
         <h1 className="text-3xl font-bold text-white">
           New Academy

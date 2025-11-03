@@ -93,15 +93,15 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {processingLogo ? (
-              <div className="h-12 w-12 bg-muted animate-pulse rounded" />
+              <div className="h-8 w-8 bg-muted animate-pulse rounded" />
             ) : (
               <img 
                 src={logoWithoutBg || logoN} 
                 alt="New Academy" 
-                className="h-12 object-contain" 
+                className="h-8 w-8 object-contain" 
               />
             )}
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               New Academy
             </span>
           </div>
@@ -239,12 +239,12 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               {processingLogo ? (
-                <div className="h-8 w-8 bg-muted animate-pulse rounded" />
+                <div className="h-6 w-6 bg-muted animate-pulse rounded" />
               ) : (
                 <img 
                   src={logoWithoutBg || logoN} 
                   alt="New Academy" 
-                  className="h-8 object-contain" 
+                  className="h-6 w-6 object-contain" 
                 />
               )}
               <span className="font-semibold">New Academy</span>
