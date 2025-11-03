@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play, Moon, Sun } from "lucide-react";
 import logoN from "@/assets/logo-n.png";
+import logoNWhite from "@/assets/logo-n-white.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
-              src={logoN} 
+              src={isDarkMode ? logoNWhite : logoN} 
               alt="New Academy" 
               className="h-8 w-8 object-contain" 
             />
@@ -211,7 +212,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img 
-                src={logoN} 
+                src={isDarkMode ? logoNWhite : logoN} 
                 alt="New Academy" 
                 className="h-6 w-6 object-contain" 
               />
