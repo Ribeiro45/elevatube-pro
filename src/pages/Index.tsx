@@ -3,12 +3,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play } from "lucide-react";
+import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play, Moon, Sun } from "lucide-react";
 import logoAcademy from "@/assets/logo-academy.png";
+import { removeBackground, loadImage } from "@/utils/removeBackground";
 
 const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [logoWithoutBg, setLogoWithoutBg] = useState<string | null>(null);
+  const [processingLogo, setProcessingLogo] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,7 +22,38 @@ const Index = () => {
         setIsLoading(false);
       }
     });
+
+    // Check initial dark mode state
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+
+    // Process logo to remove background
+    processLogo();
   }, [navigate]);
+
+  const processLogo = async () => {
+    try {
+      setProcessingLogo(true);
+      const response = await fetch(logoAcademy);
+      const blob = await response.blob();
+      const image = await loadImage(blob);
+      const processedBlob = await removeBackground(image);
+      const url = URL.createObjectURL(processedBlob);
+      setLogoWithoutBg(url);
+    } catch (error) {
+      console.error('Error processing logo:', error);
+      // Fallback to original logo
+      setLogoWithoutBg(logoAcademy);
+    } finally {
+      setProcessingLogo(false);
+    }
+  };
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    document.documentElement.classList.toggle('dark');
+  };
 
   if (isLoading) {
     return (
@@ -57,15 +92,32 @@ const Index = () => {
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoAcademy} alt="New Academy" className="h-12 object-contain" />
+            {processingLogo ? (
+              <div className="h-12 w-12 bg-muted animate-pulse rounded" />
+            ) : (
+              <img 
+                src={logoWithoutBg || logoAcademy} 
+                alt="New Academy" 
+                className="h-12 object-contain" 
+              />
+            )}
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               New Academy
             </span>
           </div>
-          <Button onClick={() => navigate("/auth")} size="lg">
-            Entrar
-            <ChevronRight className="w-4 h-4 ml-2" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleDarkMode}
+            >
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+            <Button onClick={() => navigate("/auth")} size="lg">
+              Entrar
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -109,18 +161,22 @@ const Index = () => {
           </div>
 
           <div className="relative animate-scale-in">
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-primary-glow/20 rounded-3xl blur-2xl"></div>
-            <Card className="relative border-2 border-border/50 backdrop-blur-sm bg-card/50">
-              <CardContent className="p-8">
-                <div className="space-y-6">
-                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-xl flex items-center justify-center">
-                    <Play className="w-16 h-16 text-primary" />
-                  </div>
-                  <div className="space-y-4">
-                    <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
-                    <div className="h-4 bg-muted rounded w-1/2 animate-pulse delay-75"></div>
-                    <div className="h-4 bg-muted rounded w-2/3 animate-pulse delay-150"></div>
-                  </div>
+            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl"></div>
+            <Card className="relative border-2 border-border/50 backdrop-blur-sm bg-card/50 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="aspect-video relative group">
+                  <iframe
+                    className="w-full h-full rounded-lg"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    title="Vídeo Demonstração"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg" />
+                </div>
+                <div className="p-6 space-y-2">
+                  <h3 className="text-xl font-semibold">Veja como funciona</h3>
+                  <p className="text-muted-foreground">Conheça todos os recursos da nossa plataforma em apenas alguns minutos</p>
                 </div>
               </CardContent>
             </Card>
@@ -182,7 +238,15 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <img src={logoAcademy} alt="New Academy" className="h-8 object-contain" />
+              {processingLogo ? (
+                <div className="h-8 w-8 bg-muted animate-pulse rounded" />
+              ) : (
+                <img 
+                  src={logoWithoutBg || logoAcademy} 
+                  alt="New Academy" 
+                  className="h-8 object-contain" 
+                />
+              )}
               <span className="font-semibold">New Academy</span>
             </div>
             <p className="text-sm text-muted-foreground">
