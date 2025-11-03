@@ -5,14 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play, Moon, Sun } from "lucide-react";
 import logoN from "@/assets/logo-n.png";
-import { removeBackground, loadImage } from "@/utils/removeBackground";
 
 const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [logoWithoutBg, setLogoWithoutBg] = useState<string | null>(null);
-  const [processingLogo, setProcessingLogo] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,28 +23,7 @@ const Index = () => {
     // Check initial dark mode state
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
-
-    // Process logo to remove background
-    processLogo();
   }, [navigate]);
-
-  const processLogo = async () => {
-    try {
-      setProcessingLogo(true);
-      const response = await fetch(logoN);
-      const blob = await response.blob();
-      const image = await loadImage(blob);
-      const processedBlob = await removeBackground(image);
-      const url = URL.createObjectURL(processedBlob);
-      setLogoWithoutBg(url);
-    } catch (error) {
-      console.error('Error processing logo:', error);
-      // Fallback to original logo
-      setLogoWithoutBg(logoN);
-    } finally {
-      setProcessingLogo(false);
-    }
-  };
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -92,15 +68,11 @@ const Index = () => {
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {processingLogo ? (
-              <div className="h-8 w-8 bg-muted animate-pulse rounded" />
-            ) : (
-              <img 
-                src={logoWithoutBg || logoN} 
-                alt="New Academy" 
-                className="h-8 w-8 object-contain" 
-              />
-            )}
+            <img 
+              src={logoN} 
+              alt="New Academy" 
+              className="h-8 w-8 object-contain" 
+            />
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               New Academy
             </span>
@@ -238,15 +210,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {processingLogo ? (
-                <div className="h-6 w-6 bg-muted animate-pulse rounded" />
-              ) : (
-                <img 
-                  src={logoWithoutBg || logoN} 
-                  alt="New Academy" 
-                  className="h-6 w-6 object-contain" 
-                />
-              )}
+              <img 
+                src={logoN} 
+                alt="New Academy" 
+                className="h-6 w-6 object-contain" 
+              />
               <span className="font-semibold">New Academy</span>
             </div>
             <p className="text-sm text-muted-foreground">
