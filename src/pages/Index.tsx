@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play, Moon, Sun } from "lucide-react";
-import logoAcademy from "@/assets/logo-academy.png";
+import logoN from "@/assets/logo-n.png";
 import { removeBackground, loadImage } from "@/utils/removeBackground";
 
 const Index = () => {
@@ -34,7 +34,7 @@ const Index = () => {
   const processLogo = async () => {
     try {
       setProcessingLogo(true);
-      const response = await fetch(logoAcademy);
+      const response = await fetch(logoN);
       const blob = await response.blob();
       const image = await loadImage(blob);
       const processedBlob = await removeBackground(image);
@@ -43,7 +43,7 @@ const Index = () => {
     } catch (error) {
       console.error('Error processing logo:', error);
       // Fallback to original logo
-      setLogoWithoutBg(logoAcademy);
+      setLogoWithoutBg(logoN);
     } finally {
       setProcessingLogo(false);
     }
@@ -96,7 +96,7 @@ const Index = () => {
               <div className="h-12 w-12 bg-muted animate-pulse rounded" />
             ) : (
               <img 
-                src={logoWithoutBg || logoAcademy} 
+                src={logoWithoutBg || logoN} 
                 alt="New Academy" 
                 className="h-12 object-contain" 
               />
@@ -242,7 +242,7 @@ const Index = () => {
                 <div className="h-8 w-8 bg-muted animate-pulse rounded" />
               ) : (
                 <img 
-                  src={logoWithoutBg || logoAcademy} 
+                  src={logoWithoutBg || logoN} 
                   alt="New Academy" 
                   className="h-8 object-contain" 
                 />
