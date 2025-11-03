@@ -15,6 +15,7 @@ interface Certificate {
   issued_at: string;
   course: {
     title: string;
+    total_hours: number;
   };
 }
 
@@ -58,8 +59,10 @@ const Certificates = () => {
             id,
             certificate_number,
             issued_at,
+            course_id,
             courses (
-              title
+              title,
+              id
             )
           `)
           .order("issued_at", { ascending: false }),
@@ -71,12 +74,31 @@ const Certificates = () => {
       ]);
 
       if (certificatesRes.data) {
+        // Get course IDs to fetch lessons
+        const courseIds = certificatesRes.data.map(c => c.course_id);
+        
+        // Fetch lessons for all courses
+        const { data: lessonsData } = await supabase
+          .from("lessons")
+          .select("course_id, duration_minutes")
+          .in("course_id", courseIds);
+
+        // Calculate total hours per course
+        const courseHours: Record<string, number> = {};
+        lessonsData?.forEach(lesson => {
+          if (!courseHours[lesson.course_id]) {
+            courseHours[lesson.course_id] = 0;
+          }
+          courseHours[lesson.course_id] += lesson.duration_minutes || 0;
+        });
+
         const formattedCerts = certificatesRes.data.map(cert => ({
           id: cert.id,
           certificate_number: cert.certificate_number,
           issued_at: cert.issued_at,
           course: {
-            title: (cert.courses as any)?.title || "Curso sem título"
+            title: (cert.courses as any)?.title || "Curso sem título",
+            total_hours: Math.round((courseHours[cert.course_id] || 0) / 60)
           }
         }));
         setCertificates(formattedCerts);
@@ -99,6 +121,7 @@ const Certificates = () => {
       studentName: profile?.full_name || "Estudante",
       certificateNumber: certificate.certificate_number,
       issuedAt: certificate.issued_at,
+      totalHours: certificate.course.total_hours,
     });
     toast.success("Download iniciado!");
   };

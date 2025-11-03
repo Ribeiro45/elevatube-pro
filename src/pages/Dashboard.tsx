@@ -4,13 +4,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { OverallProgress } from "@/components/dashboard/OverallProgress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Award, Download } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Course {
   id: string;
   title: string;
   description: string;
   thumbnail_url: string;
+}
+
+interface Certificate {
+  id: string;
+  certificate_number: string;
+  issued_at: string;
+  courses: {
+    title: string;
+  } | null;
 }
 
 interface Lesson {
@@ -30,6 +44,7 @@ const Dashboard = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [certificatesCount, setCertificatesCount] = useState(0);
   const [studyTime, setStudyTime] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,7 +79,14 @@ const Dashboard = () => {
         supabase.from("enrollments").select("course_id, courses(*)"),
         supabase.from("lessons").select("*"),
         supabase.from("user_progress").select("*"),
-        supabase.from("certificates").select("id", { count: 'exact' }),
+        supabase.from("certificates").select(`
+          id,
+          certificate_number,
+          issued_at,
+          courses (
+            title
+          )
+        `).order("issued_at", { ascending: false }).limit(3),
       ]);
 
       if (enrollmentsRes.data) {
@@ -84,7 +106,10 @@ const Dashboard = () => {
         setStudyTime(totalMinutes);
       }
       if (progressRes.data) setProgress(progressRes.data);
-      if (certificatesRes.count !== null) setCertificatesCount(certificatesRes.count);
+      if (certificatesRes.data) {
+        setCertificates(certificatesRes.data);
+        setCertificatesCount(certificatesRes.data.length);
+      }
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -139,6 +164,56 @@ const Dashboard = () => {
               certificates={certificatesCount}
               studyTime={studyTime}
             />
+          )}
+
+          {certificates.length > 0 && (
+            <div className="animate-fade-in">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Award className="w-6 h-6 text-primary" />
+                  Certificados Recentes
+                </h2>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate("/certificates")}
+                >
+                  Ver todos
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {certificates.map((cert, index) => (
+                  <Card 
+                    key={cert.id}
+                    className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    onClick={() => navigate("/certificates")}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="h-2 bg-gradient-to-r from-primary to-accent" />
+                    <CardHeader className="pb-3">
+                      <div className="flex gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Award className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-base line-clamp-2">
+                            {cert.courses?.title || "Curso"}
+                          </CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(cert.issued_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground">
+                        Certificado Nº {cert.certificate_number}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           )}
 
         </div>
