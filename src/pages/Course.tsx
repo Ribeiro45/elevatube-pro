@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { VideoPlayer } from "@/components/course/VideoPlayer";
 import { QuizTaker } from "@/components/quiz/QuizTaker";
+import { ModuleQuizTaker } from "@/components/course/ModuleQuizTaker";
 import { FinalExamTaker } from "@/components/quiz/FinalExamTaker";
+import { ModuleAccordion } from "@/components/course/ModuleAccordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +22,16 @@ interface Lesson {
   youtube_url: string;
   order_index: number;
   duration_minutes: number;
+  module_id: string | null;
+}
+
+interface Module {
+  id: string;
+  title: string;
+  description: string;
+  order_index: number;
+  lessons: Lesson[];
+  hasQuiz: boolean;
 }
 
 interface CourseData {
@@ -32,9 +44,12 @@ const Course = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [course, setCourse] = useState<CourseData | null>(null);
+  const [modules, setModules] = useState<Module[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
+  const [currentModuleQuiz, setCurrentModuleQuiz] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'lesson' | 'module-quiz' | 'final-exam'>('lesson');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,17 +74,44 @@ const Course = () => {
 
   const loadCourse = async () => {
     try {
-      const [courseRes, lessonsRes, progressRes] = await Promise.all([
+      const [courseRes, modulesRes, lessonsRes, progressRes, quizzesRes] = await Promise.all([
         supabase.from("courses").select("*").eq("id", id).single(),
+        supabase.from("modules").select("*").eq("course_id", id).order("order_index"),
         supabase.from("lessons").select("*").eq("course_id", id).order("order_index"),
         supabase.from("user_progress").select("*").eq("user_id", user?.id),
+        supabase.from("quizzes").select("id, module_id").not("module_id", "is", null),
       ]);
 
       if (courseRes.data) setCourse(courseRes.data);
+      
       if (lessonsRes.data) {
         setLessons(lessonsRes.data);
-        setCurrentLesson(lessonsRes.data[0]);
       }
+
+      if (modulesRes.data && lessonsRes.data) {
+        // Check which modules have quizzes
+        const moduleQuizMap = new Map(
+          quizzesRes.data?.map(q => [q.module_id, true]) || []
+        );
+
+        // Organize lessons by module
+        const modulesWithLessons = modulesRes.data.map(module => ({
+          ...module,
+          lessons: lessonsRes.data
+            .filter(l => l.module_id === module.id)
+            .sort((a, b) => a.order_index - b.order_index),
+          hasQuiz: moduleQuizMap.has(module.id),
+        }));
+
+        setModules(modulesWithLessons);
+
+        // Set first lesson as current
+        const firstModule = modulesWithLessons[0];
+        if (firstModule?.lessons.length > 0) {
+          setCurrentLesson(firstModule.lessons[0]);
+        }
+      }
+
       if (progressRes.data) {
         const completed = new Set(
           progressRes.data.filter(p => p.completed).map(p => p.lesson_id)
@@ -172,12 +214,11 @@ const Course = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
-              {currentLesson && (
+              {viewMode === 'lesson' && currentLesson && (
                 <Tabs defaultValue="video" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="video">Vídeo</TabsTrigger>
-                    <TabsTrigger value="quiz">Prova</TabsTrigger>
-                    <TabsTrigger value="final-exam">Prova Final</TabsTrigger>
+                    <TabsTrigger value="quiz">Prova da Aula</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="video">
@@ -218,63 +259,84 @@ const Course = () => {
                     <QuizTaker 
                       lessonId={currentLesson.id} 
                       onComplete={() => {
-                        toast.success("Prova concluída!");
-                        loadCourse();
-                      }}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="final-exam">
-                    <FinalExamTaker 
-                      courseId={id!} 
-                      courseTitle={course?.title || ""}
-                      onComplete={() => {
-                        toast.success("Prova final concluída!");
+                        toast.success("Prova da aula concluída!");
                         loadCourse();
                       }}
                     />
                   </TabsContent>
                 </Tabs>
               )}
+
+              {viewMode === 'module-quiz' && currentModuleQuiz && (
+                <div>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setViewMode('lesson');
+                      setCurrentModuleQuiz(null);
+                    }}
+                    className="mb-4"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar para aulas
+                  </Button>
+                  <ModuleQuizTaker
+                    moduleId={currentModuleQuiz}
+                    onComplete={() => {
+                      toast.success("Prova do módulo concluída!");
+                      setViewMode('lesson');
+                      setCurrentModuleQuiz(null);
+                      loadCourse();
+                    }}
+                  />
+                </div>
+              )}
+
+              {viewMode === 'final-exam' && (
+                <div>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setViewMode('lesson')}
+                    className="mb-4"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar para aulas
+                  </Button>
+                  <FinalExamTaker 
+                    courseId={id!} 
+                    courseTitle={course?.title || ""}
+                    onComplete={() => {
+                      toast.success("Prova final concluída!");
+                      loadCourse();
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aulas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {lessons.map((lesson) => {
-                    const isCompleted = completedLessons.has(lesson.id);
-                    const isCurrent = currentLesson?.id === lesson.id;
-                    
-                    return (
-                      <button
-                        key={lesson.id}
-                        onClick={() => setCurrentLesson(lesson)}
-                        className={cn(
-                          "w-full text-left p-3 rounded-lg transition-colors flex items-start gap-3",
-                          isCurrent 
-                            ? "bg-primary/10 border-2 border-primary" 
-                            : "hover:bg-muted border-2 border-transparent"
-                        )}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium line-clamp-2">{lesson.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {lesson.duration_minutes} min
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+            <div className="space-y-4">
+              <ModuleAccordion
+                modules={modules}
+                completedLessons={completedLessons}
+                currentLessonId={currentLesson?.id || null}
+                onSelectLesson={(lesson) => {
+                  setCurrentLesson(lesson);
+                  setViewMode('lesson');
+                  setCurrentModuleQuiz(null);
+                }}
+                onSelectModuleQuiz={(moduleId) => {
+                  setCurrentModuleQuiz(moduleId);
+                  setViewMode('module-quiz');
+                }}
+              />
+
+              <Button
+                onClick={() => setViewMode('final-exam')}
+                variant="outline"
+                className="w-full border-2 border-primary hover:bg-primary/10"
+              >
+                Prova Final do Curso
+              </Button>
             </div>
           </div>
         </div>
