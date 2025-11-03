@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { VideoPlayer } from "@/components/course/VideoPlayer";
 import { QuizTaker } from "@/components/quiz/QuizTaker";
+import { FinalExamTaker } from "@/components/quiz/FinalExamTaker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -173,9 +174,10 @@ const Course = () => {
             <div className="lg:col-span-2 space-y-4">
               {currentLesson && (
                 <Tabs defaultValue="video" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="video">Vídeo</TabsTrigger>
                     <TabsTrigger value="quiz">Prova</TabsTrigger>
+                    <TabsTrigger value="final-exam">Prova Final</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="video">
@@ -217,6 +219,17 @@ const Course = () => {
                       lessonId={currentLesson.id} 
                       onComplete={() => {
                         toast.success("Prova concluída!");
+                        loadCourse();
+                      }}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="final-exam">
+                    <FinalExamTaker 
+                      courseId={id!} 
+                      courseTitle={course?.title || ""}
+                      onComplete={() => {
+                        toast.success("Prova final concluída!");
                         loadCourse();
                       }}
                     />
