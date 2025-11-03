@@ -135,13 +135,13 @@ export const Sidebar = () => {
         {/* Header with Logo */}
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link to="/dashboard" className="flex items-center gap-3">
               <img 
                 src={isDarkMode ? logoNewStandardDark : logoNewStandard} 
                 alt="New Standard" 
-                className={`${collapsed ? 'h-12' : 'h-16'} object-contain`} 
+                className={`${collapsed ? 'h-12' : 'h-16'} object-contain cursor-pointer hover:opacity-80 transition-opacity`} 
               />
-            </div>
+            </Link>
             <button
               onClick={() => setCollapsed(!collapsed)}
               className="text-sidebar-foreground hover:text-sidebar-primary"
