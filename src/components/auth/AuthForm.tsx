@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { z } from "zod";
-import logoAcademyNoBg from "@/assets/logo-academy-no-bg.png";
+import logoN from "@/assets/logo-n.png";
 
 const authSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -89,7 +89,7 @@ export const AuthForm = () => {
       {/* Logo/Header */}
       <div className="text-center space-y-2 animate-fade-in">
         <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white mb-4 shadow-lg p-4">
-          <img src={logoAcademyNoBg} alt="New Academy" className="w-full h-full object-contain" />
+          <img src={logoN} alt="New Academy" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-3xl font-bold text-white">
           New Academy
