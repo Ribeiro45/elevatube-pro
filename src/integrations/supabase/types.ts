@@ -102,28 +102,31 @@ export type Database = {
       }
       lessons: {
         Row: {
-          course_id: string
+          course_id: string | null
           created_at: string | null
           duration_minutes: number | null
           id: string
+          module_id: string | null
           order_index: number
           title: string
           youtube_url: string
         }
         Insert: {
-          course_id: string
+          course_id?: string | null
           created_at?: string | null
           duration_minutes?: number | null
           id?: string
+          module_id?: string | null
           order_index: number
           title: string
           youtube_url: string
         }
         Update: {
-          course_id?: string
+          course_id?: string | null
           created_at?: string | null
           duration_minutes?: number | null
           id?: string
+          module_id?: string | null
           order_index?: number
           title?: string
           youtube_url?: string
@@ -131,6 +134,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modules: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
@@ -242,6 +290,7 @@ export type Database = {
           id: string
           is_final_exam: boolean | null
           lesson_id: string | null
+          module_id: string | null
           passing_score: number
           title: string
           updated_at: string | null
@@ -252,6 +301,7 @@ export type Database = {
           id?: string
           is_final_exam?: boolean | null
           lesson_id?: string | null
+          module_id?: string | null
           passing_score?: number
           title: string
           updated_at?: string | null
@@ -262,6 +312,7 @@ export type Database = {
           id?: string
           is_final_exam?: boolean | null
           lesson_id?: string | null
+          module_id?: string | null
           passing_score?: number
           title?: string
           updated_at?: string | null
@@ -279,6 +330,13 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
