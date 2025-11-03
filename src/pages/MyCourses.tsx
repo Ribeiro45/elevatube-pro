@@ -85,17 +85,29 @@ const MyCourses = () => {
     try {
       setLoading(true);
       const [enrollmentsRes, lessonsRes, progressRes] = await Promise.all([
-        supabase.from("enrollments").select("course_id, courses(*)"),
+        supabase.from("enrollments").select("course_id"),
         supabase.from("lessons").select("*"),
         supabase.from("user_progress").select("*"),
       ]);
 
       if (enrollmentsRes.data) {
-        const enrolledCourses = enrollmentsRes.data
-          .map((e: any) => e.courses)
-          .filter((c: any) => c !== null) as Course[];
+        const courseIds = enrollmentsRes.data
+          .map((e: any) => e.course_id)
+          .filter((id: string | null) => !!id);
+
+        let enrolledCourses: Course[] = [];
+        if (courseIds.length > 0) {
+          const { data: coursesData } = await supabase
+            .from("courses")
+            .select("*")
+            .in("id", courseIds);
+          enrolledCourses = (coursesData as Course[]) || [];
+        }
         setCourses(enrolledCourses);
+      } else {
+        setCourses([]);
       }
+
       if (lessonsRes.data) setLessons(lessonsRes.data);
       if (progressRes.data) setProgress(progressRes.data);
     } catch (error) {
