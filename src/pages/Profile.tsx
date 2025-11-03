@@ -43,17 +43,17 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      await loadProfile(session.user.id);
+    };
 
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
-    loadProfile(session.user.id);
-  };
+    checkAuth();
+  }, [navigate]);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -61,7 +61,7 @@ const Profile = () => {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
