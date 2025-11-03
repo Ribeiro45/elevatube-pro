@@ -56,6 +56,31 @@ const MyCourses = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to enrollment changes
+    const channel = supabase
+      .channel('enrollments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'enrollments',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadData = async () => {
     try {
       const [enrollmentsRes, lessonsRes, progressRes] = await Promise.all([

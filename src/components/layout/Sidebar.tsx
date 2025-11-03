@@ -154,14 +154,20 @@ export const Sidebar = () => {
         {!collapsed && (
           <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {userName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative group cursor-pointer" onClick={() => setShowSettings(true)}>
+                <Avatar className="h-10 w-10">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {userName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Upload size={16} className="text-white" />
+                </div>
+              </div>
               <div className="text-sidebar-foreground">
                 <p className="font-medium">{userName}</p>
+                <p className="text-xs text-muted-foreground">Editar perfil</p>
               </div>
             </div>
           </div>
