@@ -138,7 +138,7 @@ export const Sidebar = () => {
               <img 
                 src={isDarkMode ? logoNewStandardDark : logoNewStandard} 
                 alt="New Standard" 
-                className={`${collapsed ? 'h-8' : 'h-10'} object-contain`} 
+                className={`${collapsed ? 'h-12' : 'h-16'} object-contain`} 
               />
             </div>
             <button

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play } from "lucide-react";
+import logoAcademy from "@/assets/logo-academy.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -55,12 +56,10 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              Plataforma de Cursos
+          <div className="flex items-center gap-3">
+            <img src={logoAcademy} alt="New Academy" className="h-12 object-contain" />
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              New Academy
             </span>
           </div>
           <Button onClick={() => navigate("/auth")} size="lg">
@@ -76,12 +75,12 @@ const Index = () => {
           <div className="space-y-8 animate-fade-in">
             <div className="inline-block">
               <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
-                Plataforma de Aprendizado
+                New Academy - Plataforma de Aprendizado
               </span>
             </div>
             <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
               Transforme seu
-              <span className="block bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Conhecimento
               </span>
             </h1>
@@ -182,12 +181,12 @@ const Index = () => {
       <footer className="border-t border-border/40 mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-lg"></div>
-              <span className="font-semibold">Plataforma de Cursos</span>
+            <div className="flex items-center gap-3">
+              <img src={logoAcademy} alt="New Academy" className="h-8 object-contain" />
+              <span className="font-semibold">New Academy</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 Todos os direitos reservados.
+              © 2025 New Academy. Todos os direitos reservados.
             </p>
           </div>
         </div>

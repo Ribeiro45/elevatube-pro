@@ -40,13 +40,13 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    --sidebar-background: 210 100% 20%;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 15%;
     --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 100% 25%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 100% 15%;
+    --sidebar-accent: 210 100% 95%;
+    --sidebar-accent-foreground: 210 100% 20%;
+    --sidebar-border: 220 13% 91%;
     --sidebar-ring: 25 95% 53%;
 
     --gradient-primary: linear-gradient(135deg, hsl(210 100% 20%), hsl(210 100% 30%));

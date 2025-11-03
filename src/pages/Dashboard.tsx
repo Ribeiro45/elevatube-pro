@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { CourseCard } from "@/components/course/CourseCard";
 import { OverallProgress } from "@/components/dashboard/OverallProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User } from "@supabase/supabase-js";
@@ -32,6 +31,7 @@ const Dashboard = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
   const [certificatesCount, setCertificatesCount] = useState(0);
+  const [studyTime, setStudyTime] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,22 +71,18 @@ const Dashboard = () => {
         const enrolledCourses = enrollmentsRes.data
           .map((e: any) => e.courses)
           .filter((c: any) => c !== null) as Course[];
-        
-        // Filter to show only courses in progress (not completed)
-        const inProgressCourses = enrolledCourses.filter(course => {
-          const courseLessons = lessonsRes.data?.filter(l => l.course_id === course.id) || [];
-          const completedLessons = courseLessons.filter(l => 
-            progressRes.data?.some(p => p.lesson_id === l.id && p.completed)
-          );
-          const progressPercent = courseLessons.length > 0 
-            ? (completedLessons.length / courseLessons.length) * 100 
-            : 0;
-          return progressPercent > 0 && progressPercent < 100;
-        });
-        
-        setCourses(inProgressCourses);
+        setCourses(enrolledCourses);
       }
-      if (lessonsRes.data) setLessons(lessonsRes.data);
+      if (lessonsRes.data) {
+        setLessons(lessonsRes.data);
+        
+        // Calculate total study time from completed lessons
+        const completedLessonIds = progressRes.data?.filter(p => p.completed).map(p => p.lesson_id) || [];
+        const totalMinutes = lessonsRes.data
+          .filter(l => completedLessonIds.includes(l.id))
+          .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+        setStudyTime(totalMinutes);
+      }
       if (progressRes.data) setProgress(progressRes.data);
       if (certificatesRes.count !== null) setCertificatesCount(certificatesRes.count);
     } catch (error) {
@@ -141,49 +137,10 @@ const Dashboard = () => {
               totalLessons={lessons.length}
               completedLessons={completedLessonsCount}
               certificates={certificatesCount}
+              studyTime={studyTime}
             />
           )}
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="space-y-4">
-                  <Skeleton className="h-48 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
-          ) : courses.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">Você não tem cursos em andamento no momento.</p>
-              <p className="text-muted-foreground">Vá para a aba "Cursos" para se inscrever em novos cursos.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course, index) => {
-                const stats = getCourseStats(course.id);
-                return (
-                  <div 
-                    key={course.id} 
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <CourseCard
-                      id={course.id}
-                      title={course.title}
-                      description={course.description || ""}
-                      thumbnailUrl={course.thumbnail_url || ""}
-                      progress={stats.progress}
-                      totalLessons={stats.totalLessons}
-                      completedLessons={stats.completedLessons}
-                      totalDuration={stats.totalDuration}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       </main>
     </div>

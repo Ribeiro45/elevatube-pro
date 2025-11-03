@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Award, BookOpen, CheckCircle } from "lucide-react";
+import { Award, BookOpen, CheckCircle, Clock } from "lucide-react";
 
 interface OverallProgressProps {
   totalCourses: number;
@@ -8,6 +8,7 @@ interface OverallProgressProps {
   totalLessons: number;
   completedLessons: number;
   certificates: number;
+  studyTime: number;
 }
 
 export const OverallProgress = ({
@@ -16,10 +17,20 @@ export const OverallProgress = ({
   totalLessons,
   completedLessons,
   certificates,
+  studyTime,
 }: OverallProgressProps) => {
   const overallProgress = totalLessons > 0 
     ? (completedLessons / totalLessons) * 100 
     : 0;
+
+  const formatStudyTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}min`;
+    }
+    return `${mins}min`;
+  };
 
   return (
     <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
@@ -38,7 +49,7 @@ export const OverallProgress = ({
           <Progress value={overallProgress} className="h-3" />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 rounded-lg bg-background/50">
             <div className="flex items-center justify-center gap-1 mb-1">
               <BookOpen className="w-4 h-4 text-primary" />
@@ -53,6 +64,14 @@ export const OverallProgress = ({
             </div>
             <div className="text-2xl font-bold text-accent">{completedLessons}</div>
             <div className="text-xs text-muted-foreground">Aulas Concluídas</div>
+          </div>
+
+          <div className="text-center p-3 rounded-lg bg-background/50">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Clock className="w-4 h-4 text-primary" />
+            </div>
+            <div className="text-2xl font-bold text-primary">{formatStudyTime(studyTime)}</div>
+            <div className="text-xs text-muted-foreground">Tempo de Estudo</div>
           </div>
 
           <div className="text-center p-3 rounded-lg bg-background/50">
