@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CourseCard } from "@/components/course/CourseCard";
-import { OverallProgress } from "@/components/dashboard/OverallProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User } from "@supabase/supabase-js";
 
@@ -25,13 +24,12 @@ interface Progress {
   completed: boolean;
 }
 
-const Dashboard = () => {
+const MyCourses = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
-  const [certificatesCount, setCertificatesCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,35 +58,20 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
-      const [enrollmentsRes, lessonsRes, progressRes, certificatesRes] = await Promise.all([
+      const [enrollmentsRes, lessonsRes, progressRes] = await Promise.all([
         supabase.from("enrollments").select("course_id, courses(*)"),
         supabase.from("lessons").select("*"),
         supabase.from("user_progress").select("*"),
-        supabase.from("certificates").select("id", { count: 'exact' }),
       ]);
 
       if (enrollmentsRes.data) {
         const enrolledCourses = enrollmentsRes.data
           .map((e: any) => e.courses)
           .filter((c: any) => c !== null) as Course[];
-        
-        // Filter to show only courses in progress (not completed)
-        const inProgressCourses = enrolledCourses.filter(course => {
-          const courseLessons = lessonsRes.data?.filter(l => l.course_id === course.id) || [];
-          const completedLessons = courseLessons.filter(l => 
-            progressRes.data?.some(p => p.lesson_id === l.id && p.completed)
-          );
-          const progressPercent = courseLessons.length > 0 
-            ? (completedLessons.length / courseLessons.length) * 100 
-            : 0;
-          return progressPercent > 0 && progressPercent < 100;
-        });
-        
-        setCourses(inProgressCourses);
+        setCourses(enrolledCourses);
       }
       if (lessonsRes.data) setLessons(lessonsRes.data);
       if (progressRes.data) setProgress(progressRes.data);
-      if (certificatesRes.count !== null) setCertificatesCount(certificatesRes.count);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -115,12 +98,6 @@ const Dashboard = () => {
     };
   };
 
-  const completedLessonsCount = progress.filter(p => p.completed).length;
-  const completedCoursesCount = courses.filter(course => {
-    const stats = getCourseStats(course.id);
-    return stats.progress === 100;
-  }).length;
-
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -128,21 +105,9 @@ const Dashboard = () => {
       <main className="flex-1 p-8">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="animate-fade-in">
-            <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">Continue seu aprendizado de onde parou</p>
+            <h1 className="text-4xl font-bold mb-2">Meus Cursos</h1>
+            <p className="text-muted-foreground">Cursos nos quais você está inscrito</p>
           </div>
-
-          {loading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : (
-            <OverallProgress
-              totalCourses={courses.length}
-              completedCourses={completedCoursesCount}
-              totalLessons={lessons.length}
-              completedLessons={completedLessonsCount}
-              certificates={certificatesCount}
-            />
-          )}
 
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -156,8 +121,8 @@ const Dashboard = () => {
             </div>
           ) : courses.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">Você não tem cursos em andamento no momento.</p>
-              <p className="text-muted-foreground">Vá para a aba "Cursos" para se inscrever em novos cursos.</p>
+              <p className="text-muted-foreground mb-4">Você ainda não está inscrito em nenhum curso.</p>
+              <p className="text-muted-foreground">Vá para a aba "Cursos" para se inscrever.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -190,4 +155,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default MyCourses;

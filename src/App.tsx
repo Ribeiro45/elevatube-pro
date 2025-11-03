@@ -7,6 +7,8 @@ import { AdminRoute } from "@/components/admin/AdminRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import MyCourses from "./pages/MyCourses";
+import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Certificates from "./pages/Certificates";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/my-courses" element={<MyCourses />} />
+          <Route path="/courses" element={<Courses />} />
           <Route path="/course/:id" element={<Course />} />
           <Route path="/certificates" element={<Certificates />} />
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

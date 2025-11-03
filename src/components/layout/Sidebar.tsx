@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Award, Users, Settings, LogOut, Moon, Sun, Upload, Shield } from 'lucide-react';
+import { Home, BookOpen, Award, Users, Settings, LogOut, Moon, Sun, Upload, Shield, Library } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -8,13 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import logoNewStandard from '@/assets/logo-newstandard.png';
+import logoNewStandardDark from '@/assets/logo-newstandard-dark.png';
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [userName, setUserName] = useState('Usuário');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,12 +35,15 @@ export const Sidebar = () => {
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, avatar_url')
         .eq('id', user.id)
         .single();
       
       if (profile?.full_name) {
         setUserName(profile.full_name);
+      }
+      if (profile?.avatar_url) {
+        setAvatarUrl(profile.avatar_url);
       }
     }
   };
@@ -99,6 +105,7 @@ export const Sidebar = () => {
         variant: "destructive",
       });
     } else {
+      setAvatarUrl(publicUrl);
       toast({
         title: "Sucesso",
         description: "Foto atualizada com sucesso!",
@@ -110,7 +117,8 @@ export const Sidebar = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
-    { icon: BookOpen, label: 'Meus Cursos', path: '/courses' },
+    { icon: Library, label: 'Meus Cursos', path: '/my-courses' },
+    { icon: BookOpen, label: 'Cursos', path: '/courses' },
     { icon: Award, label: 'Certificados', path: '/certificates' },
   ];
 
@@ -127,8 +135,11 @@ export const Sidebar = () => {
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logoNewStandard} alt="New Standard" className={`${collapsed ? 'w-8 h-8' : 'w-10 h-10'} object-contain`} />
-              {!collapsed && <span className="text-sidebar-foreground font-bold text-lg">New Standard</span>}
+              <img 
+                src={isDarkMode ? logoNewStandardDark : logoNewStandard} 
+                alt="New Standard" 
+                className={`${collapsed ? 'h-8' : 'h-10'} object-contain`} 
+              />
             </div>
             <button
               onClick={() => setCollapsed(!collapsed)}
@@ -142,8 +153,16 @@ export const Sidebar = () => {
         {/* User Info */}
         {!collapsed && (
           <div className="p-4 border-b border-sidebar-border">
-            <div className="text-sidebar-foreground">
-              <p className="font-medium">{userName}</p>
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {userName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-sidebar-foreground">
+                <p className="font-medium">{userName}</p>
+              </div>
             </div>
           </div>
         )}
