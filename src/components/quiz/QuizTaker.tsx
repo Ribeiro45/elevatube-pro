@@ -19,12 +19,17 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [maxAttemptsReached, setMaxAttemptsReached] = useState(false);
 
   useEffect(() => {
     fetchQuiz();
   }, [lessonId]);
 
   const fetchQuiz = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data: quizData } = await supabase
       .from('quizzes')
       .select('*')
@@ -49,6 +54,30 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
       .in('question_id', (questionsData || []).map(q => q.id));
 
     setAnswers(answersData || []);
+
+    // Count previous attempts
+    const { data: attemptsData } = await supabase
+      .from('user_quiz_attempts')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('quiz_id', quizData.id);
+
+    const attempts = attemptsData || [];
+    setAttemptCount(attempts.length);
+
+    // Check if already passed
+    const passedAttempt = attempts.find(a => a.passed);
+    if (passedAttempt) {
+      setResult({
+        score: passedAttempt.score,
+        passed: true,
+        correctCount: Math.round((passedAttempt.score / 100) * (questionsData?.length || 0)),
+        total: questionsData?.length || 0
+      });
+      setSubmitted(true);
+    } else if (attempts.length >= 2) {
+      setMaxAttemptsReached(true);
+    }
   };
 
   const handleSubmit = async () => {
@@ -106,17 +135,41 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
 
     setResult({ score, passed, correctCount, total: questions.length });
     setSubmitted(true);
+    setAttemptCount(attemptCount + 1);
 
     if (passed) {
       toast.success('Parabéns! Você passou na prova!');
       setTimeout(() => onComplete(), 2000);
     } else {
-      toast.error('Você não atingiu a nota mínima. Tente novamente!');
+      if (attemptCount + 1 >= 2) {
+        setMaxAttemptsReached(true);
+        toast.error('Você usou todas as tentativas! Refaça as aulas desta lição.');
+      } else {
+        toast.error(`Você não atingiu a nota mínima. Você tem mais ${2 - (attemptCount + 1)} tentativa(s).`);
+      }
     }
   };
 
   if (!quiz) {
     return <div className="text-center text-muted-foreground">Nenhuma prova disponível para esta aula</div>;
+  }
+
+  if (maxAttemptsReached && !result?.passed) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <XCircle className="w-6 h-6 text-destructive" />
+            Limite de Tentativas Atingido
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-center">
+            Você já usou as 2 tentativas permitidas para esta prova. Refaça as aulas desta lição para tentar novamente.
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (submitted && result) {
@@ -148,10 +201,15 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
                 Nota mínima: {quiz.passing_score}%
               </p>
             </div>
-            {!result.passed && (
+            {!result.passed && attemptCount < 2 && (
               <Button onClick={() => { setSubmitted(false); setUserAnswers({}); }} className="w-full">
-                Tentar Novamente
+                Tentar Novamente ({2 - attemptCount} tentativa(s) restante(s))
               </Button>
+            )}
+            {!result.passed && attemptCount >= 2 && (
+              <p className="text-center text-sm text-muted-foreground">
+                Limite de tentativas atingido. Refaça as aulas desta lição.
+              </p>
             )}
           </div>
         </CardContent>

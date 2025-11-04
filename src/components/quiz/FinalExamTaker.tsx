@@ -25,6 +25,8 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
   const [profile, setProfile] = useState<any>(null);
   const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [maxAttemptsReached, setMaxAttemptsReached] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -74,20 +76,23 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
 
     setAnswers(answersData || []);
 
-    // Check if user already passed
-    const { data: attemptData } = await supabase
+    // Count previous attempts
+    const { data: attemptsData } = await supabase
       .from('user_quiz_attempts')
       .select('*')
       .eq('user_id', user.id)
-      .eq('quiz_id', quizData.id)
-      .eq('passed', true)
-      .maybeSingle();
+      .eq('quiz_id', quizData.id);
 
-    if (attemptData) {
+    const attempts = attemptsData || [];
+    setAttemptCount(attempts.length);
+
+    // Check if already passed
+    const passedAttempt = attempts.find(a => a.passed);
+    if (passedAttempt) {
       setResult({
-        score: attemptData.score,
+        score: passedAttempt.score,
         passed: true,
-        correctCount: Math.round((attemptData.score / 100) * (questionsData?.length || 0)),
+        correctCount: Math.round((passedAttempt.score / 100) * (questionsData?.length || 0)),
         total: questionsData?.length || 0
       });
       setSubmitted(true);
@@ -101,6 +106,8 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
         .maybeSingle();
 
       setCertificate(certData);
+    } else if (attempts.length >= 2) {
+      setMaxAttemptsReached(true);
     }
 
     // Calculate total hours
@@ -170,6 +177,7 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
 
     setResult({ score, passed, correctCount, total: questions.length });
     setSubmitted(true);
+    setAttemptCount(attemptCount + 1);
 
     if (passed) {
       toast.success('Parabéns! Você passou na prova final!');
@@ -190,7 +198,26 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
       setCertificate(certData);
       setTimeout(() => onComplete(), 2000);
     } else {
-      toast.error('Você não atingiu a nota mínima. Tente novamente!');
+      if (attemptCount + 1 >= 2) {
+        // Reset course progress
+        const { data: lessonsData } = await supabase
+          .from('lessons')
+          .select('id')
+          .eq('course_id', courseId);
+
+        if (lessonsData) {
+          await supabase
+            .from('user_progress')
+            .delete()
+            .eq('user_id', user.id)
+            .in('lesson_id', lessonsData.map(l => l.id));
+        }
+
+        setMaxAttemptsReached(true);
+        toast.error('Você usou todas as tentativas! O progresso do curso foi resetado.');
+      } else {
+        toast.error(`Você não atingiu a nota mínima. Você tem mais ${2 - (attemptCount + 1)} tentativa(s).`);
+      }
     }
   };
 
@@ -216,6 +243,24 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
           Nenhuma prova final disponível para este curso
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (maxAttemptsReached && !result?.passed) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <XCircle className="w-6 h-6 text-destructive" />
+            Limite de Tentativas Atingido
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-center">
+            Você já usou as 2 tentativas permitidas para esta prova. O progresso do curso foi resetado. Refaça todas as aulas e módulos para tentar novamente.
+          </p>
         </CardContent>
       </Card>
     );
@@ -272,10 +317,15 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
               </div>
             )}
 
-            {!result.passed && (
+            {!result.passed && attemptCount < 2 && (
               <Button onClick={() => { setSubmitted(false); setUserAnswers({}); }} className="w-full">
-                Tentar Novamente
+                Tentar Novamente ({2 - attemptCount} tentativa(s) restante(s))
               </Button>
+            )}
+            {!result.passed && attemptCount >= 2 && (
+              <p className="text-center text-sm text-muted-foreground">
+                Limite de tentativas atingido. O progresso do curso foi resetado.
+              </p>
             )}
           </div>
         </CardContent>
