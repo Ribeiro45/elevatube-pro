@@ -42,6 +42,7 @@ interface UserWithRole {
   full_name: string | null;
   created_at: string;
   is_admin: boolean;
+  is_editor: boolean;
   completed_lessons: number;
   total_certificates: number;
 }
@@ -76,11 +77,10 @@ const AdminUsers = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fetch all user roles
+      // Fetch all user roles (admin and editor)
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("*")
-        .eq("role", "admin");
+        .select("*");
 
       if (rolesError) throw rolesError;
 
@@ -94,7 +94,8 @@ const AdminUsers = () => {
         .from("certificates")
         .select("user_id");
 
-      const adminIds = new Set(roles?.map((r) => r.user_id) || []);
+      const adminIds = new Set(roles?.filter(r => r.role === 'admin').map((r) => r.user_id) || []);
+      const editorIds = new Set(roles?.filter(r => r.role === 'editor').map((r) => r.user_id) || []);
 
       const usersWithRoles: UserWithRole[] = profiles?.map((profile) => {
         const userProgress = progressData?.filter(p => p.user_id === profile.id && p.completed) || [];
@@ -106,6 +107,7 @@ const AdminUsers = () => {
           full_name: profile.full_name,
           created_at: profile.created_at,
           is_admin: adminIds.has(profile.id),
+          is_editor: editorIds.has(profile.id),
           completed_lessons: userProgress.length,
           total_certificates: userCerts.length,
         };
@@ -155,6 +157,45 @@ const AdminUsers = () => {
       fetchUsers();
     } catch (error) {
       console.error("Error toggling admin role:", error);
+      toast({
+        title: "Erro ao alterar permissão",
+        description: "Não foi possível alterar a permissão do usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleEditorRole = async (userId: string, isCurrentlyEditor: boolean) => {
+    try {
+      if (isCurrentlyEditor) {
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", userId)
+          .eq("role", "editor");
+
+        if (error) throw error;
+
+        toast({
+          title: "Permissão removida",
+          description: "Acesso de editor foi removido.",
+        });
+      } else {
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: "editor" });
+
+        if (error) throw error;
+
+        toast({
+          title: "Permissão concedida",
+          description: "Acesso de editor foi concedido.",
+        });
+      }
+
+      fetchUsers();
+    } catch (error) {
+      console.error("Error toggling editor role:", error);
       toast({
         title: "Erro ao alterar permissão",
         description: "Não foi possível alterar a permissão do usuário.",
@@ -390,20 +431,29 @@ const AdminUsers = () => {
                           {new Date(user.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
                         <TableCell>
-                          {user.is_admin ? (
-                            <Badge variant="default" className="gap-1">
-                              <Shield className="w-3 h-3" />
-                              Admin
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="gap-1">
-                              <ShieldOff className="w-3 h-3" />
-                              Usuário
-                            </Badge>
-                          )}
+                          <div className="flex gap-2 flex-wrap">
+                            {user.is_admin && (
+                              <Badge variant="default" className="gap-1">
+                                <Shield className="w-3 h-3" />
+                                Admin
+                              </Badge>
+                            )}
+                            {user.is_editor && (
+                              <Badge variant="default" className="gap-1 bg-blue-600 hover:bg-blue-700">
+                                <Shield className="w-3 h-3" />
+                                Editor
+                              </Badge>
+                            )}
+                            {!user.is_admin && !user.is_editor && (
+                              <Badge variant="secondary" className="gap-1">
+                                <ShieldOff className="w-3 h-3" />
+                                Usuário
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
+                          <div className="flex gap-2 justify-end flex-wrap">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -417,6 +467,14 @@ const AdminUsers = () => {
                               onClick={() => toggleAdminRole(user.id, user.is_admin)}
                             >
                               {user.is_admin ? "Remover Admin" : "Tornar Admin"}
+                            </Button>
+                            <Button
+                              variant={user.is_editor ? "destructive" : "default"}
+                              size="sm"
+                              onClick={() => toggleEditorRole(user.id, user.is_editor)}
+                              className={user.is_editor ? "" : "bg-blue-600 hover:bg-blue-700"}
+                            >
+                              {user.is_editor ? "Remover Editor" : "Tornar Editor"}
                             </Button>
                             <Button
                               variant="ghost"
