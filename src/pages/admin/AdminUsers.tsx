@@ -16,6 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -126,76 +133,31 @@ const AdminUsers = () => {
     }
   };
 
-  const toggleAdminRole = async (userId: string, isCurrentlyAdmin: boolean) => {
+  const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      if (isCurrentlyAdmin) {
+      // Remove all existing roles
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      // Add new role if not 'user'
+      if (newRole !== "user") {
         const { error } = await supabase
           .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .eq("role", "admin");
+          .insert({ user_id: userId, role: newRole as "admin" | "editor" | "user" });
 
         if (error) throw error;
-
-        toast({
-          title: "Permissão removida",
-          description: "Acesso de administrador foi removido.",
-        });
-      } else {
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "admin" });
-
-        if (error) throw error;
-
-        toast({
-          title: "Permissão concedida",
-          description: "Acesso de administrador foi concedido.",
-        });
       }
 
-      fetchUsers();
-    } catch (error) {
-      console.error("Error toggling admin role:", error);
       toast({
-        title: "Erro ao alterar permissão",
-        description: "Não foi possível alterar a permissão do usuário.",
-        variant: "destructive",
+        title: "Permissão atualizada",
+        description: `Usuário agora tem permissão de ${newRole}.`,
       });
-    }
-  };
-
-  const toggleEditorRole = async (userId: string, isCurrentlyEditor: boolean) => {
-    try {
-      if (isCurrentlyEditor) {
-        const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .eq("role", "editor");
-
-        if (error) throw error;
-
-        toast({
-          title: "Permissão removida",
-          description: "Acesso de editor foi removido.",
-        });
-      } else {
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "editor" });
-
-        if (error) throw error;
-
-        toast({
-          title: "Permissão concedida",
-          description: "Acesso de editor foi concedido.",
-        });
-      }
 
       fetchUsers();
     } catch (error) {
-      console.error("Error toggling editor role:", error);
+      console.error("Error changing role:", error);
       toast({
         title: "Erro ao alterar permissão",
         description: "Não foi possível alterar a permissão do usuário.",
@@ -431,50 +393,43 @@ const AdminUsers = () => {
                           {new Date(user.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2 flex-wrap">
-                            {user.is_admin && (
-                              <Badge variant="default" className="gap-1">
-                                <Shield className="w-3 h-3" />
-                                Admin
-                              </Badge>
-                            )}
-                            {user.is_editor && (
-                              <Badge variant="default" className="gap-1 bg-blue-600 hover:bg-blue-700">
-                                <Shield className="w-3 h-3" />
-                                Editor
-                              </Badge>
-                            )}
-                            {!user.is_admin && !user.is_editor && (
-                              <Badge variant="secondary" className="gap-1">
-                                <ShieldOff className="w-3 h-3" />
-                                Usuário
-                              </Badge>
-                            )}
-                          </div>
+                          <Select
+                            value={user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
+                            onValueChange={(value) => handleRoleChange(user.id, value)}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">
+                                <div className="flex items-center gap-2">
+                                  <ShieldOff className="w-3 h-3" />
+                                  Usuário
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="editor">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-3 h-3" />
+                                  Editor
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-3 h-3" />
+                                  Admin
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end flex-wrap">
+                          <div className="flex gap-2 justify-end">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleEditUser(user)}
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant={user.is_admin ? "destructive" : "default"}
-                              size="sm"
-                              onClick={() => toggleAdminRole(user.id, user.is_admin)}
-                            >
-                              {user.is_admin ? "Remover Admin" : "Tornar Admin"}
-                            </Button>
-                            <Button
-                              variant={user.is_editor ? "destructive" : "default"}
-                              size="sm"
-                              onClick={() => toggleEditorRole(user.id, user.is_editor)}
-                              className={user.is_editor ? "" : "bg-blue-600 hover:bg-blue-700"}
-                            >
-                              {user.is_editor ? "Remover Editor" : "Tornar Editor"}
                             </Button>
                             <Button
                               variant="ghost"
