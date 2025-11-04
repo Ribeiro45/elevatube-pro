@@ -4,6 +4,7 @@ import { Home, BookOpen, Award, Users, Settings, LogOut, Moon, Sun, Upload, Shie
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useEditor } from '@/hooks/useEditor';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
+  const { isEditor } = useEditor();
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -127,6 +129,9 @@ export const Sidebar = () => {
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
+  ];
+
+  const editorMenuItems = [
     { icon: Award, label: 'Gerenciar Provas', path: '/admin/quizzes' },
   ];
 
@@ -191,10 +196,28 @@ export const Sidebar = () => {
             );
           })}
 
-          {isAdmin && (
+          {(isAdmin || isEditor) && (
             <>
               <div className="my-4 border-t border-sidebar-border" />
-              {adminMenuItems.map((item) => {
+              {isAdmin && adminMenuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                    }`}
+                  >
+                    <Icon size={20} />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+              {isEditor && editorMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 return (
