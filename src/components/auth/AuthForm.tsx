@@ -23,6 +23,7 @@ export const AuthForm = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -84,6 +85,31 @@ export const AuthForm = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (!email) {
+        toast.error("Por favor, informe seu email");
+        return;
+      }
+
+      setLoading(true);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+      toast.success("Link de recuperação enviado para seu email!");
+      setShowForgotPassword(false);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar link de recuperação");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto space-y-6 animate-scale-in">
       {/* Logo/Header */}
@@ -101,21 +127,66 @@ export const AuthForm = () => {
 
       <Card className="border-2 backdrop-blur-sm bg-card/50 shadow-xl">
         <CardHeader className="space-y-1 pb-4">
-          <CardTitle className="text-2xl text-center">Acessar Plataforma</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            {showForgotPassword ? "Recuperar Senha" : "Acessar Plataforma"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login" className="relative">
-                Entrar
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="relative">
-                Criar Conta
-              </TabsTrigger>
-            </TabsList>
+          {showForgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4 animate-fade-in">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email" className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-primary" />
+                  Email
+                </Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="transition-all focus:scale-[1.02]"
+                />
+              </div>
 
-            <TabsContent value="login" className="space-y-4 animate-fade-in">
-              <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Button 
+                  type="submit" 
+                  className="w-full group relative overflow-hidden" 
+                  disabled={loading}
+                  size="lg"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {loading ? "Enviando..." : "Enviar Link de Recuperação"}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/50 to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  className="w-full" 
+                  onClick={() => setShowForgotPassword(false)}
+                >
+                  Voltar ao Login
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login" className="relative">
+                  Entrar
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="relative">
+                  Criar Conta
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login" className="space-y-4 animate-fade-in">
+                <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email" className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />
@@ -159,6 +230,15 @@ export const AuthForm = () => {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/50 to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+
+                <Button 
+                  type="button"
+                  variant="link"
+                  className="w-full text-sm" 
+                  onClick={() => setShowForgotPassword(true)}
+                >
+                  Esqueci minha senha
                 </Button>
               </form>
             </TabsContent>
@@ -232,6 +312,7 @@ export const AuthForm = () => {
               </form>
             </TabsContent>
           </Tabs>
+          )}
         </CardContent>
       </Card>
 

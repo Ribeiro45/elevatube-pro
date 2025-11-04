@@ -20,7 +20,7 @@ const Demo = () => {
         .from("site_settings")
         .select("setting_value")
         .eq("setting_key", "demo_page")
-        .single();
+        .maybeSingle();
 
       if (data?.setting_value) {
         setSettings(data.setting_value as any);
