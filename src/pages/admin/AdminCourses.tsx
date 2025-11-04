@@ -31,6 +31,7 @@ export default function AdminCourses() {
   const [lessons, setLessons] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<any>(null);
 
   const courseForm = useForm({
     resolver: zodResolver(courseSchema),
@@ -86,21 +87,44 @@ export default function AdminCourses() {
   const onSubmitLesson = async (values: z.infer<typeof lessonSchema>) => {
     if (!selectedCourse) return;
 
-    const { error } = await supabase.from('lessons').insert([{
-      title: values.title,
-      youtube_url: values.youtube_url,
-      duration_minutes: values.duration_minutes || null,
-      course_id: selectedCourse.id,
-      order_index: lessons.length,
-    }]);
-    
-    if (error) {
-      toast.error('Erro ao adicionar aula');
+    if (editingLesson) {
+      // Update existing lesson
+      const { error } = await supabase
+        .from('lessons')
+        .update({
+          title: values.title,
+          youtube_url: values.youtube_url,
+          duration_minutes: values.duration_minutes || null,
+        })
+        .eq('id', editingLesson.id);
+      
+      if (error) {
+        toast.error('Erro ao atualizar aula');
+      } else {
+        toast.success('Aula atualizada com sucesso!');
+        setLessonDialogOpen(false);
+        setEditingLesson(null);
+        lessonForm.reset();
+        fetchLessons(selectedCourse.id);
+      }
     } else {
-      toast.success('Aula adicionada com sucesso!');
-      setLessonDialogOpen(false);
-      lessonForm.reset();
-      fetchLessons(selectedCourse.id);
+      // Insert new lesson
+      const { error } = await supabase.from('lessons').insert([{
+        title: values.title,
+        youtube_url: values.youtube_url,
+        duration_minutes: values.duration_minutes || null,
+        course_id: selectedCourse.id,
+        order_index: lessons.length,
+      }]);
+      
+      if (error) {
+        toast.error('Erro ao adicionar aula');
+      } else {
+        toast.success('Aula adicionada com sucesso!');
+        setLessonDialogOpen(false);
+        lessonForm.reset();
+        fetchLessons(selectedCourse.id);
+      }
     }
   };
 
@@ -238,7 +262,16 @@ export default function AdminCourses() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle>Aulas - {selectedCourse.title}</CardTitle>
-                    <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+                    <Dialog 
+                      open={lessonDialogOpen} 
+                      onOpenChange={(open) => {
+                        setLessonDialogOpen(open);
+                        if (!open) {
+                          setEditingLesson(null);
+                          lessonForm.reset();
+                        }
+                      }}
+                    >
                       <DialogTrigger asChild>
                         <Button size="sm">
                           <Plus className="w-4 h-4 mr-2" />
@@ -247,7 +280,7 @@ export default function AdminCourses() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Adicionar Nova Aula</DialogTitle>
+                          <DialogTitle>{editingLesson ? 'Editar Aula' : 'Adicionar Nova Aula'}</DialogTitle>
                         </DialogHeader>
                         <Form {...lessonForm}>
                           <form onSubmit={lessonForm.handleSubmit(onSubmitLesson)} className="space-y-4">
@@ -311,13 +344,30 @@ export default function AdminCourses() {
                             {lesson.duration_minutes} minutos
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteLesson(lesson.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingLesson(lesson);
+                              lessonForm.reset({
+                                title: lesson.title,
+                                youtube_url: lesson.youtube_url,
+                                duration_minutes: lesson.duration_minutes || 0,
+                              });
+                              setLessonDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteLesson(lesson.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
