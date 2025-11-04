@@ -11,7 +11,15 @@ const Demo = () => {
     title: "Como Funciona a Plataforma",
     subtitle: "Um overview completo da New Academy e seus recursos",
     video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    video_title: "Tutorial Completo da Plataforma"
+    video_title: "Tutorial Completo da Plataforma",
+    step1_title: "1. Explore os Cursos",
+    step1_description: "Navegue pela biblioteca de cursos disponíveis e escolha o que você quer aprender",
+    step2_title: "2. Assista às Aulas",
+    step2_description: "Acesse vídeos de alta qualidade e aprenda no seu próprio ritmo",
+    step3_title: "3. Acompanhe seu Progresso",
+    step3_description: "Veja seu desenvolvimento em tempo real e complete os quizzes",
+    step4_title: "4. Receba Certificados",
+    step4_description: "Ao completar 100% do curso, receba seu certificado oficial"
   });
 
   useEffect(() => {
@@ -32,23 +40,23 @@ const Demo = () => {
   const tutorialSteps = [
     {
       icon: BookOpen,
-      title: "1. Explore os Cursos",
-      description: "Navegue pela biblioteca de cursos disponíveis e escolha o que você quer aprender"
+      title: settings.step1_title,
+      description: settings.step1_description
     },
     {
       icon: PlayCircle,
-      title: "2. Assista às Aulas",
-      description: "Acesse vídeos de alta qualidade e aprenda no seu próprio ritmo"
+      title: settings.step2_title,
+      description: settings.step2_description
     },
     {
       icon: TrendingUp,
-      title: "3. Acompanhe seu Progresso",
-      description: "Veja seu desenvolvimento em tempo real e complete os quizzes"
+      title: settings.step3_title,
+      description: settings.step3_description
     },
     {
       icon: Award,
-      title: "4. Receba Certificados",
-      description: "Ao completar 100% do curso, receba seu certificado oficial"
+      title: settings.step4_title,
+      description: settings.step4_description
     }
   ];
 

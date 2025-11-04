@@ -31,6 +31,14 @@ interface SiteSettings {
     subtitle: string;
     video_url: string;
     video_title: string;
+    step1_title: string;
+    step1_description: string;
+    step2_title: string;
+    step2_description: string;
+    step3_title: string;
+    step3_description: string;
+    step4_title: string;
+    step4_description: string;
   };
 }
 
@@ -59,6 +67,14 @@ const AdminSiteSettings = () => {
       subtitle: "",
       video_url: "",
       video_title: "",
+      step1_title: "",
+      step1_description: "",
+      step2_title: "",
+      step2_description: "",
+      step3_title: "",
+      step3_description: "",
+      step4_title: "",
+      step4_description: "",
     },
   });
 
@@ -359,6 +375,120 @@ const AdminSiteSettings = () => {
                     <p className="text-sm text-muted-foreground mt-1">
                       Use o formato: https://www.youtube.com/embed/VIDEO_ID
                     </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Passos do Tutorial</CardTitle>
+                  <CardDescription>
+                    Configure os 4 passos do tutorial da página de demonstração
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Step 1 */}
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <h3 className="font-semibold text-sm text-muted-foreground">Passo 1</h3>
+                    <div>
+                      <Label htmlFor="step1-title">Título</Label>
+                      <Input
+                        id="step1-title"
+                        value={settings.demo_page.step1_title}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step1_title", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="step1-description">Descrição</Label>
+                      <Textarea
+                        id="step1-description"
+                        value={settings.demo_page.step1_description}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step1_description", e.target.value)
+                        }
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <h3 className="font-semibold text-sm text-muted-foreground">Passo 2</h3>
+                    <div>
+                      <Label htmlFor="step2-title">Título</Label>
+                      <Input
+                        id="step2-title"
+                        value={settings.demo_page.step2_title}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step2_title", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="step2-description">Descrição</Label>
+                      <Textarea
+                        id="step2-description"
+                        value={settings.demo_page.step2_description}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step2_description", e.target.value)
+                        }
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <h3 className="font-semibold text-sm text-muted-foreground">Passo 3</h3>
+                    <div>
+                      <Label htmlFor="step3-title">Título</Label>
+                      <Input
+                        id="step3-title"
+                        value={settings.demo_page.step3_title}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step3_title", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="step3-description">Descrição</Label>
+                      <Textarea
+                        id="step3-description"
+                        value={settings.demo_page.step3_description}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step3_description", e.target.value)
+                        }
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <h3 className="font-semibold text-sm text-muted-foreground">Passo 4</h3>
+                    <div>
+                      <Label htmlFor="step4-title">Título</Label>
+                      <Input
+                        id="step4-title"
+                        value={settings.demo_page.step4_title}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step4_title", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="step4-description">Descrição</Label>
+                      <Textarea
+                        id="step4-description"
+                        value={settings.demo_page.step4_description}
+                        onChange={(e) =>
+                          updateSetting("demo_page", "step4_description", e.target.value)
+                        }
+                        rows={2}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
