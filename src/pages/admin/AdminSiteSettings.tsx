@@ -1,0 +1,379 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Home, Video, Award } from "lucide-react";
+import { Sidebar } from "@/components/layout/Sidebar";
+
+interface SiteSettings {
+  homepage_hero: {
+    badge_text: string;
+    title_line1: string;
+    title_line2: string;
+    description: string;
+    video_url: string;
+  };
+  homepage_features: {
+    section_title: string;
+    section_subtitle: string;
+  };
+  homepage_cta: {
+    title: string;
+    description: string;
+  };
+  demo_page: {
+    title: string;
+    subtitle: string;
+    video_url: string;
+    video_title: string;
+  };
+}
+
+const AdminSiteSettings = () => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>({
+    homepage_hero: {
+      badge_text: "",
+      title_line1: "",
+      title_line2: "",
+      description: "",
+      video_url: "",
+    },
+    homepage_features: {
+      section_title: "",
+      section_subtitle: "",
+    },
+    homepage_cta: {
+      title: "",
+      description: "",
+    },
+    demo_page: {
+      title: "",
+      subtitle: "",
+      video_url: "",
+      video_title: "",
+    },
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("setting_key, setting_value");
+
+      if (error) throw error;
+
+      const settingsMap: any = {};
+      data?.forEach((item) => {
+        settingsMap[item.setting_key] = item.setting_value;
+      });
+
+      setSettings(settingsMap as SiteSettings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar configurações",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updates = Object.entries(settings).map(([key, value]) => ({
+        setting_key: key,
+        setting_value: value,
+      }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("site_settings")
+          .update({ setting_value: update.setting_value })
+          .eq("setting_key", update.setting_key);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Configurações salvas com sucesso!",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateSetting = (section: keyof SiteSettings, field: string, value: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value,
+      },
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <main className="flex-1 p-8">
+        <div className="max-w-5xl mx-auto space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold">Configurações do Site</h1>
+            <p className="text-muted-foreground mt-2">
+              Gerencie o conteúdo da página inicial e página de demonstração
+            </p>
+          </div>
+
+          <Tabs defaultValue="hero" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="hero">
+                <Home className="w-4 h-4 mr-2" />
+                Hero
+              </TabsTrigger>
+              <TabsTrigger value="features">Features</TabsTrigger>
+              <TabsTrigger value="cta">CTA</TabsTrigger>
+              <TabsTrigger value="demo">
+                <Video className="w-4 h-4 mr-2" />
+                Demo
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="hero" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seção Hero - Página Inicial</CardTitle>
+                  <CardDescription>
+                    Configure o conteúdo principal da página inicial
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="badge">Texto do Badge</Label>
+                    <Input
+                      id="badge"
+                      value={settings.homepage_hero.badge_text}
+                      onChange={(e) =>
+                        updateSetting("homepage_hero", "badge_text", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="title1">Título - Linha 1</Label>
+                    <Input
+                      id="title1"
+                      value={settings.homepage_hero.title_line1}
+                      onChange={(e) =>
+                        updateSetting("homepage_hero", "title_line1", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="title2">Título - Linha 2 (Destaque)</Label>
+                    <Input
+                      id="title2"
+                      value={settings.homepage_hero.title_line2}
+                      onChange={(e) =>
+                        updateSetting("homepage_hero", "title_line2", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={settings.homepage_hero.description}
+                      onChange={(e) =>
+                        updateSetting("homepage_hero", "description", e.target.value)
+                      }
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="video">URL do Vídeo (YouTube Embed)</Label>
+                    <Input
+                      id="video"
+                      value={settings.homepage_hero.video_url}
+                      onChange={(e) =>
+                        updateSetting("homepage_hero", "video_url", e.target.value)
+                      }
+                      placeholder="https://www.youtube.com/embed/..."
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Use o formato: https://www.youtube.com/embed/VIDEO_ID
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="features" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seção de Features</CardTitle>
+                  <CardDescription>
+                    Configure os títulos da seção de recursos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="features-title">Título da Seção</Label>
+                    <Input
+                      id="features-title"
+                      value={settings.homepage_features.section_title}
+                      onChange={(e) =>
+                        updateSetting("homepage_features", "section_title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="features-subtitle">Subtítulo da Seção</Label>
+                    <Input
+                      id="features-subtitle"
+                      value={settings.homepage_features.section_subtitle}
+                      onChange={(e) =>
+                        updateSetting("homepage_features", "section_subtitle", e.target.value)
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="cta" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seção Call-to-Action</CardTitle>
+                  <CardDescription>
+                    Configure o convite para ação na página inicial
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="cta-title">Título</Label>
+                    <Input
+                      id="cta-title"
+                      value={settings.homepage_cta.title}
+                      onChange={(e) =>
+                        updateSetting("homepage_cta", "title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cta-description">Descrição</Label>
+                    <Textarea
+                      id="cta-description"
+                      value={settings.homepage_cta.description}
+                      onChange={(e) =>
+                        updateSetting("homepage_cta", "description", e.target.value)
+                      }
+                      rows={2}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="demo" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Página de Demonstração</CardTitle>
+                  <CardDescription>
+                    Configure o conteúdo da página de demonstração
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="demo-title">Título Principal</Label>
+                    <Input
+                      id="demo-title"
+                      value={settings.demo_page.title}
+                      onChange={(e) =>
+                        updateSetting("demo_page", "title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="demo-subtitle">Subtítulo</Label>
+                    <Input
+                      id="demo-subtitle"
+                      value={settings.demo_page.subtitle}
+                      onChange={(e) =>
+                        updateSetting("demo_page", "subtitle", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="demo-video-title">Título do Vídeo</Label>
+                    <Input
+                      id="demo-video-title"
+                      value={settings.demo_page.video_title}
+                      onChange={(e) =>
+                        updateSetting("demo_page", "video_title", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="demo-video">URL do Vídeo (YouTube Embed)</Label>
+                    <Input
+                      id="demo-video"
+                      value={settings.demo_page.video_url}
+                      onChange={(e) =>
+                        updateSetting("demo_page", "video_url", e.target.value)
+                      }
+                      placeholder="https://www.youtube.com/embed/..."
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Use o formato: https://www.youtube.com/embed/VIDEO_ID
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={saving} size="lg">
+              {saving ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default AdminSiteSettings;

@@ -1,10 +1,33 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, PlayCircle, BookOpen, Award, TrendingUp } from "lucide-react";
 
 const Demo = () => {
   const navigate = useNavigate();
+  const [settings, setSettings] = useState({
+    title: "Como Funciona a Plataforma",
+    subtitle: "Um overview completo da New Academy e seus recursos",
+    video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    video_title: "Tutorial Completo da Plataforma"
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("setting_value")
+        .eq("setting_key", "demo_page")
+        .single();
+
+      if (data?.setting_value) {
+        setSettings(data.setting_value as any);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const tutorialSteps = [
     {
@@ -49,10 +72,10 @@ const Demo = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12 space-y-4">
           <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Como Funciona a Plataforma
+            {settings.title}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Um overview completo da New Academy e seus recursos
+            {settings.subtitle}
           </p>
         </div>
 
@@ -63,15 +86,15 @@ const Demo = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PlayCircle className="w-6 h-6 text-primary" />
-                Vídeo Demonstração
+                {settings.video_title}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="aspect-video rounded-lg overflow-hidden shadow-lg">
                 <iframe
                   className="w-full h-full"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                  title="Tutorial Completo da Plataforma"
+                  src={settings.video_url}
+                  title={settings.video_title}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>

@@ -11,6 +11,23 @@ const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [settings, setSettings] = useState({
+    hero: {
+      badge_text: "New Academy - Plataforma de Aprendizado",
+      title_line1: "Transforme seu",
+      title_line2: "Conhecimento",
+      description: "Acesse cursos de alta qualidade, acompanhe seu progresso e obtenha certificados reconhecidos.",
+      video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+    },
+    features: {
+      section_title: "Por que escolher nossa plataforma?",
+      section_subtitle: "Recursos poderosos para acelerar seu aprendizado"
+    },
+    cta: {
+      title: "Pronto para começar?",
+      description: "Junte-se a centenas de colaboradores que já estão transformando suas carreiras"
+    }
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -20,6 +37,27 @@ const Index = () => {
         setIsLoading(false);
       }
     });
+
+    // Fetch site settings
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["homepage_hero", "homepage_features", "homepage_cta"]);
+
+      if (data) {
+        const settingsMap: any = {};
+        data.forEach((item) => {
+          if (item.setting_key === "homepage_hero") settingsMap.hero = item.setting_value;
+          if (item.setting_key === "homepage_features") settingsMap.features = item.setting_value;
+          if (item.setting_key === "homepage_cta") settingsMap.cta = item.setting_value;
+        });
+        if (Object.keys(settingsMap).length > 0) {
+          setSettings((prev) => ({ ...prev, ...settingsMap }));
+        }
+      }
+    };
+    fetchSettings();
 
     // Check initial dark mode state from localStorage
     const savedTheme = localStorage.getItem('theme');
@@ -112,17 +150,17 @@ const Index = () => {
           <div className="space-y-8 animate-fade-in">
             <div className="inline-block">
               <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
-                New Academy - Plataforma de Aprendizado
+                {settings.hero.badge_text}
               </span>
             </div>
             <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-              Transforme seu
+              {settings.hero.title_line1}
               <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Conhecimento
+                {settings.hero.title_line2}
               </span>
             </h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Acesse cursos de alta qualidade, acompanhe seu progresso e obtenha certificados reconhecidos.
+              {settings.hero.description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
@@ -152,7 +190,7 @@ const Index = () => {
                 <div className="aspect-video relative group">
                   <iframe
                     className="w-full h-full rounded-lg"
-                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    src={settings.hero.video_url}
                     title="Vídeo Demonstração"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -172,9 +210,9 @@ const Index = () => {
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl font-bold">Por que escolher nossa plataforma?</h2>
+          <h2 className="text-4xl font-bold">{settings.features.section_title}</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Recursos poderosos para acelerar seu aprendizado
+            {settings.features.section_subtitle}
           </p>
         </div>
 
@@ -202,9 +240,9 @@ const Index = () => {
         <Card className="relative overflow-hidden border-2 border-border/50">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/10"></div>
           <CardContent className="relative p-12 text-center space-y-6">
-            <h2 className="text-4xl font-bold">Pronto para começar?</h2>
+            <h2 className="text-4xl font-bold">{settings.cta.title}</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Junte-se a centenas de colaboradores que já estão transformando suas carreiras
+              {settings.cta.description}
             </p>
             <Button 
               onClick={() => navigate("/auth")}

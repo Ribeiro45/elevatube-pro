@@ -129,6 +129,7 @@ export const Sidebar = () => {
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
+    { icon: Settings, label: 'Configurações do Site', path: '/admin/settings' },
   ];
 
   const editorMenuItems = [
