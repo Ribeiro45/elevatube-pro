@@ -165,6 +165,28 @@ export const ModuleQuizTaker = ({ moduleId, onComplete }: ModuleQuizTakerProps) 
             .in('lesson_id', lessonsData.map(l => l.id));
         }
 
+        // Delete quiz attempts and responses to allow retaking
+        const { data: attemptsToDelete } = await supabase
+          .from('user_quiz_attempts')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('quiz_id', quiz.id);
+
+        if (attemptsToDelete && attemptsToDelete.length > 0) {
+          // Delete responses first (foreign key constraint)
+          await supabase
+            .from('user_quiz_responses')
+            .delete()
+            .in('attempt_id', attemptsToDelete.map(a => a.id));
+
+          // Then delete attempts
+          await supabase
+            .from('user_quiz_attempts')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('quiz_id', quiz.id);
+        }
+
         setMaxAttemptsReached(true);
         toast.error('Você usou todas as tentativas! O progresso do módulo foi resetado.');
       } else {
