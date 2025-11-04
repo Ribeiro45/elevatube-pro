@@ -142,8 +142,15 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
       setTimeout(() => onComplete(), 2000);
     } else {
       if (attemptCount + 1 >= 2) {
+        // Reset lesson progress
+        await supabase
+          .from('user_progress')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('lesson_id', lessonId);
+
         setMaxAttemptsReached(true);
-        toast.error('Você usou todas as tentativas! Refaça as aulas desta lição.');
+        toast.error('Você usou todas as tentativas! O progresso desta lição foi resetado.');
       } else {
         toast.error(`Você não atingiu a nota mínima. Você tem mais ${2 - (attemptCount + 1)} tentativa(s).`);
       }
