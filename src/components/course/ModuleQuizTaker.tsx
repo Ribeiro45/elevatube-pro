@@ -148,7 +148,7 @@ export const ModuleQuizTaker = ({ moduleId, onComplete }: ModuleQuizTakerProps) 
 
     if (passed) {
       toast.success('Parabéns! Você passou na prova do módulo!');
-      setTimeout(() => onComplete(), 2000);
+      onComplete();
     } else {
       if (attemptCount + 1 >= 2) {
         // Reset module progress

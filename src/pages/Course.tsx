@@ -302,9 +302,25 @@ const Course = () => {
                     moduleId={currentModuleQuiz}
                     onComplete={() => {
                       toast.success("Prova do módulo concluída!");
-                      setViewMode('lesson');
-                      setCurrentModuleQuiz(null);
                       loadCourse();
+                      
+                      // Find the next module and open it
+                      const currentModuleIndex = modules.findIndex(m => m.id === currentModuleQuiz);
+                      if (currentModuleIndex !== -1 && currentModuleIndex < modules.length - 1) {
+                        const nextModule = modules[currentModuleIndex + 1];
+                        if (nextModule.lessons.length > 0) {
+                          setCurrentLesson(nextModule.lessons[0]);
+                          setViewMode('lesson');
+                          setCurrentModuleQuiz(null);
+                          toast.success(`Avançando para ${nextModule.title}`);
+                        } else {
+                          setViewMode('lesson');
+                          setCurrentModuleQuiz(null);
+                        }
+                      } else {
+                        setViewMode('lesson');
+                        setCurrentModuleQuiz(null);
+                      }
                     }}
                   />
                 </div>

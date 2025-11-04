@@ -49,8 +49,17 @@ export const ModuleAccordion = ({
               <AccordionTrigger className="px-4 hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-primary" />
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center",
+                      moduleProgress === 100 
+                        ? "bg-green-500/20 text-green-600 dark:text-green-400" 
+                        : "bg-primary/10 text-primary"
+                    )}>
+                      {moduleProgress === 100 ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        <BookOpen className="w-5 h-5" />
+                      )}
                     </div>
                     <div className="text-left">
                       <h3 className="font-semibold">{module.title}</h3>
@@ -59,7 +68,10 @@ export const ModuleAccordion = ({
                       </p>
                     </div>
                   </div>
-                  <div className="text-xs font-medium text-primary">
+                  <div className={cn(
+                    "text-xs font-medium",
+                    moduleProgress === 100 ? "text-green-600 dark:text-green-400" : "text-primary"
+                  )}>
                     {Math.round(moduleProgress)}%
                   </div>
                 </div>

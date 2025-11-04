@@ -127,6 +127,7 @@ export const Sidebar = () => {
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
+    { icon: Award, label: 'Gerenciar Provas', path: '/admin/quizzes' },
   ];
 
   return (
