@@ -19,7 +19,7 @@ const profileSchema = z.object({
   full_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome muito longo"),
   email: z.string().email("Email inválido"),
   phone: z.string().optional(),
-  sexual_orientation: z.string().optional(),
+  birth_date: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -38,7 +38,7 @@ const Profile = () => {
       full_name: "",
       email: "",
       phone: "",
-      sexual_orientation: "",
+      birth_date: "",
     },
   });
 
@@ -70,7 +70,7 @@ const Profile = () => {
           full_name: data.full_name || "",
           email: data.email || "",
           phone: data.phone || "",
-          sexual_orientation: data.sexual_orientation || "",
+          birth_date: data.birth_date || "",
         });
         setAvatarUrl(data.avatar_url || "");
       }
@@ -142,7 +142,7 @@ const Profile = () => {
           full_name: data.full_name,
           email: data.email,
           phone: data.phone || null,
-          sexual_orientation: data.sexual_orientation || null,
+          birth_date: data.birth_date || null,
         })
         .eq("id", user.id);
 
@@ -262,26 +262,13 @@ const Profile = () => {
 
                   <FormField
                     control={form.control}
-                    name="sexual_orientation"
+                    name="birth_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Orientação Sexual (opcional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione uma opção" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="heterossexual">Heterossexual</SelectItem>
-                            <SelectItem value="homossexual">Homossexual</SelectItem>
-                            <SelectItem value="bissexual">Bissexual</SelectItem>
-                            <SelectItem value="pansexual">Pansexual</SelectItem>
-                            <SelectItem value="assexual">Assexual</SelectItem>
-                            <SelectItem value="outro">Outro</SelectItem>
-                            <SelectItem value="prefiro_nao_dizer">Prefiro não dizer</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Data de Nascimento (opcional)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
