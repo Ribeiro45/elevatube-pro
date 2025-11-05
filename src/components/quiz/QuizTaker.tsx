@@ -49,7 +49,7 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
     setQuestions(questionsData || []);
 
     const { data: answersData } = await supabase
-      .from('quiz_answers')
+      .from('quiz_answer_options')
       .select('*')
       .in('question_id', (questionsData || []).map(q => q.id));
 
@@ -92,18 +92,27 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
     let correctCount = 0;
     const responses = [];
 
+    // Fetch correct answers from the backend for validation
+    const { data: correctAnswersData } = await supabase
+      .from('quiz_answers')
+      .select('id, question_id, is_correct')
+      .in('question_id', questions.map(q => q.id));
+
     for (const question of questions) {
       const selectedAnswerId = userAnswers[question.id];
-      const selectedAnswer = answers.find(a => a.id === selectedAnswerId);
+      const correctAnswer = correctAnswersData?.find(
+        a => a.question_id === question.id && a.is_correct
+      );
+      const isCorrect = selectedAnswerId === correctAnswer?.id;
       
-      if (selectedAnswer?.is_correct) {
+      if (isCorrect) {
         correctCount++;
       }
 
       responses.push({
         question_id: question.id,
         answer_id: selectedAnswerId,
-        is_correct: selectedAnswer?.is_correct || false,
+        is_correct: isCorrect,
       });
     }
 
