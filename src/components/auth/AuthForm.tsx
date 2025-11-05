@@ -7,14 +7,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Shield } from "lucide-react";
 import { z } from "zod";
 import logoNWhite from "@/assets/logo-n-white.png";
 
 const authSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-  fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres").optional(),
+  email: z
+    .string()
+    .min(1, "Email é obrigatório")
+    .email("Email inválido")
+    .max(255, "Email muito longo"),
+  password: z
+    .string()
+    .min(8, "Senha deve ter no mínimo 8 caracteres")
+    .max(100, "Senha muito longa")
+    .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
+    .regex(/[a-z]/, "Senha deve conter pelo menos uma letra minúscula")
+    .regex(/[0-9]/, "Senha deve conter pelo menos um número"),
+  fullName: z
+    .string()
+    .min(2, "Nome deve ter no mínimo 2 caracteres")
+    .max(100, "Nome muito longo")
+    .optional(),
 });
 
 export const AuthForm = () => {
@@ -24,21 +38,55 @@ export const AuthForm = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [show2FAChallenge, setShow2FAChallenge] = useState(false);
+  const [factorId, setFactorId] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      authSchema.parse({ email, password });
+      // Validate input
+      const validatedData = authSchema.parse({ email: email.trim(), password });
       setLoading(true);
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for specific auth errors
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.');
+          return;
+        }
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Email ou senha incorretos');
+          return;
+        }
+        throw error;
+      }
+
+      // Check if 2FA is required
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const totpFactor = factorsData?.totp?.find(f => f.status === 'verified');
+
+      if (totpFactor && data.session) {
+        // User has 2FA enabled, show challenge
+        const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+          factorId: totpFactor.id,
+        });
+
+        if (challengeError) throw challengeError;
+
+        setFactorId(totpFactor.id);
+        setShow2FAChallenge(true);
+        toast.info('Digite o código do seu autenticador');
+        return;
+      }
+
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard");
     } catch (error: any) {
@@ -52,28 +100,78 @@ export const AuthForm = () => {
     }
   };
 
+  const handleMFAVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (mfaCode.length !== 6) {
+        toast.error('O código deve ter 6 dígitos');
+        return;
+      }
+
+      setLoading(true);
+
+      const { error } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: factorId, // Using factorId as challengeId for simplicity
+        code: mfaCode,
+      });
+
+      if (error) {
+        toast.error('Código inválido. Tente novamente.');
+        return;
+      }
+
+      toast.success("Login realizado com sucesso!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao verificar código");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      authSchema.parse({ email, password, fullName });
+      // Validate input with trimmed email
+      const validatedData = authSchema.parse({ 
+        email: email.trim(), 
+        password, 
+        fullName: fullName.trim() 
+      });
       setLoading(true);
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data, error } = await supabase.auth.signUp({
+        email: validatedData.email,
+        password: validatedData.password,
         options: {
           data: {
-            full_name: fullName,
+            full_name: validatedData.fullName,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
-      if (error) throw error;
-      toast.success("Conta criada com sucesso! Você já pode fazer login.");
-      setActiveTab("login");
-      setPassword("");
+      if (error) {
+        // Check for specific signup errors
+        if (error.message.includes('User already registered')) {
+          toast.error('Este email já está cadastrado. Faça login ou recupere sua senha.');
+          return;
+        }
+        throw error;
+      }
+
+      if (data.user) {
+        toast.success(
+          "Conta criada com sucesso! Verifique seu email para confirmar o cadastro.",
+          { duration: 6000 }
+        );
+        setActiveTab("login");
+        setPassword("");
+        setFullName("");
+      }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -169,6 +267,54 @@ export const AuthForm = () => {
                   variant="ghost"
                   className="w-full" 
                   onClick={() => setShowForgotPassword(false)}
+                >
+                  Voltar ao Login
+                </Button>
+              </div>
+            </form>
+          ) : show2FAChallenge ? (
+            <form onSubmit={handleMFAVerify} className="space-y-4 animate-fade-in">
+              <div className="text-center space-y-2 mb-6">
+                <Shield className="w-12 h-12 mx-auto text-primary" />
+                <h3 className="text-lg font-semibold">Autenticação de Dois Fatores</h3>
+                <p className="text-sm text-muted-foreground">
+                  Digite o código de 6 dígitos do seu aplicativo autenticador
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mfa-code">Código de Verificação</Label>
+                <Input
+                  id="mfa-code"
+                  type="text"
+                  placeholder="000000"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading || mfaCode.length !== 6}
+                  size="lg"
+                >
+                  {loading ? "Verificando..." : "Verificar Código"}
+                </Button>
+
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  className="w-full" 
+                  onClick={() => {
+                    setShow2FAChallenge(false);
+                    setMfaCode('');
+                    setFactorId('');
+                  }}
                 >
                   Voltar ao Login
                 </Button>
@@ -289,11 +435,11 @@ export const AuthForm = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="transition-all focus:scale-[1.02]"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Mínimo de 6 caracteres
+                    Mínimo de 8 caracteres, com letras maiúsculas, minúsculas e números
                   </p>
                 </div>
 

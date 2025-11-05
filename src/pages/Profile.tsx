@@ -14,6 +14,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { TwoFactorSetup } from "@/components/auth/TwoFactorSetup";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome muito longo"),
@@ -281,6 +282,10 @@ const Profile = () => {
               </Form>
             </CardContent>
           </Card>
+
+          <div className="animate-fade-in" style={{ animationDelay: "300ms" }}>
+            <TwoFactorSetup />
+          </div>
         </div>
       </main>
     </div>
