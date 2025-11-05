@@ -468,6 +468,13 @@ export type Database = {
             foreignKeyName: "user_quiz_responses_answer_id_fkey"
             columns: ["answer_id"]
             isOneToOne: false
+            referencedRelation: "quiz_answer_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quiz_responses_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
             referencedRelation: "quiz_answers"
             referencedColumns: ["id"]
           },
@@ -510,7 +517,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      quiz_answer_options: {
+        Row: {
+          answer: string | null
+          created_at: string | null
+          id: string | null
+          question_id: string | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string | null
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_and_issue_certificate: {
