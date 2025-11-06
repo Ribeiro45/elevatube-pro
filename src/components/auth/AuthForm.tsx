@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, Shield } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Shield, Building } from "lucide-react";
 import { z } from "zod";
 import logoNWhite from "@/assets/logo-n-white.png";
 
@@ -34,9 +35,13 @@ const authSchema = z.object({
 export const AuthForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [cnpj, setCnpj] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  const [userType, setUserType] = useState<"colaborador" | "cliente">("colaborador");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [show2FAChallenge, setShow2FAChallenge] = useState(false);
   const [factorId, setFactorId] = useState("");
@@ -47,7 +52,6 @@ export const AuthForm = () => {
     e.preventDefault();
     
     try {
-      // Validate input
       const validatedData = authSchema.parse({ email: email.trim(), password });
       setLoading(true);
 
@@ -57,9 +61,8 @@ export const AuthForm = () => {
       });
 
       if (error) {
-        // Check for specific auth errors
         if (error.message.includes('Email not confirmed')) {
-          toast.error('Por favor, confirme seu email antes de fazer login. Verifique sua caixa de entrada.');
+          toast.error('Por favor, confirme seu email antes de fazer login.');
           return;
         }
         if (error.message.includes('Invalid login credentials')) {
@@ -74,7 +77,6 @@ export const AuthForm = () => {
       const totpFactor = factorsData?.totp?.find(f => f.status === 'verified');
 
       if (totpFactor && data.session) {
-        // User has 2FA enabled, show challenge
         const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: totpFactor.id,
         });
@@ -113,7 +115,7 @@ export const AuthForm = () => {
 
       const { error } = await supabase.auth.mfa.verify({
         factorId,
-        challengeId: factorId, // Using factorId as challengeId for simplicity
+        challengeId: factorId,
         code: mfaCode,
       });
 
@@ -135,7 +137,18 @@ export const AuthForm = () => {
     e.preventDefault();
     
     try {
-      // Validate input with trimmed email
+      // Validate confirm password
+      if (password !== confirmPassword) {
+        toast.error("As senhas não coincidem");
+        return;
+      }
+
+      // Validate based on user type
+      if (userType === 'cliente' && (!companyName || !cnpj)) {
+        toast.error("Preencha todos os campos da empresa");
+        return;
+      }
+
       const validatedData = authSchema.parse({ 
         email: email.trim(), 
         password, 
@@ -149,28 +162,46 @@ export const AuthForm = () => {
         options: {
           data: {
             full_name: validatedData.fullName,
+            user_type: userType,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
       if (error) {
-        // Check for specific signup errors
         if (error.message.includes('User already registered')) {
-          toast.error('Este email já está cadastrado. Faça login ou recupere sua senha.');
+          toast.error('Este email já está cadastrado.');
           return;
         }
         throw error;
       }
 
+      // If client type, save company data
+      if (userType === 'cliente' && data.user) {
+        const { error: companyError } = await supabase
+          .from('company_profiles')
+          .insert({
+            user_id: data.user.id,
+            company_name: companyName,
+            cnpj: cnpj,
+          });
+
+        if (companyError) {
+          console.error('Erro ao salvar dados da empresa:', companyError);
+        }
+      }
+
       if (data.user) {
         toast.success(
-          "Conta criada com sucesso! Verifique seu email para confirmar o cadastro.",
+          "Conta criada! Verifique seu email para confirmar o cadastro.",
           { duration: 6000 }
         );
         setActiveTab("login");
         setPassword("");
+        setConfirmPassword("");
         setFullName("");
+        setCompanyName("");
+        setCnpj("");
       }
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -199,10 +230,10 @@ export const AuthForm = () => {
       });
 
       if (error) throw error;
-      toast.success("Link de recuperação enviado para seu email!");
+      toast.success("Link de recuperação enviado!");
       setShowForgotPassword(false);
     } catch (error: any) {
-      toast.error(error.message || "Erro ao enviar link de recuperação");
+      toast.error(error.message || "Erro ao enviar link");
     } finally {
       setLoading(false);
     }
@@ -210,17 +241,12 @@ export const AuthForm = () => {
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6 animate-scale-in">
-      {/* Logo/Header */}
       <div className="text-center space-y-2 animate-fade-in">
         <div className="inline-flex items-center justify-center mb-4">
           <img src={logoNWhite} alt="New Academy" className="w-24 h-24 object-contain" />
         </div>
-        <h1 className="text-3xl font-bold text-white">
-          New Academy
-        </h1>
-        <p className="text-white/80">
-          Entre ou crie sua conta para começar
-        </p>
+        <h1 className="text-3xl font-bold text-white">New Academy</h1>
+        <p className="text-white/80">Entre ou crie sua conta para começar</p>
       </div>
 
       <Card className="border-2 backdrop-blur-sm bg-card/50 shadow-xl">
@@ -244,24 +270,13 @@ export const AuthForm = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="transition-all focus:scale-[1.02]"
                 />
               </div>
 
               <div className="space-y-2">
-                <Button 
-                  type="submit" 
-                  className="w-full group relative overflow-hidden" 
-                  disabled={loading}
-                  size="lg"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {loading ? "Enviando..." : "Enviar Link de Recuperação"}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/50 to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Button type="submit" className="w-full" disabled={loading} size="lg">
+                  {loading ? "Enviando..." : "Enviar Link de Recuperação"}
                 </Button>
-
                 <Button 
                   type="button"
                   variant="ghost"
@@ -278,7 +293,7 @@ export const AuthForm = () => {
                 <Shield className="w-12 h-12 mx-auto text-primary" />
                 <h3 className="text-lg font-semibold">Autenticação de Dois Fatores</h3>
                 <p className="text-sm text-muted-foreground">
-                  Digite o código de 6 dígitos do seu aplicativo autenticador
+                  Digite o código de 6 dígitos do seu aplicativo
                 </p>
               </div>
 
@@ -305,7 +320,6 @@ export const AuthForm = () => {
                 >
                   {loading ? "Verificando..." : "Verificar Código"}
                 </Button>
-
                 <Button 
                   type="button"
                   variant="ghost"
@@ -323,147 +337,209 @@ export const AuthForm = () => {
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login" className="relative">
-                  Entrar
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="relative">
-                  Criar Conta
-                </TabsTrigger>
+                <TabsTrigger value="login">Entrar</TabsTrigger>
+                <TabsTrigger value="signup">Criar Conta</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="space-y-4 animate-fade-in">
+                <div className="space-y-3 mb-4">
+                  <Label>Tipo de Usuário</Label>
+                  <RadioGroup value={userType} onValueChange={(v) => setUserType(v as any)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="colaborador" id="login-colaborador" />
+                      <Label htmlFor="login-colaborador" className="cursor-pointer">Entrar como Colaborador</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cliente" id="login-cliente" />
+                      <Label htmlFor="login-cliente" className="cursor-pointer">Entrar como Cliente</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
                 <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-primary" />
-                    Email
-                  </Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="transition-all focus:scale-[1.02]"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email" className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-primary" />
+                      Email
+                    </Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="login-password" className="flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-primary" />
-                    Senha
-                  </Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="transition-all focus:scale-[1.02]"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password" className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-primary" />
+                      Senha
+                    </Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full group relative overflow-hidden" 
-                  disabled={loading}
-                  size="lg"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loading}
+                    size="lg"
+                  >
                     {loading ? "Entrando..." : "Entrar"}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/50 to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Button>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
 
-                <Button 
-                  type="button"
-                  variant="link"
-                  className="w-full text-sm" 
-                  onClick={() => setShowForgotPassword(true)}
-                >
-                  Esqueci minha senha
-                </Button>
-              </form>
-            </TabsContent>
+                  <Button 
+                    type="button"
+                    variant="link"
+                    className="w-full text-sm" 
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Esqueci minha senha
+                  </Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="signup" className="space-y-4 animate-fade-in">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-primary" />
-                    Nome Completo
-                  </Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    className="transition-all focus:scale-[1.02]"
-                  />
+              <TabsContent value="signup" className="space-y-4 animate-fade-in">
+                <div className="space-y-3 mb-4">
+                  <Label>Tipo de Cadastro</Label>
+                  <RadioGroup value={userType} onValueChange={(v) => setUserType(v as any)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="colaborador" id="signup-colaborador" />
+                      <Label htmlFor="signup-colaborador" className="cursor-pointer">Cadastro de Colaborador</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="cliente" id="signup-cliente" />
+                      <Label htmlFor="signup-cliente" className="cursor-pointer">Cadastro de Cliente (Empresa)</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-primary" />
-                    Email
-                  </Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="transition-all focus:scale-[1.02]"
-                  />
-                </div>
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name" className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      {userType === 'cliente' ? 'Nome do Responsável' : 'Nome Completo'}
+                    </Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder={userType === 'cliente' ? "Nome do responsável" : "Seu nome completo"}
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-primary" />
-                    Senha
-                  </Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    className="transition-all focus:scale-[1.02]"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Mínimo de 8 caracteres, com letras maiúsculas, minúsculas e números
-                  </p>
-                </div>
+                  {userType === 'cliente' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="company-name" className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-primary" />
+                          Nome da Empresa
+                        </Label>
+                        <Input
+                          id="company-name"
+                          type="text"
+                          placeholder="Razão social da empresa"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          required
+                        />
+                      </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full group relative overflow-hidden" 
-                  disabled={loading}
-                  size="lg"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="cnpj" className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-primary" />
+                          CNPJ
+                        </Label>
+                        <Input
+                          id="cnpj"
+                          type="text"
+                          placeholder="00.000.000/0000-00"
+                          value={cnpj}
+                          onChange={(e) => setCnpj(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email" className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-primary" />
+                      Email
+                    </Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password" className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-primary" />
+                      Senha
+                    </Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Mínimo de 8 caracteres com letras maiúsculas, minúsculas e números
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-primary" />
+                      Confirmar Senha
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loading}
+                    size="lg"
+                  >
                     {loading ? "Criando conta..." : "Criar Conta"}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-glow/50 to-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Ao continuar, você concorda com nossos Termos de Uso e Política de Privacidade
+      <p className="text-center text-sm text-white/60">
+        Ao continuar, você concorda com nossos Termos de Uso
       </p>
     </div>
   );

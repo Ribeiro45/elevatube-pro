@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Award, TrendingUp, Users, ChevronRight, Play, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import logoN from "@/assets/logo-n.png";
 import logoNWhite from "@/assets/logo-n-white.png";
 
 const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode, toggleTheme } = useTheme();
   const [settings, setSettings] = useState({
     hero: {
       badge_text: "New Academy - Plataforma de Aprendizado",
@@ -58,29 +59,7 @@ const Index = () => {
       }
     };
     fetchSettings();
-
-    // Check initial dark mode state from localStorage
-    const savedTheme = localStorage.getItem('theme');
-    const isDark = savedTheme === 'dark' || (!savedTheme && document.documentElement.classList.contains('dark'));
-    setIsDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, [navigate]);
-
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
 
   if (isLoading) {
     return (
@@ -132,7 +111,7 @@ const Index = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleDarkMode}
+              onClick={toggleTheme}
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>

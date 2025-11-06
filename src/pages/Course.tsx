@@ -217,17 +217,47 @@ const Course = () => {
             Voltar para meus cursos
           </Button>
 
-          <div className="animate-fade-in">
-            <h1 className="text-4xl font-bold mb-2">{course?.title}</h1>
-            <p className="text-muted-foreground mb-4">{course?.description}</p>
+          <div className="animate-fade-in space-y-6">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{course?.title}</h1>
+              <p className="text-muted-foreground mb-4">{course?.description}</p>
+            </div>
             
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Progresso do curso</span>
                 <span className="font-medium">{Math.round(progressPercent)}%</span>
               </div>
               <Progress value={progressPercent} className="h-2" />
             </div>
+
+            {(course as any)?.duration && (
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-lg">Informações do Curso</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-3 gap-4">
+                  {(course as any).duration && (
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{(course as any).duration}</p>
+                      <p className="text-sm text-muted-foreground">Duração</p>
+                    </div>
+                  )}
+                  {(course as any).total_modules && (
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{(course as any).total_modules}</p>
+                      <p className="text-sm text-muted-foreground">Módulos</p>
+                    </div>
+                  )}
+                  {(course as any).total_lessons && (
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{(course as any).total_lessons}</p>
+                      <p className="text-sm text-muted-foreground">Aulas</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

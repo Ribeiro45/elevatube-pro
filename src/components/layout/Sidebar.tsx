@@ -1,34 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Award, Users, Settings, LogOut, Moon, Sun, Upload, Shield, Library, User } from 'lucide-react';
+import { Home, BookOpen, Award, Users, LogOut, Moon, Sun, Shield, Library, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEditor } from '@/hooks/useEditor';
+import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import logoNewStandard from '@/assets/logo-newstandard.png';
 import logoNewStandardDark from '@/assets/logo-newstandard-dark.png';
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [userName, setUserName] = useState('Usuário');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
   const { isEditor } = useEditor();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setIsDarkMode(isDark);
     loadUserProfile();
   }, []);
 
@@ -63,59 +57,6 @@ export const Sidebar = () => {
     }
   };
 
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    document.documentElement.classList.toggle('dark');
-  };
-
-  const handleAvatarUpload = async () => {
-    if (!avatarFile) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const fileExt = avatarFile.name.split('.').pop();
-    const fileName = `${user.id}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, avatarFile, { upsert: true });
-
-    if (uploadError) {
-      toast({
-        title: "Erro ao fazer upload",
-        description: uploadError.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', user.id);
-
-    if (updateError) {
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: updateError.message,
-        variant: "destructive",
-      });
-    } else {
-      setAvatarUrl(publicUrl);
-      toast({
-        title: "Sucesso",
-        description: "Foto atualizada com sucesso!",
-      });
-      setShowSettings(false);
-      setAvatarFile(null);
-    }
-  };
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
@@ -129,7 +70,8 @@ export const Sidebar = () => {
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
-    { icon: Settings, label: 'Configurações do Site', path: '/admin/settings' },
+    { icon: BookOpen, label: 'Editor de Demo', path: '/admin/demo' },
+    { icon: BookOpen, label: 'Configurações do Site', path: '/admin/settings' },
   ];
 
   const editorMenuItems = [
@@ -240,14 +182,14 @@ export const Sidebar = () => {
           )}
         </nav>
 
-        {/* Footer with Settings & Logout */}
+        {/* Footer with Theme Toggle & Logout */}
         <div className="p-4 border-t border-sidebar-border space-y-2">
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={toggleTheme}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/50 w-full transition-colors"
           >
-            <Settings size={20} />
-            {!collapsed && <span>Configurações</span>}
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {!collapsed && <span>{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>}
           </button>
           <button
             onClick={handleLogout}
@@ -258,49 +200,6 @@ export const Sidebar = () => {
           </button>
         </div>
       </aside>
-
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Configurações</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            {/* Dark Mode Toggle */}
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
-                Modo Escuro
-              </Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleDarkMode}
-              >
-                {isDarkMode ? 'Desativar' : 'Ativar'}
-              </Button>
-            </div>
-
-            {/* Avatar Upload */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Upload size={20} />
-                Mudar Foto
-              </Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-              />
-              {avatarFile && (
-                <Button onClick={handleAvatarUpload} className="w-full">
-                  Salvar Foto
-                </Button>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

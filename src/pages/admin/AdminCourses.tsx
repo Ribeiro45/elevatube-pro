@@ -17,6 +17,9 @@ const courseSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   thumbnail_url: z.string().url('URL inválida').optional().or(z.literal('')),
+  duration: z.string().optional(),
+  total_modules: z.number().min(0).optional(),
+  total_lessons: z.number().min(0).optional(),
 });
 
 const lessonSchema = z.object({
@@ -35,7 +38,14 @@ export default function AdminCourses() {
 
   const courseForm = useForm({
     resolver: zodResolver(courseSchema),
-    defaultValues: { title: '', description: '', thumbnail_url: '' },
+    defaultValues: { 
+      title: '', 
+      description: '', 
+      thumbnail_url: '',
+      duration: '',
+      total_modules: 0,
+      total_lessons: 0
+    },
   });
 
   const lessonForm = useForm({
@@ -72,6 +82,9 @@ export default function AdminCourses() {
       title: values.title,
       description: values.description || null,
       thumbnail_url: values.thumbnail_url || null,
+      duration: values.duration || null,
+      total_modules: values.total_modules || null,
+      total_lessons: values.total_lessons || null,
     }]);
     
     if (error) {
@@ -215,6 +228,55 @@ export default function AdminCourses() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={courseForm.control}
+                      name="duration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Duração (ex: 8 horas)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="8 horas" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={courseForm.control}
+                        name="total_modules"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Módulos</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={courseForm.control}
+                        name="total_lessons"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Aulas</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <Button type="submit" className="w-full">Criar Curso</Button>
                   </form>
                 </Form>

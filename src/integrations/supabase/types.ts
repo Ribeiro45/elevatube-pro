@@ -49,29 +49,65 @@ export type Database = {
           },
         ]
       }
+      company_profiles: {
+        Row: {
+          cnpj: string
+          company_name: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cnpj: string
+          company_name: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cnpj?: string
+          company_name?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           created_at: string | null
           description: string | null
+          duration: string | null
           id: string
           thumbnail_url: string | null
           title: string
+          total_lessons: number | null
+          total_modules: number | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          duration?: string | null
           id?: string
           thumbnail_url?: string | null
           title: string
+          total_lessons?: number | null
+          total_modules?: number | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          duration?: string | null
           id?: string
           thumbnail_url?: string | null
           title?: string
+          total_lessons?: number | null
+          total_modules?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -196,6 +232,7 @@ export type Database = {
           id: string
           phone: string | null
           updated_at: string | null
+          user_type: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -206,6 +243,7 @@ export type Database = {
           id: string
           phone?: string | null
           updated_at?: string | null
+          user_type?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -216,6 +254,7 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string | null
+          user_type?: string | null
         }
         Relationships: []
       }
