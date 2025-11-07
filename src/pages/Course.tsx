@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Circle, ArrowLeft } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CheckCircle2, Circle, ArrowLeft, ChevronDown, Clock, BookOpen, GraduationCap, Award } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
@@ -37,6 +38,9 @@ interface Module {
 interface CourseData {
   title: string;
   description: string;
+  duration: string | null;
+  total_modules: number | null;
+  total_lessons: number | null;
 }
 
 const Course = () => {
@@ -51,6 +55,8 @@ const Course = () => {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'lesson' | 'module-quiz' | 'final-exam'>('lesson');
   const [loading, setLoading] = useState(true);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [hasCertificate, setHasCertificate] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -74,15 +80,17 @@ const Course = () => {
 
   const loadCourse = async () => {
     try {
-      const [courseRes, modulesRes, lessonsRes, progressRes, quizzesRes] = await Promise.all([
+      const [courseRes, modulesRes, lessonsRes, progressRes, quizzesRes, certificateRes] = await Promise.all([
         supabase.from("courses").select("*").eq("id", id).single(),
         supabase.from("modules").select("*").eq("course_id", id).order("order_index"),
         supabase.from("lessons").select("*").eq("course_id", id).order("order_index"),
         supabase.from("user_progress").select("*").eq("user_id", user?.id),
         supabase.from("quizzes").select("id, module_id").not("module_id", "is", null),
+        supabase.from("certificates").select("id").eq("user_id", user?.id).eq("course_id", id).maybeSingle(),
       ]);
 
       if (courseRes.data) setCourse(courseRes.data);
+      if (certificateRes.data) setHasCertificate(true);
       
       if (lessonsRes.data) {
         setLessons(lessonsRes.data);
@@ -231,32 +239,57 @@ const Course = () => {
               <Progress value={progressPercent} className="h-2" />
             </div>
 
-            {(course as any)?.duration && (
-              <Card className="border-primary/20">
-                <CardHeader>
-                  <CardTitle className="text-lg">Informações do Curso</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-3 gap-4">
-                  {(course as any).duration && (
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">{(course as any).duration}</p>
-                      <p className="text-sm text-muted-foreground">Duração</p>
-                    </div>
-                  )}
-                  {(course as any).total_modules && (
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">{(course as any).total_modules}</p>
-                      <p className="text-sm text-muted-foreground">Módulos</p>
-                    </div>
-                  )}
-                  {(course as any).total_lessons && (
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">{(course as any).total_lessons}</p>
-                      <p className="text-sm text-muted-foreground">Aulas</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            <Collapsible open={infoOpen} onOpenChange={setInfoOpen}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Informações do Curso
+                  </span>
+                  <ChevronDown className={cn("w-4 h-4 transition-transform", infoOpen && "rotate-180")} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <Card className="border-primary/20">
+                  <CardContent className="grid grid-cols-3 gap-4 pt-6">
+                    {course?.duration && (
+                      <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                        <Clock className="w-8 h-8 text-primary mb-2" />
+                        <p className="text-2xl font-bold text-primary">{course.duration}</p>
+                        <p className="text-sm text-muted-foreground">Duração</p>
+                      </div>
+                    )}
+                    {course?.total_modules && (
+                      <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                        <GraduationCap className="w-8 h-8 text-primary mb-2" />
+                        <p className="text-2xl font-bold text-primary">{course.total_modules}</p>
+                        <p className="text-sm text-muted-foreground">Módulos</p>
+                      </div>
+                    )}
+                    {course?.total_lessons && (
+                      <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                        <BookOpen className="w-8 h-8 text-primary mb-2" />
+                        <p className="text-2xl font-bold text-primary">{course.total_lessons}</p>
+                        <p className="text-sm text-muted-foreground">Aulas</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {hasCertificate && progressPercent === 100 && (
+              <Button 
+                onClick={() => navigate("/certificates")}
+                className="w-full"
+                size="lg"
+              >
+                <Award className="w-5 h-5 mr-2" />
+                Gerar Certificado
+              </Button>
             )}
           </div>
 

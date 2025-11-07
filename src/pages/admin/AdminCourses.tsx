@@ -20,6 +20,7 @@ const courseSchema = z.object({
   duration: z.string().optional(),
   total_modules: z.number().min(0).optional(),
   total_lessons: z.number().min(0).optional(),
+  course_target: z.enum(['colaborador', 'cliente', 'both']).default('both'),
 });
 
 const lessonSchema = z.object({
@@ -44,7 +45,8 @@ export default function AdminCourses() {
       thumbnail_url: '',
       duration: '',
       total_modules: 0,
-      total_lessons: 0
+      total_lessons: 0,
+      course_target: 'both' as const,
     },
   });
 
@@ -85,6 +87,7 @@ export default function AdminCourses() {
       duration: values.duration || null,
       total_modules: values.total_modules || null,
       total_lessons: values.total_lessons || null,
+      course_target: values.course_target || 'both',
     }]);
     
     if (error) {

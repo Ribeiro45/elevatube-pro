@@ -14,6 +14,7 @@ import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Certificates from "./pages/Certificates";
 import Profile from "./pages/Profile";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCourses from "./pages/admin/AdminCourses";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/demo" element={<Demo />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/courses" element={<Courses />} />

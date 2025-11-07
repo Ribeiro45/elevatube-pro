@@ -47,9 +47,11 @@ interface UserWithRole {
   id: string;
   email: string;
   full_name: string | null;
+  user_type: string | null;
   created_at: string;
   is_admin: boolean;
   is_editor: boolean;
+  is_admin_master: boolean;
   completed_lessons: number;
   total_certificates: number;
 }
@@ -103,6 +105,7 @@ const AdminUsers = () => {
 
       const adminIds = new Set(roles?.filter(r => r.role === 'admin').map((r) => r.user_id) || []);
       const editorIds = new Set(roles?.filter(r => r.role === 'editor').map((r) => r.user_id) || []);
+      const adminMasterIds = new Set(roles?.filter(r => r.role === 'admin_master').map((r) => r.user_id) || []);
 
       const usersWithRoles: UserWithRole[] = profiles?.map((profile) => {
         const userProgress = progressData?.filter(p => p.user_id === profile.id && p.completed) || [];
@@ -112,9 +115,11 @@ const AdminUsers = () => {
           id: profile.id,
           email: profile.id,
           full_name: profile.full_name,
+          user_type: profile.user_type,
           created_at: profile.created_at,
           is_admin: adminIds.has(profile.id),
           is_editor: editorIds.has(profile.id),
+          is_admin_master: adminMasterIds.has(profile.id),
           completed_lessons: userProgress.length,
           total_certificates: userCerts.length,
         };
@@ -363,6 +368,7 @@ const AdminUsers = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
+                      <TableHead>Tipo</TableHead>
                       <TableHead>ID</TableHead>
                       <TableHead className="text-center">Aulas</TableHead>
                       <TableHead className="text-center">Certificados</TableHead>
@@ -376,6 +382,11 @@ const AdminUsers = () => {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
                           {user.full_name || "Sem nome"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.user_type === 'cliente' ? 'default' : 'secondary'}>
+                            {user.user_type === 'cliente' ? 'Cliente' : 'Colaborador New'}
+                          </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {user.id.slice(0, 8)}...
@@ -394,7 +405,7 @@ const AdminUsers = () => {
                         </TableCell>
                         <TableCell>
                           <Select
-                            value={user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
+                            value={user.is_admin_master ? "admin_master" : user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
                             onValueChange={(value) => handleRoleChange(user.id, value)}
                           >
                             <SelectTrigger className="w-[140px]">
@@ -417,6 +428,12 @@ const AdminUsers = () => {
                                 <div className="flex items-center gap-2">
                                   <Shield className="w-3 h-3" />
                                   Admin
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin_master">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-3 h-3 text-primary" />
+                                  Admin Master
                                 </div>
                               </SelectItem>
                             </SelectContent>

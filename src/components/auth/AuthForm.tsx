@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, Shield, Building } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Shield, Building, CreditCard } from "lucide-react";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
 import logoNWhite from "@/assets/logo-n-white.png";
 
 const authSchema = z.object({
@@ -32,11 +32,15 @@ const authSchema = z.object({
     .optional(),
 });
 
+const cpfSchema = z.string().regex(/^\d{11}$/, "CPF inválido - deve conter 11 dígitos");
+const cnpjSchema = z.string().regex(/^\d{14}$/, "CNPJ inválido - deve conter 14 dígitos");
+
 export const AuthForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [cpf, setCpf] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [loading, setLoading] = useState(false);
@@ -144,9 +148,45 @@ export const AuthForm = () => {
       }
 
       // Validate based on user type
-      if (userType === 'cliente' && (!companyName || !cnpj)) {
-        toast.error("Preencha todos os campos da empresa");
-        return;
+      if (userType === 'colaborador') {
+        if (!cpf) {
+          toast.error("CPF é obrigatório");
+          return;
+        }
+        cpfSchema.parse(cpf.replace(/\D/g, ''));
+        
+        // Check if CPF already exists
+        const { data: existingCpf } = await supabase
+          .from('profiles')
+          .select('cpf')
+          .eq('cpf', cpf.replace(/\D/g, ''))
+          .maybeSingle();
+        
+        if (existingCpf) {
+          toast.error("Este CPF já está cadastrado");
+          return;
+        }
+      }
+
+      if (userType === 'cliente') {
+        if (!companyName || !cnpj) {
+          toast.error("Preencha todos os campos da empresa");
+          return;
+        }
+        cnpjSchema.parse(cnpj.replace(/\D/g, ''));
+        
+        // Check if CNPJ + company name combination exists
+        const { data: existingCompany } = await supabase
+          .from('company_profiles')
+          .select('cnpj, company_name')
+          .eq('cnpj', cnpj.replace(/\D/g, ''))
+          .eq('company_name', companyName.trim())
+          .maybeSingle();
+        
+        if (existingCompany) {
+          toast.error("Esta combinação de CNPJ e Nome da Empresa já está cadastrada");
+          return;
+        }
       }
 
       const validatedData = authSchema.parse({ 
@@ -176,14 +216,26 @@ export const AuthForm = () => {
         throw error;
       }
 
+      // Save CPF for colaborador
+      if (userType === 'colaborador' && data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ cpf: cpf.replace(/\D/g, '') })
+          .eq('id', data.user.id);
+
+        if (profileError) {
+          console.error('Erro ao salvar CPF:', profileError);
+        }
+      }
+
       // If client type, save company data
       if (userType === 'cliente' && data.user) {
         const { error: companyError } = await supabase
           .from('company_profiles')
           .insert({
             user_id: data.user.id,
-            company_name: companyName,
-            cnpj: cnpj,
+            company_name: companyName.trim(),
+            cnpj: cnpj.replace(/\D/g, ''),
           });
 
         if (companyError) {
@@ -200,6 +252,7 @@ export const AuthForm = () => {
         setPassword("");
         setConfirmPassword("");
         setFullName("");
+        setCpf("");
         setCompanyName("");
         setCnpj("");
       }
@@ -226,7 +279,7 @@ export const AuthForm = () => {
       setLoading(true);
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
@@ -343,17 +396,33 @@ export const AuthForm = () => {
 
               <TabsContent value="login" className="space-y-4 animate-fade-in">
                 <div className="space-y-3 mb-4">
-                  <Label>Tipo de Usuário</Label>
-                  <RadioGroup value={userType} onValueChange={(v) => setUserType(v as any)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="colaborador" id="login-colaborador" />
-                      <Label htmlFor="login-colaborador" className="cursor-pointer">Entrar como Colaborador</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="cliente" id="login-cliente" />
-                      <Label htmlFor="login-cliente" className="cursor-pointer">Entrar como Cliente</Label>
-                    </div>
-                  </RadioGroup>
+                  <Label className="text-base font-medium">Tipo de Usuário</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant={userType === "colaborador" ? "default" : "outline"}
+                      className={cn(
+                        "flex flex-col items-center gap-2 h-auto py-4 transition-all",
+                        userType === "colaborador" && "ring-2 ring-primary"
+                      )}
+                      onClick={() => setUserType("colaborador")}
+                    >
+                      <User className="w-6 h-6" />
+                      <span className="text-sm font-medium">Colaborador New</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={userType === "cliente" ? "default" : "outline"}
+                      className={cn(
+                        "flex flex-col items-center gap-2 h-auto py-4 transition-all",
+                        userType === "cliente" && "ring-2 ring-primary"
+                      )}
+                      onClick={() => setUserType("cliente")}
+                    >
+                      <Building className="w-6 h-6" />
+                      <span className="text-sm font-medium">Cliente</span>
+                    </Button>
+                  </div>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -410,17 +479,33 @@ export const AuthForm = () => {
 
               <TabsContent value="signup" className="space-y-4 animate-fade-in">
                 <div className="space-y-3 mb-4">
-                  <Label>Tipo de Cadastro</Label>
-                  <RadioGroup value={userType} onValueChange={(v) => setUserType(v as any)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="colaborador" id="signup-colaborador" />
-                      <Label htmlFor="signup-colaborador" className="cursor-pointer">Cadastro de Colaborador</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="cliente" id="signup-cliente" />
-                      <Label htmlFor="signup-cliente" className="cursor-pointer">Cadastro de Cliente (Empresa)</Label>
-                    </div>
-                  </RadioGroup>
+                  <Label className="text-base font-medium">Tipo de Cadastro</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant={userType === "colaborador" ? "default" : "outline"}
+                      className={cn(
+                        "flex flex-col items-center gap-2 h-auto py-4 transition-all",
+                        userType === "colaborador" && "ring-2 ring-primary"
+                      )}
+                      onClick={() => setUserType("colaborador")}
+                    >
+                      <User className="w-6 h-6" />
+                      <span className="text-sm font-medium">Colaborador New</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={userType === "cliente" ? "default" : "outline"}
+                      className={cn(
+                        "flex flex-col items-center gap-2 h-auto py-4 transition-all",
+                        userType === "cliente" && "ring-2 ring-primary"
+                      )}
+                      onClick={() => setUserType("cliente")}
+                    >
+                      <Building className="w-6 h-6" />
+                      <span className="text-sm font-medium">Cliente</span>
+                    </Button>
+                  </div>
                 </div>
 
                 <form onSubmit={handleSignUp} className="space-y-4">
@@ -438,6 +523,27 @@ export const AuthForm = () => {
                       required
                     />
                   </div>
+
+                  {userType === 'colaborador' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf" className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-primary" />
+                        CPF
+                      </Label>
+                      <Input
+                        id="cpf"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        value={cpf}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          setCpf(value);
+                        }}
+                        maxLength={11}
+                        required
+                      />
+                    </div>
+                  )}
 
                   {userType === 'cliente' && (
                     <>
@@ -458,7 +564,7 @@ export const AuthForm = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="cnpj" className="flex items-center gap-2">
-                          <Building className="w-4 h-4 text-primary" />
+                          <CreditCard className="w-4 h-4 text-primary" />
                           CNPJ
                         </Label>
                         <Input
@@ -466,7 +572,11 @@ export const AuthForm = () => {
                           type="text"
                           placeholder="00.000.000/0000-00"
                           value={cnpj}
-                          onChange={(e) => setCnpj(e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setCnpj(value);
+                          }}
+                          maxLength={14}
                           required
                         />
                       </div>
@@ -500,11 +610,7 @@ export const AuthForm = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      minLength={8}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Mínimo de 8 caracteres com letras maiúsculas, minúsculas e números
-                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -537,10 +643,6 @@ export const AuthForm = () => {
           )}
         </CardContent>
       </Card>
-
-      <p className="text-center text-sm text-white/60">
-        Ao continuar, você concorda com nossos Termos de Uso
-      </p>
     </div>
   );
 };
