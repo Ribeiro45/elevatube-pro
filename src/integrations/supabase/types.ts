@@ -78,6 +78,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          course_target: string
           created_at: string | null
           description: string | null
           duration: string | null
@@ -89,6 +90,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          course_target?: string
           created_at?: string | null
           description?: string | null
           duration?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          course_target?: string
           created_at?: string | null
           description?: string | null
           duration?: string | null
@@ -226,6 +229,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           birth_date: string | null
+          cpf: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
@@ -237,6 +241,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           birth_date?: string | null
+          cpf?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -248,6 +253,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           birth_date?: string | null
+          cpf?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -602,6 +608,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "editor"
+      course_target: "colaborador" | "cliente" | "both"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -730,6 +737,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "editor"],
+      course_target: ["colaborador", "cliente", "both"],
     },
   },
 } as const
