@@ -89,11 +89,13 @@ const Dashboard = () => {
         `).order("issued_at", { ascending: false }).limit(3),
       ]);
 
+      let enrolledCoursesCount = 0;
       if (enrollmentsRes.data) {
         const enrolledCourses = enrollmentsRes.data
           .map((e: any) => e.courses)
           .filter((c: any) => c !== null) as Course[];
         setCourses(enrolledCourses);
+        enrolledCoursesCount = enrolledCourses.length;
       }
       if (lessonsRes.data) {
         setLessons(lessonsRes.data);

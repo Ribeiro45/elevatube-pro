@@ -70,6 +70,7 @@ export const Sidebar = () => {
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
+    { icon: Shield, label: 'Acesso aos Cursos', path: '/admin/course-access' },
     { icon: BookOpen, label: 'Editor de Demo', path: '/admin/demo' },
     { icon: BookOpen, label: 'Configurações do Site', path: '/admin/settings' },
   ];

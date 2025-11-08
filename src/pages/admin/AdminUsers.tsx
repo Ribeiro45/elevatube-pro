@@ -63,6 +63,10 @@ const AdminUsers = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [userPasswordDialogOpen, setUserPasswordDialogOpen] = useState(false);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<UserWithRole | null>(null);
+  const [userNewPassword, setUserNewPassword] = useState("");
+  const [userConfirmPassword, setUserConfirmPassword] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [editName, setEditName] = useState("");
@@ -278,6 +282,54 @@ const AdminUsers = () => {
     }
   };
 
+  const handleChangeUserPassword = async () => {
+    if (!selectedUserForPassword) return;
+
+    if (userNewPassword !== userConfirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "Por favor, verifique se as senhas são iguais.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (userNewPassword.length < 8) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 8 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.admin.updateUserById(
+        selectedUserForPassword.id,
+        { password: userNewPassword }
+      );
+
+      if (error) throw error;
+
+      toast({
+        title: "Senha alterada",
+        description: `Senha de ${selectedUserForPassword.full_name} foi alterada com sucesso.`,
+      });
+
+      setUserPasswordDialogOpen(false);
+      setSelectedUserForPassword(null);
+      setUserNewPassword("");
+      setUserConfirmPassword("");
+    } catch (error) {
+      console.error("Error changing user password:", error);
+      toast({
+        title: "Erro ao alterar senha",
+        description: "Não foi possível alterar a senha do usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -444,6 +496,17 @@ const AdminUsers = () => {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => {
+                                setSelectedUserForPassword(user);
+                                setUserPasswordDialogOpen(true);
+                              }}
+                              title="Trocar senha"
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleEditUser(user)}
                             >
                               <Edit className="h-4 w-4" />
@@ -524,6 +587,54 @@ const AdminUsers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Change User Password Dialog */}
+      <Dialog open={userPasswordDialogOpen} onOpenChange={setUserPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trocar Senha do Usuário</DialogTitle>
+            <DialogDescription>
+              Alterar senha de {selectedUserForPassword?.full_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="user-new-password">Nova Senha</Label>
+              <Input
+                id="user-new-password"
+                type="password"
+                value={userNewPassword}
+                onChange={(e) => setUserNewPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-confirm-password">Confirmar Senha</Label>
+              <Input
+                id="user-confirm-password"
+                type="password"
+                value={userConfirmPassword}
+                onChange={(e) => setUserConfirmPassword(e.target.value)}
+                placeholder="Digite a senha novamente"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setUserPasswordDialogOpen(false);
+                setSelectedUserForPassword(null);
+                setUserNewPassword("");
+                setUserConfirmPassword("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleChangeUserPassword}>Alterar Senha</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

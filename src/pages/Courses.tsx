@@ -13,6 +13,10 @@ interface Course {
   title: string;
   description: string;
   thumbnail_url: string;
+  duration: string;
+  total_modules: number;
+  total_lessons: number;
+  course_target: string;
 }
 
 interface Enrollment {
@@ -52,12 +56,39 @@ const Courses = () => {
 
   const loadData = async () => {
     try {
-      const [coursesRes, enrollmentsRes] = await Promise.all([
+      // Get user profile to check user_type
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", user?.id)
+        .single();
+
+      const userType = profile?.user_type || 'colaborador';
+
+      // Fetch all courses and course access
+      const [coursesRes, enrollmentsRes, courseAccessRes] = await Promise.all([
         supabase.from("courses").select("*"),
         supabase.from("enrollments").select("course_id"),
+        supabase.from("course_access").select("*"),
       ]);
 
-      if (coursesRes.data) setCourses(coursesRes.data);
+      if (coursesRes.data && courseAccessRes.data) {
+        // Filter courses based on user type and course access
+        const accessibleCourses = coursesRes.data.filter(course => {
+          // Check if course has specific access rules
+          const accessRules = courseAccessRes.data.filter(a => a.course_id === course.id);
+          
+          // If no access rules, check course_target
+          if (accessRules.length === 0) {
+            return course.course_target === 'both' || course.course_target === userType;
+          }
+          
+          // If has access rules, check if user type is allowed
+          return accessRules.some(rule => rule.user_type === userType || rule.user_type === 'both');
+        });
+        
+        setCourses(accessibleCourses);
+      }
       if (enrollmentsRes.data) setEnrollments(enrollmentsRes.data);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -126,7 +157,20 @@ const Courses = () => {
                   </div>
                   <CardHeader>
                     <CardTitle>{course.title}</CardTitle>
-                    <CardDescription>{course.description}</CardDescription>
+                    <CardDescription className="space-y-2">
+                      <p>{course.description}</p>
+                      <div className="flex gap-4 text-sm text-muted-foreground pt-2">
+                        {course.total_modules && (
+                          <span>{course.total_modules} módulos</span>
+                        )}
+                        {course.total_lessons && (
+                          <span>{course.total_lessons} aulas</span>
+                        )}
+                        {course.duration && (
+                          <span>{course.duration}</span>
+                        )}
+                      </div>
+                    </CardDescription>
                   </CardHeader>
                   <CardFooter>
                     {isEnrolled(course.id) ? (

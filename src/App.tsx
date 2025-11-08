@@ -20,6 +20,7 @@ import AdminCourses from "./pages/admin/AdminCourses";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminQuizzes from "./pages/admin/AdminQuizzes";
 import AdminSiteSettings from "./pages/admin/AdminSiteSettings";
+import AdminCourseAccess from "./pages/admin/AdminCourseAccess";
 import AdminDemo from "./pages/admin/AdminDemo";
 import NotFound from "./pages/NotFound";
 
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/courses" element={<AdminRoute><AdminCourses /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/course-access" element={<AdminRoute><AdminCourseAccess /></AdminRoute>} />
           <Route path="/admin/quizzes" element={<EditorRoute><AdminQuizzes /></EditorRoute>} />
           <Route path="/admin/demo" element={<AdminRoute><AdminDemo /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
