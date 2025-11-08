@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { BookOpen, Clock, Award } from "lucide-react";
 
 interface Course {
   id: string;
@@ -157,23 +158,32 @@ const Courses = () => {
                   </div>
                   <CardHeader>
                     <CardTitle>{course.title}</CardTitle>
-                    <CardDescription>
-                      <div className="space-y-2">
-                        <p>{course.description}</p>
-                        <div className="flex gap-4 text-sm pt-2">
-                          {course.total_modules && (
-                            <span>{course.total_modules} módulos</span>
-                          )}
-                          {course.total_lessons && (
-                            <span>{course.total_lessons} aulas</span>
-                          )}
-                          {course.duration && (
-                            <span>{course.duration}</span>
-                          )}
-                        </div>
-                      </div>
-                    </CardDescription>
                   </CardHeader>
+                  <CardContent>
+                    <CardDescription className="mb-4">
+                      {course.description}
+                    </CardDescription>
+                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                      {course.total_modules && (
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="w-4 h-4" />
+                          <span>{course.total_modules} módulos</span>
+                        </div>
+                      )}
+                      {course.total_lessons && (
+                        <div className="flex items-center gap-1">
+                          <Award className="w-4 h-4" />
+                          <span>{course.total_lessons} aulas</span>
+                        </div>
+                      )}
+                      {course.duration && (
+                        <div className="flex items-center gap-1">
+                          <Award className="w-4 h-4" />
+                          <span>{course.duration}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
                   <CardFooter>
                     {isEnrolled(course.id) ? (
                       <Button 
