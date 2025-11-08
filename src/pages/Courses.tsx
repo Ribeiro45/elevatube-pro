@@ -157,18 +157,20 @@ const Courses = () => {
                   </div>
                   <CardHeader>
                     <CardTitle>{course.title}</CardTitle>
-                    <CardDescription className="space-y-2">
-                      <p>{course.description}</p>
-                      <div className="flex gap-4 text-sm text-muted-foreground pt-2">
-                        {course.total_modules && (
-                          <span>{course.total_modules} módulos</span>
-                        )}
-                        {course.total_lessons && (
-                          <span>{course.total_lessons} aulas</span>
-                        )}
-                        {course.duration && (
-                          <span>{course.duration}</span>
-                        )}
+                    <CardDescription>
+                      <div className="space-y-2">
+                        <p>{course.description}</p>
+                        <div className="flex gap-4 text-sm pt-2">
+                          {course.total_modules && (
+                            <span>{course.total_modules} módulos</span>
+                          )}
+                          {course.total_lessons && (
+                            <span>{course.total_lessons} aulas</span>
+                          )}
+                          {course.duration && (
+                            <span>{course.duration}</span>
+                          )}
+                        </div>
                       </div>
                     </CardDescription>
                   </CardHeader>

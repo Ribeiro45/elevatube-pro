@@ -50,7 +50,8 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
 
       if (error) throw error;
 
-      setQrCode(data.totp.qr_code);
+      // Use the URI for QR code generation, not the qr_code image data
+      setQrCode(data.totp.uri);
       setSecret(data.totp.secret);
       toast.success('Escaneie o QR Code com seu aplicativo autenticador!');
     } catch (error: any) {
