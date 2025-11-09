@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CourseCard } from "@/components/course/CourseCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 interface Course {
   id: string;
@@ -136,6 +138,28 @@ const MyCourses = () => {
     };
   };
 
+  const handleUnenroll = async (courseId: string, courseTitle: string) => {
+    if (!confirm(`Tem certeza que deseja cancelar sua inscrição em "${courseTitle}"?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("enrollments")
+        .delete()
+        .eq("user_id", user?.id)
+        .eq("course_id", courseId);
+
+      if (error) throw error;
+
+      toast.success("Inscrição cancelada com sucesso!");
+      loadData();
+    } catch (error) {
+      console.error("Error unenrolling:", error);
+      toast.error("Erro ao cancelar inscrição");
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -169,7 +193,7 @@ const MyCourses = () => {
                 return (
                   <div 
                     key={course.id} 
-                    className="animate-fade-in"
+                    className="animate-fade-in space-y-2"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <CourseCard
@@ -182,6 +206,14 @@ const MyCourses = () => {
                       completedLessons={stats.completedLessons}
                       totalDuration={stats.totalDuration}
                     />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleUnenroll(course.id, course.title)}
+                    >
+                      Cancelar Inscrição
+                    </Button>
                   </div>
                 );
               })}

@@ -330,6 +330,31 @@ const AdminUsers = () => {
     }
   };
 
+  const handleUserTypeChange = async (userId: string, newType: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ user_type: newType })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Tipo de usuário alterado",
+        description: `Usuário agora é ${newType === 'cliente' ? 'Cliente' : 'Colaborador New'}.`,
+      });
+
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user type:", error);
+      toast({
+        title: "Erro ao alterar tipo",
+        description: "Não foi possível alterar o tipo do usuário.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -436,9 +461,18 @@ const AdminUsers = () => {
                           {user.full_name || "Sem nome"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={user.user_type === 'cliente' ? 'default' : 'secondary'}>
-                            {user.user_type === 'cliente' ? 'Cliente' : 'Colaborador New'}
-                          </Badge>
+                          <Select
+                            value={user.user_type || 'colaborador'}
+                            onValueChange={(value) => handleUserTypeChange(user.id, value)}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="colaborador">Colaborador New</SelectItem>
+                              <SelectItem value="cliente">Cliente</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {user.id.slice(0, 8)}...

@@ -89,13 +89,11 @@ const Dashboard = () => {
         `).order("issued_at", { ascending: false }).limit(3),
       ]);
 
-      let enrolledCoursesCount = 0;
       if (enrollmentsRes.data) {
         const enrolledCourses = enrollmentsRes.data
           .map((e: any) => e.courses)
           .filter((c: any) => c !== null) as Course[];
         setCourses(enrolledCourses);
-        enrolledCoursesCount = enrolledCourses.length;
       }
       if (lessonsRes.data) {
         setLessons(lessonsRes.data);
@@ -143,6 +141,7 @@ const Dashboard = () => {
     const stats = getCourseStats(course.id);
     return stats.progress === 100;
   }).length;
+  const enrolledCoursesCount = courses.length;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -158,14 +157,56 @@ const Dashboard = () => {
           {loading ? (
             <Skeleton className="h-48 w-full" />
           ) : (
-            <OverallProgress
-              totalCourses={courses.length}
-              completedCourses={completedCoursesCount}
-              totalLessons={lessons.length}
-              completedLessons={completedLessonsCount}
-              certificates={certificatesCount}
-              studyTime={studyTime}
-            />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Cursos Inscritos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-primary">{enrolledCoursesCount}</div>
+                    <p className="text-xs text-muted-foreground mt-1">Total de cursos que você está fazendo</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Cursos Finalizados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-primary">{completedCoursesCount}</div>
+                    <p className="text-xs text-muted-foreground mt-1">Cursos concluídos com 100%</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Taxa de Conclusão
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-primary">
+                      {enrolledCoursesCount > 0 ? Math.round((completedCoursesCount / enrolledCoursesCount) * 100) : 0}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Percentual de cursos finalizados</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <OverallProgress
+                totalCourses={courses.length}
+                completedCourses={completedCoursesCount}
+                totalLessons={lessons.length}
+                completedLessons={completedLessonsCount}
+                certificates={certificatesCount}
+                studyTime={studyTime}
+              />
+            </>
           )}
 
           {certificates.length > 0 && (
