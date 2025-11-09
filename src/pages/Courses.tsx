@@ -7,15 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { BookOpen, Clock, Award, Info } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { BookOpen, Clock, Award } from "lucide-react";
 
 interface Course {
   id: string;
@@ -38,8 +30,6 @@ const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -194,28 +184,17 @@ const Courses = () => {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter className="gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedCourse(course);
-                        setInfoDialogOpen(true);
-                      }}
-                      className="flex-1"
-                    >
-                      <Info className="w-4 h-4 mr-2" />
-                      Informações
-                    </Button>
+                  <CardFooter>
                     {isEnrolled(course.id) ? (
                       <Button 
-                        className="flex-1" 
+                        className="w-full" 
                         onClick={() => navigate(`/course/${course.id}`)}
                       >
                         Acessar Curso
                       </Button>
                     ) : (
                       <Button 
-                        className="flex-1" 
+                        className="w-full" 
                         onClick={() => handleEnroll(course.id)}
                       >
                         Inscrever-se
@@ -228,79 +207,6 @@ const Courses = () => {
           )}
         </div>
       </main>
-
-      <Dialog open={infoDialogOpen} onOpenChange={setInfoDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">{selectedCourse?.title}</DialogTitle>
-            <DialogDescription className="text-base mt-4">
-              {selectedCourse?.description}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            {selectedCourse?.total_modules && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <BookOpen className="w-8 h-8 text-primary mb-2" />
-                  <p className="text-2xl font-bold text-primary">{selectedCourse.total_modules}</p>
-                  <p className="text-sm text-muted-foreground">Módulos</p>
-                </CardContent>
-              </Card>
-            )}
-            {selectedCourse?.total_lessons && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <Award className="w-8 h-8 text-primary mb-2" />
-                  <p className="text-2xl font-bold text-primary">{selectedCourse.total_lessons}</p>
-                  <p className="text-sm text-muted-foreground">Aulas</p>
-                </CardContent>
-              </Card>
-            )}
-            {selectedCourse?.duration && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <Clock className="w-8 h-8 text-primary mb-2" />
-                  <p className="text-2xl font-bold text-primary">{selectedCourse.duration}</p>
-                  <p className="text-sm text-muted-foreground">Duração</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className="flex gap-2 mt-6">
-            {selectedCourse && isEnrolled(selectedCourse.id) ? (
-              <Button 
-                className="flex-1" 
-                onClick={() => {
-                  setInfoDialogOpen(false);
-                  navigate(`/course/${selectedCourse.id}`);
-                }}
-              >
-                Acessar Curso
-              </Button>
-            ) : (
-              <Button 
-                className="flex-1" 
-                onClick={() => {
-                  if (selectedCourse) {
-                    handleEnroll(selectedCourse.id);
-                    setInfoDialogOpen(false);
-                  }
-                }}
-              >
-                Inscrever-se
-              </Button>
-            )}
-            <Button 
-              variant="outline"
-              onClick={() => setInfoDialogOpen(false)}
-            >
-              Fechar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
