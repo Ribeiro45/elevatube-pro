@@ -7,7 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Save } from 'lucide-react';
+import { Save, Plus, Trash2 } from 'lucide-react';
+
+interface Step {
+  title: string;
+  description: string;
+}
 
 export default function AdminDemo() {
   const [loading, setLoading] = useState(false);
@@ -16,15 +21,13 @@ export default function AdminDemo() {
     subtitle: '',
     video_url: '',
     video_title: '',
-    step1_title: '',
-    step1_description: '',
-    step2_title: '',
-    step2_description: '',
-    step3_title: '',
-    step3_description: '',
-    step4_title: '',
-    step4_description: '',
   });
+  const [steps, setSteps] = useState<Step[]>([
+    { title: '', description: '' },
+    { title: '', description: '' },
+    { title: '', description: '' },
+    { title: '', description: '' },
+  ]);
 
   useEffect(() => {
     fetchSettings();
@@ -38,21 +41,46 @@ export default function AdminDemo() {
       .maybeSingle();
 
     if (data?.setting_value) {
-      setSettings(data.setting_value as any);
+      const savedData = data.setting_value as any;
+      setSettings({
+        title: savedData.title || '',
+        subtitle: savedData.subtitle || '',
+        video_url: savedData.video_url || '',
+        video_title: savedData.video_title || '',
+      });
+      
+      // Load steps from saved data
+      if (savedData.steps && Array.isArray(savedData.steps)) {
+        setSteps(savedData.steps);
+      } else {
+        // Legacy format conversion
+        const legacySteps: Step[] = [];
+        for (let i = 1; i <= 10; i++) {
+          if (savedData[`step${i}_title`]) {
+            legacySteps.push({
+              title: savedData[`step${i}_title`],
+              description: savedData[`step${i}_description`] || '',
+            });
+          }
+        }
+        if (legacySteps.length > 0) {
+          setSteps(legacySteps);
+        }
+      }
     }
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
+      const dataToSave = {
+        setting_key: 'demo_page',
+        setting_value: { ...settings, steps } as any,
+      };
+
       const { error } = await supabase
         .from('site_settings')
-        .upsert({
-          setting_key: 'demo_page',
-          setting_value: settings,
-        }, {
-          onConflict: 'setting_key'
-        });
+        .upsert(dataToSave);
 
       if (error) throw error;
 
@@ -66,6 +94,24 @@ export default function AdminDemo() {
 
   const handleChange = (field: string, value: string) => {
     setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleStepChange = (index: number, field: keyof Step, value: string) => {
+    setSteps(prev => prev.map((step, i) => 
+      i === index ? { ...step, [field]: value } : step
+    ));
+  };
+
+  const addStep = () => {
+    setSteps(prev => [...prev, { title: '', description: '' }]);
+  };
+
+  const removeStep = (index: number) => {
+    if (steps.length > 1) {
+      setSteps(prev => prev.filter((_, i) => i !== index));
+    } else {
+      toast.error('Deve haver pelo menos um passo!');
+    }
   };
 
   return (
@@ -136,34 +182,53 @@ export default function AdminDemo() {
             </CardContent>
           </Card>
 
-          {[1, 2, 3, 4].map((num) => (
-            <Card key={num}>
-              <CardHeader>
-                <CardTitle>Passo {num}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor={`step${num}_title`}>Título</Label>
-                  <Input
-                    id={`step${num}_title`}
-                    value={settings[`step${num}_title` as keyof typeof settings]}
-                    onChange={(e) => handleChange(`step${num}_title`, e.target.value)}
-                    placeholder={`${num}. Título do Passo`}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`step${num}_description`}>Descrição</Label>
-                  <Textarea
-                    id={`step${num}_description`}
-                    value={settings[`step${num}_description` as keyof typeof settings]}
-                    onChange={(e) => handleChange(`step${num}_description`, e.target.value)}
-                    placeholder="Descrição detalhada do passo"
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Passos do Tutorial</CardTitle>
+              <Button onClick={addStep} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Passo
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {steps.map((step, index) => (
+                <Card key={index} className="relative">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg">Passo {index + 1}</CardTitle>
+                    <Button 
+                      onClick={() => removeStep(index)} 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`step${index}_title`}>Título</Label>
+                      <Input
+                        id={`step${index}_title`}
+                        value={step.title}
+                        onChange={(e) => handleStepChange(index, 'title', e.target.value)}
+                        placeholder={`${index + 1}. Título do Passo`}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`step${index}_description`}>Descrição</Label>
+                      <Textarea
+                        id={`step${index}_description`}
+                        value={step.description}
+                        onChange={(e) => handleStepChange(index, 'description', e.target.value)}
+                        placeholder="Descrição detalhada do passo"
+                        rows={3}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

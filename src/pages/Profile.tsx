@@ -184,7 +184,7 @@ const Profile = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
-                  {avatarUrl && <AvatarImage src={avatarUrl} />}
+                  {avatarUrl && <AvatarImage src={avatarUrl} className="object-cover" />}
                   <AvatarFallback className="bg-primary/10 text-primary">
                     <User size={40} />
                   </AvatarFallback>

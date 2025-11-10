@@ -12,15 +12,25 @@ const Demo = () => {
     subtitle: "Um overview completo da New Academy e seus recursos",
     video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     video_title: "Tutorial Completo da Plataforma",
-    step1_title: "1. Explore os Cursos",
-    step1_description: "Navegue pela biblioteca de cursos disponíveis e escolha o que você quer aprender",
-    step2_title: "2. Assista às Aulas",
-    step2_description: "Acesse vídeos de alta qualidade e aprenda no seu próprio ritmo",
-    step3_title: "3. Acompanhe seu Progresso",
-    step3_description: "Veja seu desenvolvimento em tempo real e complete os quizzes",
-    step4_title: "4. Receba Certificados",
-    step4_description: "Ao completar 100% do curso, receba seu certificado oficial"
   });
+  const [steps, setSteps] = useState([
+    {
+      title: "1. Explore os Cursos",
+      description: "Navegue pela biblioteca de cursos disponíveis e escolha o que você quer aprender"
+    },
+    {
+      title: "2. Assista às Aulas",
+      description: "Acesse vídeos de alta qualidade e aprenda no seu próprio ritmo"
+    },
+    {
+      title: "3. Acompanhe seu Progresso",
+      description: "Veja seu desenvolvimento em tempo real e complete os quizzes"
+    },
+    {
+      title: "4. Receba Certificados",
+      description: "Ao completar 100% do curso, receba seu certificado oficial"
+    }
+  ]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -31,34 +41,45 @@ const Demo = () => {
         .maybeSingle();
 
       if (data?.setting_value) {
-        setSettings(data.setting_value as any);
+        const savedData = data.setting_value as any;
+        setSettings({
+          title: savedData.title || "Como Funciona a Plataforma",
+          subtitle: savedData.subtitle || "Um overview completo da New Academy e seus recursos",
+          video_url: savedData.video_url || "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          video_title: savedData.video_title || "Tutorial Completo da Plataforma",
+        });
+        
+        // Handle new format (steps array)
+        if (savedData.steps && Array.isArray(savedData.steps)) {
+          setSteps(savedData.steps);
+        } 
+        // Handle legacy format (step1, step2, etc.)
+        else if (savedData.step1_title) {
+          const legacySteps = [];
+          for (let i = 1; i <= 10; i++) {
+            if (savedData[`step${i}_title`]) {
+              legacySteps.push({
+                title: savedData[`step${i}_title`],
+                description: savedData[`step${i}_description`] || '',
+              });
+            }
+          }
+          if (legacySteps.length > 0) {
+            setSteps(legacySteps);
+          }
+        }
       }
     };
     fetchSettings();
   }, []);
 
-  const tutorialSteps = [
-    {
-      icon: BookOpen,
-      title: settings.step1_title,
-      description: settings.step1_description
-    },
-    {
-      icon: PlayCircle,
-      title: settings.step2_title,
-      description: settings.step2_description
-    },
-    {
-      icon: TrendingUp,
-      title: settings.step3_title,
-      description: settings.step3_description
-    },
-    {
-      icon: Award,
-      title: settings.step4_title,
-      description: settings.step4_description
-    }
-  ];
+  const iconList = [BookOpen, PlayCircle, TrendingUp, Award];
+  
+  const tutorialSteps = steps.map((step, index) => ({
+    icon: iconList[index % iconList.length],
+    title: step.title,
+    description: step.description
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted">
