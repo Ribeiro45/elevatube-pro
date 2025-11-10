@@ -34,6 +34,7 @@ const answerSchema = z.object({
 
 export default function AdminQuizzes() {
   const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
@@ -100,8 +101,14 @@ export default function AdminQuizzes() {
     setLessons(data || []);
   };
 
-  const fetchQuizzes = async () => {
-    const { data } = await supabase.from('quizzes').select('*').order('title');
+  const fetchQuizzes = async (courseId?: string) => {
+    let query = supabase.from('quizzes').select('*').order('title');
+    
+    if (courseId) {
+      query = query.eq('course_id', courseId);
+    }
+    
+    const { data } = await query;
     setQuizzes(data || []);
   };
 
@@ -280,36 +287,60 @@ export default function AdminQuizzes() {
             </Dialog>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Provas</CardTitle>
+                <CardTitle>Cursos</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {quizzes.map((quiz) => (
+                {courses.map((course) => (
                   <div
-                    key={quiz.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted cursor-pointer"
+                    key={course.id}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedCourse?.id === course.id ? 'bg-accent' : 'hover:bg-accent/50'
+                    }`}
                     onClick={() => {
-                      setSelectedQuiz(quiz);
-                      fetchQuestions(quiz.id);
+                      setSelectedCourse(course);
+                      fetchQuizzes(course.id);
                     }}
                   >
-                    <span className="font-medium">{quiz.title}</span>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteQuiz(quiz.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <span className="font-medium">{course.title}</span>
                   </div>
                 ))}
               </CardContent>
             </Card>
+
+            {selectedCourse && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Provas - {selectedCourse.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {quizzes.map((quiz) => (
+                    <div
+                      key={quiz.id}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-muted cursor-pointer"
+                      onClick={() => {
+                        setSelectedQuiz(quiz);
+                        fetchQuestions(quiz.id);
+                      }}
+                    >
+                      <span className="font-medium">{quiz.title}</span>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteQuiz(quiz.id);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             {selectedQuiz && (
               <Card>

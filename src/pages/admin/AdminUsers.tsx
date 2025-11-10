@@ -70,6 +70,10 @@ const AdminUsers = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCpf, setEditCpf] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editBirthDate, setEditBirthDate] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const { toast } = useToast();
@@ -178,6 +182,22 @@ const AdminUsers = () => {
   const handleEditUser = (user: UserWithRole) => {
     setSelectedUser(user);
     setEditName(user.full_name || "");
+    
+    // Fetch full profile data to get email, cpf, phone, birth_date
+    supabase
+      .from("profiles")
+      .select("email, cpf, phone, birth_date")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setEditEmail(data.email || "");
+          setEditCpf(data.cpf || "");
+          setEditPhone(data.phone || "");
+          setEditBirthDate(data.birth_date || "");
+        }
+      });
+    
     setEditDialogOpen(true);
   };
 
@@ -187,7 +207,13 @@ const AdminUsers = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: editName })
+        .update({ 
+          full_name: editName,
+          email: editEmail,
+          cpf: editCpf,
+          phone: editPhone,
+          birth_date: editBirthDate || null,
+        })
         .eq("id", selectedUser.id);
 
       if (error) throw error;
@@ -585,6 +611,44 @@ const AdminUsers = () => {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="Nome do usuário"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cpf">CPF</Label>
+              <Input
+                id="edit-cpf"
+                value={editCpf}
+                onChange={(e) => setEditCpf(e.target.value)}
+                placeholder="000.000.000-00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Telefone</Label>
+              <Input
+                id="edit-phone"
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-birth-date">Data de Nascimento</Label>
+              <Input
+                id="edit-birth-date"
+                type="date"
+                value={editBirthDate}
+                onChange={(e) => setEditBirthDate(e.target.value)}
               />
             </div>
           </div>

@@ -470,7 +470,7 @@ export const AuthForm = () => {
                     type="button"
                     variant="link"
                     className="w-full text-sm" 
-                    onClick={() => setShowForgotPassword(true)}
+                    onClick={() => navigate('/forgot-password')}
                   >
                     Esqueci minha senha
                   </Button>

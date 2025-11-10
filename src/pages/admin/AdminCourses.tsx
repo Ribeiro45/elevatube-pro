@@ -36,6 +36,8 @@ export default function AdminCourses() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any>(null);
+  const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
 
   const courseForm = useForm({
     resolver: zodResolver(courseSchema),
@@ -80,23 +82,80 @@ export default function AdminCourses() {
   };
 
   const onSubmitCourse = async (values: z.infer<typeof courseSchema>) => {
-    const { error } = await supabase.from('courses').insert([{
-      title: values.title,
-      description: values.description || null,
-      thumbnail_url: values.thumbnail_url || null,
-      duration: values.duration || null,
-      total_modules: values.total_modules || null,
-      total_lessons: values.total_lessons || null,
-      course_target: values.course_target || 'both',
-    }]);
-    
-    if (error) {
-      toast.error('Erro ao criar curso');
+    if (editingCourse) {
+      // Update existing course
+      const { error } = await supabase
+        .from('courses')
+        .update({
+          title: values.title,
+          description: values.description || null,
+          thumbnail_url: values.thumbnail_url || null,
+          duration: values.duration || null,
+          total_modules: values.total_modules || null,
+          total_lessons: values.total_lessons || null,
+          course_target: values.course_target || 'both',
+        })
+        .eq('id', editingCourse.id);
+      
+      if (error) {
+        toast.error('Erro ao atualizar curso');
+      } else {
+        toast.success('Curso atualizado com sucesso!');
+        setDialogOpen(false);
+        setEditingCourse(null);
+        courseForm.reset();
+        fetchCourses();
+      }
     } else {
-      toast.success('Curso criado com sucesso!');
-      setDialogOpen(false);
-      courseForm.reset();
-      fetchCourses();
+      // Insert new course
+      const { error } = await supabase.from('courses').insert([{
+        title: values.title,
+        description: values.description || null,
+        thumbnail_url: values.thumbnail_url || null,
+        duration: values.duration || null,
+        total_modules: values.total_modules || null,
+        total_lessons: values.total_lessons || null,
+        course_target: values.course_target || 'both',
+      }]);
+      
+      if (error) {
+        toast.error('Erro ao criar curso');
+      } else {
+        toast.success('Curso criado com sucesso!');
+        setDialogOpen(false);
+        courseForm.reset();
+        fetchCourses();
+      }
+    }
+  };
+
+  const handleUploadThumbnail = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `course-thumbnails/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      courseForm.setValue('thumbnail_url', publicUrl);
+      toast.success('Imagem carregada com sucesso!');
+    } catch (error) {
+      console.error('Error uploading:', error);
+      toast.error('Erro ao fazer upload da imagem');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -179,16 +238,22 @@ export default function AdminCourses() {
               <h1 className="text-4xl font-bold text-foreground mb-2">Gerenciar Cursos</h1>
               <p className="text-muted-foreground">Adicione e gerencie cursos e aulas</p>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setEditingCourse(null);
+                courseForm.reset();
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
                   Novo Curso
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Criar Novo Curso</DialogTitle>
+                  <DialogTitle>{editingCourse ? 'Editar Curso' : 'Criar Novo Curso'}</DialogTitle>
                 </DialogHeader>
                 <Form {...courseForm}>
                   <form onSubmit={courseForm.handleSubmit(onSubmitCourse)} className="space-y-4">
@@ -223,9 +288,20 @@ export default function AdminCourses() {
                       name="thumbnail_url"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>URL da Thumbnail</FormLabel>
+                          <FormLabel>Capa do Curso</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <div className="space-y-2">
+                              <Input {...field} placeholder="URL da imagem" />
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleUploadThumbnail}
+                                  disabled={uploading}
+                                />
+                                {uploading && <span className="text-sm text-muted-foreground">Enviando...</span>}
+                              </div>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -280,7 +356,9 @@ export default function AdminCourses() {
                         )}
                       />
                     </div>
-                    <Button type="submit" className="w-full">Criar Curso</Button>
+                    <Button type="submit" className="w-full">
+                      {editingCourse ? 'Atualizar Curso' : 'Criar Curso'}
+                    </Button>
                   </form>
                 </Form>
               </DialogContent>
@@ -306,16 +384,38 @@ export default function AdminCourses() {
                         <h3 className="font-semibold">{course.title}</h3>
                         <p className="text-sm text-muted-foreground mt-1">{course.description}</p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteCourse(course.id);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingCourse(course);
+                            courseForm.reset({
+                              title: course.title,
+                              description: course.description || '',
+                              thumbnail_url: course.thumbnail_url || '',
+                              duration: course.duration || '',
+                              total_modules: course.total_modules || 0,
+                              total_lessons: course.total_lessons || 0,
+                              course_target: course.course_target || 'both',
+                            });
+                            setDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteCourse(course.id);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
