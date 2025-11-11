@@ -49,7 +49,7 @@ export const QuizTaker = ({ lessonId, onComplete }: QuizTakerProps) => {
     setQuestions(questionsData || []);
 
     const { data: answersData } = await supabase
-      .from('quiz_answer_options')
+      .from('quiz_answers')
       .select('*')
       .in('question_id', (questionsData || []).map(q => q.id));
 

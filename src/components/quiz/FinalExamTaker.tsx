@@ -68,9 +68,9 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
 
     setQuestions(questionsData || []);
 
-    // Fetch answers (without is_correct field)
+    // Fetch answers
     const { data: answersData } = await supabase
-      .from('quiz_answer_options')
+      .from('quiz_answers')
       .select('*')
       .in('question_id', (questionsData || []).map(q => q.id));
 
