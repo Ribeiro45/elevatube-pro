@@ -44,6 +44,7 @@ export default function AdminQuizzes() {
   const [questionDialogOpen, setQuestionDialogOpen] = useState(false);
   const [answerDialogOpen, setAnswerDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
+  const [quizType, setQuizType] = useState<'lesson' | 'module' | 'final'>('lesson');
 
   const quizForm = useForm<z.infer<typeof quizSchema>>({
     resolver: zodResolver(quizSchema),
@@ -245,8 +246,11 @@ export default function AdminQuizzes() {
                   <div>
                     <Label>Tipo</Label>
                     <Select
-                      onValueChange={(val) => {
+                      onValueChange={(val: any) => {
+                        setQuizType(val);
                         quizForm.setValue('is_final_exam', val === 'final');
+                        quizForm.setValue('lesson_id', null);
+                        quizForm.setValue('module_id', null);
                       }}
                     >
                       <SelectTrigger>
@@ -264,6 +268,8 @@ export default function AdminQuizzes() {
                     <Select
                       onValueChange={(val) => {
                         quizForm.setValue('course_id', val);
+                        setModules([]);
+                        setLessons([]);
                         fetchModules(val);
                       }}
                     >
@@ -279,6 +285,52 @@ export default function AdminQuizzes() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {(quizType === 'module' || quizType === 'lesson') && modules.length > 0 && (
+                    <div>
+                      <Label>Módulo</Label>
+                      <Select
+                        onValueChange={(val) => {
+                          quizForm.setValue('module_id', val);
+                          if (quizType === 'lesson') {
+                            setLessons([]);
+                            fetchLessons(val);
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o módulo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {modules.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {quizType === 'lesson' && lessons.length > 0 && (
+                    <div>
+                      <Label>Aula</Label>
+                      <Select
+                        onValueChange={(val) => {
+                          quizForm.setValue('lesson_id', val);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a aula" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lessons.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {l.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <Button type="submit" className="w-full">
                     Criar Prova
                   </Button>
