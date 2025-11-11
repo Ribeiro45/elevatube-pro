@@ -14,20 +14,20 @@ const Index = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [settings, setSettings] = useState({
     hero: {
-      badge_text: "New Academy - Plataforma de Aprendizado",
+      badge_text: "New War - Plataforma de Aprendizado",
       title_line1: "Transforme seu",
       title_line2: "Conhecimento",
       description: "Acesse cursos de alta qualidade, acompanhe seu progresso e obtenha certificados reconhecidos.",
-      video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+      video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     },
     features: {
       section_title: "Por que escolher nossa plataforma?",
-      section_subtitle: "Recursos poderosos para acelerar seu aprendizado"
+      section_subtitle: "Recursos poderosos para acelerar seu aprendizado",
     },
     cta: {
       title: "Pronto para começar?",
-      description: "Junte-se a centenas de colaboradores que já estão transformando suas carreiras"
-    }
+      description: "Junte-se a centenas de colaboradores que já estão transformando suas carreiras",
+    },
   });
 
   useEffect(() => {
@@ -73,23 +73,23 @@ const Index = () => {
     {
       icon: BookOpen,
       title: "Cursos Completos",
-      description: "Acesse uma biblioteca completa de cursos em vídeo"
+      description: "Acesse uma biblioteca completa de cursos em vídeo",
     },
     {
       icon: TrendingUp,
       title: "Acompanhe seu Progresso",
-      description: "Monitore seu desenvolvimento em tempo real"
+      description: "Monitore seu desenvolvimento em tempo real",
     },
     {
       icon: Award,
       title: "Certificados",
-      description: "Receba certificados ao concluir os cursos"
+      description: "Receba certificados ao concluir os cursos",
     },
     {
       icon: Users,
       title: "Aprendizado Colaborativo",
-      description: "Aprenda junto com outros colaboradores"
-    }
+      description: "Aprenda junto com outros colaboradores",
+    },
   ];
 
   return (
@@ -98,21 +98,13 @@ const Index = () => {
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img 
-              src={isDarkMode ? logoNWhite : logoN} 
-              alt="New Academy" 
-              className="h-8 w-8 object-contain" 
-            />
+            <img src={isDarkMode ? logoNWhite : logoN} alt="New Academy" className="h-8 w-8 object-contain" />
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               New Academy
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-            >
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
             <Button onClick={() => navigate("/auth")} size="lg">
@@ -138,24 +130,13 @@ const Index = () => {
                 {settings.hero.title_line2}
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              {settings.hero.description}
-            </p>
+            <p className="text-xl text-muted-foreground leading-relaxed">{settings.hero.description}</p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                onClick={() => navigate("/auth")} 
-                size="lg"
-                className="text-lg px-8 py-6 group"
-              >
+              <Button onClick={() => navigate("/auth")} size="lg" className="text-lg px-8 py-6 group">
                 Começar Agora
                 <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="text-lg px-8 py-6"
-                onClick={() => navigate("/demo")}
-              >
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6" onClick={() => navigate("/demo")}>
                 <Play className="w-5 h-5 mr-2" />
                 Ver Demo
               </Button>
@@ -178,7 +159,9 @@ const Index = () => {
                 </div>
                 <div className="p-6 space-y-2">
                   <h3 className="text-xl font-semibold">Veja como funciona</h3>
-                  <p className="text-muted-foreground">Conheça todos os recursos da nossa plataforma em apenas alguns minutos</p>
+                  <p className="text-muted-foreground">
+                    Conheça todos os recursos da nossa plataforma em apenas alguns minutos
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -190,14 +173,12 @@ const Index = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-4xl font-bold">{settings.features.section_title}</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {settings.features.section_subtitle}
-          </p>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{settings.features.section_subtitle}</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
-            <Card 
+            <Card
               key={index}
               className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50 animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
@@ -220,14 +201,8 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/10"></div>
           <CardContent className="relative p-12 text-center space-y-6">
             <h2 className="text-4xl font-bold">{settings.cta.title}</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              {settings.cta.description}
-            </p>
-            <Button 
-              onClick={() => navigate("/auth")}
-              size="lg"
-              className="text-lg px-10 py-6"
-            >
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{settings.cta.description}</p>
+            <Button onClick={() => navigate("/auth")} size="lg" className="text-lg px-10 py-6">
               Criar Conta Grátis
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
@@ -240,16 +215,10 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <img 
-                src={isDarkMode ? logoNWhite : logoN} 
-                alt="New Academy" 
-                className="h-6 w-6 object-contain" 
-              />
+              <img src={isDarkMode ? logoNWhite : logoN} alt="New Academy" className="h-6 w-6 object-contain" />
               <span className="font-semibold">New Academy</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              © 2025 New Academy. Todos os direitos reservados.
-            </p>
+            <p className="text-sm text-muted-foreground">© 2025 New Academy. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
