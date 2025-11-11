@@ -14,7 +14,7 @@ const Index = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [settings, setSettings] = useState({
     hero: {
-      badge_text: "New War - Plataforma de Aprendizado",
+      badge_text: "NewWar - Plataforma de Aprendizado",
       title_line1: "Transforme seu",
       title_line2: "Conhecimento",
       description: "Acesse cursos de alta qualidade, acompanhe seu progresso e obtenha certificados reconhecidos.",
@@ -98,7 +98,7 @@ const Index = () => {
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={isDarkMode ? logoNWhite : logoN} alt="New Academy" className="h-8 w-8 object-contain" />
+            <img src={isDarkMode ? logoNWhite : logoN} alt="NewWar" className="h-8 w-8 object-contain" />
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               New Academy
             </span>
@@ -215,7 +215,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <img src={isDarkMode ? logoNWhite : logoN} alt="New Academy" className="h-6 w-6 object-contain" />
+              <img src={isDarkMode ? logoNWhite : logoN} alt="NewWar" className="h-6 w-6 object-contain" />
               <span className="font-semibold">New Academy</span>
             </div>
             <p className="text-sm text-muted-foreground">© 2025 NewWar. Todos os direitos reservados.</p>
