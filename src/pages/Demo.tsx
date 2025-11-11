@@ -9,7 +9,7 @@ const Demo = () => {
   const navigate = useNavigate();
   const [settings, setSettings] = useState({
     title: "Como Funciona a Plataforma",
-    subtitle: "Um overview completo da New Academy e seus recursos",
+    subtitle: "Um overview completo da NewWar e seus recursos",
     video_url: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     video_title: "Tutorial Completo da Plataforma",
   });
@@ -44,7 +44,7 @@ const Demo = () => {
         const savedData = data.setting_value as any;
         setSettings({
           title: savedData.title || "Como Funciona a Plataforma",
-          subtitle: savedData.subtitle || "Um overview completo da New Academy e seus recursos",
+          subtitle: savedData.subtitle || "Um overview completo da NewWar e seus recursos",
           video_url: savedData.video_url || "https://www.youtube.com/embed/dQw4w9WgXcQ",
           video_title: savedData.video_title || "Tutorial Completo da Plataforma",
         });

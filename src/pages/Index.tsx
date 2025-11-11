@@ -100,7 +100,7 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <img src={isDarkMode ? logoNWhite : logoN} alt="NewWar" className="h-8 w-8 object-contain" />
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              New Academy
+              NewWar
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -216,7 +216,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img src={isDarkMode ? logoNWhite : logoN} alt="NewWar" className="h-6 w-6 object-contain" />
-              <span className="font-semibold">New Academy</span>
+              <span className="font-semibold">NewWar</span>
             </div>
             <p className="text-sm text-muted-foreground">© 2025 NewWar. Todos os direitos reservados.</p>
           </div>

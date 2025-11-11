@@ -93,6 +93,33 @@ export const AuthForm = () => {
         return;
       }
 
+      // Verify user type matches selected type
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Erro ao buscar perfil:', profileError);
+          toast.error('Erro ao verificar tipo de usuário');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        const profileUserType = profile?.user_type || 'colaborador';
+        if (profileUserType !== userType) {
+          await supabase.auth.signOut();
+          toast.error(
+            userType === 'colaborador' 
+              ? 'Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.'
+              : 'Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.'
+          );
+          return;
+        }
+      }
+
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard");
     } catch (error: any) {
@@ -126,6 +153,34 @@ export const AuthForm = () => {
       if (error) {
         toast.error('Código inválido. Tente novamente.');
         return;
+      }
+
+      // Verify user type matches selected type after MFA
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Erro ao buscar perfil:', profileError);
+          toast.error('Erro ao verificar tipo de usuário');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        const profileUserType = profile?.user_type || 'colaborador';
+        if (profileUserType !== userType) {
+          await supabase.auth.signOut();
+          toast.error(
+            userType === 'colaborador' 
+              ? 'Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.'
+              : 'Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.'
+          );
+          return;
+        }
       }
 
       toast.success("Login realizado com sucesso!");
@@ -296,9 +351,9 @@ export const AuthForm = () => {
     <div className="w-full max-w-md mx-auto space-y-6 animate-scale-in">
       <div className="text-center space-y-2 animate-fade-in">
         <div className="inline-flex items-center justify-center mb-4">
-          <img src={logoNWhite} alt="New Academy" className="w-24 h-24 object-contain" />
+          <img src={logoNWhite} alt="NewWar" className="w-24 h-24 object-contain" />
         </div>
-        <h1 className="text-3xl font-bold text-white">New Academy</h1>
+        <h1 className="text-3xl font-bold text-white">NewWar</h1>
         <p className="text-white/80">Entre ou crie sua conta para começar</p>
       </div>
 

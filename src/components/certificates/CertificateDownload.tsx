@@ -127,7 +127,7 @@ export const generateCertificatePDF = ({
 
     ctx.font = '16px Arial';
     ctx.fillStyle = '#333';
-    ctx.fillText('New Standard Academy', canvas.width / 2, 775);
+    ctx.fillText('NewWar', canvas.width / 2, 775);
 
     // Convert to downloadable image
     canvas.toBlob((blob) => {

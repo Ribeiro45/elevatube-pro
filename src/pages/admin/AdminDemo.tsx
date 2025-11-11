@@ -150,7 +150,7 @@ export default function AdminDemo() {
                   id="subtitle"
                   value={settings.subtitle}
                   onChange={(e) => handleChange('subtitle', e.target.value)}
-                  placeholder="Um overview completo da New Academy"
+                  placeholder="Um overview completo da NewWar"
                 />
               </div>
             </CardContent>

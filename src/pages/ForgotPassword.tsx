@@ -60,7 +60,7 @@ const ForgotPassword = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <img src={logoNewStandard} alt="New Academy" className="h-12 w-auto object-contain" />
+        <img src={logoNewStandard} alt="NewWar" className="h-12 w-auto object-contain" />
       </header>
 
       {/* Main content */}

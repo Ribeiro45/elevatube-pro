@@ -57,7 +57,7 @@ const ResetPassword = () => {
 
       {/* Logo */}
       <div className="absolute top-6 left-6">
-        <img src={logoNewStandard} alt="New Academy" className="h-12 w-auto object-contain" />
+        <img src={logoNewStandard} alt="NewWar" className="h-12 w-auto object-contain" />
       </div>
 
       {/* Card */}
