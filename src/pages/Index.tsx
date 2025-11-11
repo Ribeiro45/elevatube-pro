@@ -218,7 +218,7 @@ const Index = () => {
               <img src={isDarkMode ? logoNWhite : logoN} alt="New Academy" className="h-6 w-6 object-contain" />
               <span className="font-semibold">New Academy</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2025 New Academy. Todos os direitos reservados.</p>
+            <p className="text-sm text-muted-foreground">© 2025 New War. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
