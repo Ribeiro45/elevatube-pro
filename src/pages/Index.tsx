@@ -14,7 +14,7 @@ const Index = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [settings, setSettings] = useState({
     hero: {
-      badge_text: "NewWar - Plataforma de Aprendizado",
+      badge_text: "New Academy - Plataforma de Aprendizado",
       title_line1: "Transforme seu",
       title_line2: "Conhecimento",
       description: "Acesse cursos de alta qualidade, acompanhe seu progresso e obtenha certificados reconhecidos.",
