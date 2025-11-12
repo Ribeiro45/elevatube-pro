@@ -86,9 +86,8 @@ const MyCourses = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [enrollmentsRes, lessonsRes, progressRes] = await Promise.all([
+      const [enrollmentsRes, progressRes] = await Promise.all([
         supabase.from("enrollments").select("course_id"),
-        supabase.from("lessons").select("*"),
         supabase.from("user_progress").select("*"),
       ]);
 
@@ -104,13 +103,20 @@ const MyCourses = () => {
             .select("*")
             .in("id", courseIds);
           enrolledCourses = (coursesData as Course[]) || [];
+          
+          // Get only lessons from enrolled courses
+          const { data: lessonsData } = await supabase
+            .from("lessons")
+            .select("*")
+            .in("course_id", courseIds);
+          setLessons(lessonsData || []);
         }
         setCourses(enrolledCourses);
       } else {
         setCourses([]);
+        setLessons([]);
       }
 
-      if (lessonsRes.data) setLessons(lessonsRes.data);
       if (progressRes.data) setProgress(progressRes.data);
     } catch (error) {
       console.error("Error loading data:", error);

@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, ClipboardList } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -29,15 +30,25 @@ const lessonSchema = z.object({
   duration_minutes: z.number().min(1, 'Duração deve ser maior que 0').optional(),
 });
 
+const quizSchema = z.object({
+  title: z.string().min(1, 'Título é obrigatório'),
+  passing_score: z.number().min(0).max(100).default(70),
+});
+
 export default function AdminCourses() {
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
+  const [modules, setModules] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [quizDialogOpen, setQuizDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any>(null);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
+  const [selectedLessonForQuiz, setSelectedLessonForQuiz] = useState<any>(null);
+  const [selectedModuleForQuiz, setSelectedModuleForQuiz] = useState<any>(null);
+  const [quizType, setQuizType] = useState<'lesson' | 'module' | 'final'>('lesson');
 
   const courseForm = useForm({
     resolver: zodResolver(courseSchema),
@@ -57,6 +68,11 @@ export default function AdminCourses() {
     defaultValues: { title: '', youtube_url: '', duration_minutes: 0 },
   });
 
+  const quizForm = useForm({
+    resolver: zodResolver(quizSchema),
+    defaultValues: { title: '', passing_score: 70 },
+  });
+
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -64,6 +80,7 @@ export default function AdminCourses() {
   useEffect(() => {
     if (selectedCourse) {
       fetchLessons(selectedCourse.id);
+      fetchModules(selectedCourse.id);
     }
   }, [selectedCourse]);
 
@@ -79,6 +96,15 @@ export default function AdminCourses() {
       .eq('course_id', courseId)
       .order('order_index', { ascending: true });
     setLessons(data || []);
+  };
+
+  const fetchModules = async (courseId: string) => {
+    const { data } = await supabase
+      .from('modules')
+      .select('*')
+      .eq('course_id', courseId)
+      .order('order_index', { ascending: true });
+    setModules(data || []);
   };
 
   const onSubmitCourse = async (values: z.infer<typeof courseSchema>) => {
@@ -225,6 +251,35 @@ export default function AdminCourses() {
     } else {
       toast.success('Aula deletada com sucesso!');
       fetchLessons(selectedCourse.id);
+    }
+  };
+
+  const onSubmitQuiz = async (values: z.infer<typeof quizSchema>) => {
+    if (!selectedCourse) return;
+
+    const quizData: any = {
+      title: values.title,
+      passing_score: values.passing_score,
+      course_id: selectedCourse.id,
+      is_final_exam: quizType === 'final',
+    };
+
+    if (quizType === 'lesson' && selectedLessonForQuiz) {
+      quizData.lesson_id = selectedLessonForQuiz.id;
+    } else if (quizType === 'module' && selectedModuleForQuiz) {
+      quizData.module_id = selectedModuleForQuiz.id;
+    }
+
+    const { error } = await supabase.from('quizzes').insert([quizData]);
+    
+    if (error) {
+      toast.error('Erro ao criar prova');
+    } else {
+      toast.success('Prova criada com sucesso!');
+      setQuizDialogOpen(false);
+      quizForm.reset();
+      setSelectedLessonForQuiz(null);
+      setSelectedModuleForQuiz(null);
     }
   };
 
@@ -511,6 +566,22 @@ export default function AdminCourses() {
                         </div>
                         <div className="flex gap-2">
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedLessonForQuiz(lesson);
+                              setQuizType('lesson');
+                              quizForm.reset({ 
+                                title: `Prova - ${lesson.title}`,
+                                passing_score: 70 
+                              });
+                              setQuizDialogOpen(true);
+                            }}
+                          >
+                            <ClipboardList className="w-4 h-4 mr-2" />
+                            Criar Prova
+                          </Button>
+                          <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => {
@@ -536,10 +607,129 @@ export default function AdminCourses() {
                       </div>
                     </div>
                   ))}
+                  
+                  {modules.length > 0 && (
+                    <div className="mt-6 pt-6 border-t">
+                      <h3 className="font-semibold mb-4">Módulos</h3>
+                      {modules.map((module) => (
+                        <div key={module.id} className="p-4 border rounded-lg mb-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{module.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {module.description}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedModuleForQuiz(module);
+                                setQuizType('module');
+                                quizForm.reset({ 
+                                  title: `Prova - ${module.title}`,
+                                  passing_score: 70 
+                                });
+                                setQuizDialogOpen(true);
+                              }}
+                            >
+                              <ClipboardList className="w-4 h-4 mr-2" />
+                              Criar Prova
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="pt-4 border-t">
+                    <Button
+                      variant="secondary"
+                      className="w-full"
+                      onClick={() => {
+                        setQuizType('final');
+                        quizForm.reset({ 
+                          title: `Prova Final - ${selectedCourse.title}`,
+                          passing_score: 70 
+                        });
+                        setQuizDialogOpen(true);
+                      }}
+                    >
+                      <ClipboardList className="w-4 h-4 mr-2" />
+                      Criar Prova Final do Curso
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
           </div>
+          
+          {/* Quiz Dialog */}
+          <Dialog open={quizDialogOpen} onOpenChange={setQuizDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {quizType === 'lesson' && 'Criar Prova de Aula'}
+                  {quizType === 'module' && 'Criar Prova de Módulo'}
+                  {quizType === 'final' && 'Criar Prova Final'}
+                </DialogTitle>
+              </DialogHeader>
+              <Form {...quizForm}>
+                <form onSubmit={quizForm.handleSubmit(onSubmitQuiz)} className="space-y-4">
+                  <FormField
+                    control={quizForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Título da Prova</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={quizForm.control}
+                    name="passing_score"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nota Mínima (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {quizType === 'lesson' && selectedLessonForQuiz && (
+                    <p className="text-sm text-muted-foreground">
+                      Vinculado à aula: <strong>{selectedLessonForQuiz.title}</strong>
+                    </p>
+                  )}
+                  {quizType === 'module' && selectedModuleForQuiz && (
+                    <p className="text-sm text-muted-foreground">
+                      Vinculado ao módulo: <strong>{selectedModuleForQuiz.title}</strong>
+                    </p>
+                  )}
+                  {quizType === 'final' && (
+                    <p className="text-sm text-muted-foreground">
+                      Esta será a prova final do curso <strong>{selectedCourse?.title}</strong>
+                    </p>
+                  )}
+                  <Button type="submit" className="w-full">
+                    Criar Prova
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>

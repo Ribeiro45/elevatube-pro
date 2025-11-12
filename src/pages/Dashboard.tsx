@@ -75,9 +75,8 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
-      const [enrollmentsRes, lessonsRes, progressRes, certificatesRes] = await Promise.all([
+      const [enrollmentsRes, progressRes, certificatesRes] = await Promise.all([
         supabase.from("enrollments").select("course_id, courses(*)"),
-        supabase.from("lessons").select("*"),
         supabase.from("user_progress").select("*"),
         supabase.from("certificates").select(`
           id,
@@ -94,16 +93,26 @@ const Dashboard = () => {
           .map((e: any) => e.courses)
           .filter((c: any) => c !== null) as Course[];
         setCourses(enrolledCourses);
-      }
-      if (lessonsRes.data) {
-        setLessons(lessonsRes.data);
         
-        // Calculate total study time from completed lessons
-        const completedLessonIds = progressRes.data?.filter(p => p.completed).map(p => p.lesson_id) || [];
-        const totalMinutes = lessonsRes.data
-          .filter(l => completedLessonIds.includes(l.id))
-          .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
-        setStudyTime(totalMinutes);
+        // Get only lessons from enrolled courses
+        const courseIds = enrolledCourses.map(c => c.id);
+        if (courseIds.length > 0) {
+          const { data: lessonsData } = await supabase
+            .from("lessons")
+            .select("*")
+            .in("course_id", courseIds);
+          
+          if (lessonsData) {
+            setLessons(lessonsData);
+            
+            // Calculate total study time from completed lessons
+            const completedLessonIds = progressRes.data?.filter(p => p.completed).map(p => p.lesson_id) || [];
+            const totalMinutes = lessonsData
+              .filter(l => completedLessonIds.includes(l.id))
+              .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+            setStudyTime(totalMinutes);
+          }
+        }
       }
       if (progressRes.data) setProgress(progressRes.data);
       if (certificatesRes.data) {
