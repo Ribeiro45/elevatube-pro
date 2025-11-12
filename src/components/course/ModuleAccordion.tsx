@@ -1,6 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Circle, BookOpen, FileCheck } from "lucide-react";
+import { CheckCircle2, Circle, BookOpen, FileCheck, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Lesson {
@@ -10,6 +10,8 @@ interface Lesson {
   duration_minutes: number;
   order_index: number;
   module_id: string | null;
+  hasQuiz?: boolean;
+  quizId?: string | null;
 }
 
 interface Module {
@@ -24,6 +26,7 @@ interface Module {
 interface ModuleAccordionProps {
   modules: Module[];
   completedLessons: Set<string>;
+  passedQuizzes: Set<string>;
   currentLessonId: string | null;
   onSelectLesson: (lesson: Lesson) => void;
   onSelectModuleQuiz: (moduleId: string) => void;
@@ -32,10 +35,28 @@ interface ModuleAccordionProps {
 export const ModuleAccordion = ({
   modules,
   completedLessons,
+  passedQuizzes,
   currentLessonId,
   onSelectLesson,
   onSelectModuleQuiz,
 }: ModuleAccordionProps) => {
+  
+  // Check if a lesson is unlocked
+  const isLessonUnlocked = (lesson: Lesson, lessonIndex: number, moduleLessons: Lesson[]) => {
+    // First lesson is always unlocked
+    if (lessonIndex === 0) return true;
+    
+    // Check previous lesson
+    const previousLesson = moduleLessons[lessonIndex - 1];
+    
+    // If previous lesson has a quiz, user must pass it to unlock this lesson
+    if (previousLesson.hasQuiz && previousLesson.quizId) {
+      return passedQuizzes.has(previousLesson.quizId);
+    }
+    
+    // Otherwise, lesson is unlocked
+    return true;
+  };
   return (
     <Card>
       <Accordion type="single" collapsible className="w-full">
@@ -83,30 +104,38 @@ export const ModuleAccordion = ({
                   </p>
                 )}
                 <div className="space-y-2">
-                  {module.lessons.map((lesson) => {
+                  {module.lessons.map((lesson, lessonIndex) => {
                     const isCompleted = completedLessons.has(lesson.id);
                     const isCurrent = currentLessonId === lesson.id;
+                    const isUnlocked = isLessonUnlocked(lesson, lessonIndex, module.lessons);
                     
                     return (
                       <button
                         key={lesson.id}
-                        onClick={() => onSelectLesson(lesson)}
+                        onClick={() => isUnlocked && onSelectLesson(lesson)}
+                        disabled={!isUnlocked}
                         className={cn(
                           "w-full text-left p-3 rounded-lg transition-colors flex items-start gap-3",
+                          !isUnlocked && "opacity-50 cursor-not-allowed",
                           isCurrent 
                             ? "bg-primary/10 border-2 border-primary" 
-                            : "hover:bg-muted border-2 border-transparent"
+                            : isUnlocked ? "hover:bg-muted border-2 border-transparent" : "border-2 border-transparent"
                         )}
                       >
-                        {isCompleted ? (
+                        {!isUnlocked ? (
+                          <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                        ) : isCompleted ? (
                           <CheckCircle2 className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                         ) : (
                           <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium line-clamp-2">{lesson.title}</p>
+                          <p className="font-medium line-clamp-2">
+                            {lesson.title}
+                            {!isUnlocked && " (Bloqueada)"}
+                          </p>
                           <p className="text-sm text-muted-foreground">
-                            {lesson.duration_minutes} min
+                            {!isUnlocked ? "Complete a prova anterior para desbloquear" : `${lesson.duration_minutes} min`}
                           </p>
                         </div>
                       </button>

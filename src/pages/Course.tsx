@@ -24,6 +24,8 @@ interface Lesson {
   order_index: number;
   duration_minutes: number;
   module_id: string | null;
+  hasQuiz?: boolean;
+  quizId?: string | null;
 }
 
 interface Module {
@@ -53,6 +55,7 @@ const Course = () => {
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [currentModuleQuiz, setCurrentModuleQuiz] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [passedQuizzes, setPassedQuizzes] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'lesson' | 'module-quiz' | 'final-exam'>('lesson');
   const [loading, setLoading] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -80,12 +83,13 @@ const Course = () => {
 
   const loadCourse = async () => {
     try {
-      const [courseRes, modulesRes, lessonsRes, progressRes, quizzesRes, certificateRes] = await Promise.all([
+      const [courseRes, modulesRes, lessonsRes, progressRes, moduleQuizzesRes, lessonQuizzesRes, certificateRes] = await Promise.all([
         supabase.from("courses").select("*").eq("id", id).single(),
         supabase.from("modules").select("*").eq("course_id", id).order("order_index"),
         supabase.from("lessons").select("*").eq("course_id", id).order("order_index"),
         supabase.from("user_progress").select("*").eq("user_id", user?.id),
-        supabase.from("quizzes").select("id, module_id").not("module_id", "is", null),
+        supabase.from("quizzes").select("id, module_id").eq("course_id", id).not("module_id", "is", null),
+        supabase.from("quizzes").select("id, lesson_id").eq("course_id", id).not("lesson_id", "is", null),
         supabase.from("certificates").select("id").eq("user_id", user?.id).eq("course_id", id).maybeSingle(),
       ]);
 
@@ -99,16 +103,26 @@ const Course = () => {
       if (modulesRes.data && lessonsRes.data) {
         // Check which modules have quizzes
         const moduleQuizMap = new Map(
-          quizzesRes.data?.map(q => [q.module_id, true]) || []
+          moduleQuizzesRes.data?.map(q => [q.module_id, true]) || []
+        );
+        
+        // Check which lessons have quizzes
+        const lessonQuizMap = new Map(
+          lessonQuizzesRes.data?.map(q => [q.lesson_id, q.id]) || []
         );
 
         if (modulesRes.data.length > 0) {
-          // Organize lessons by module
+          // Organize lessons by module and attach quiz info
           const modulesWithLessons = modulesRes.data.map(module => ({
             ...module,
             lessons: lessonsRes.data
               .filter(l => l.module_id === module.id)
-              .sort((a, b) => a.order_index - b.order_index),
+              .sort((a, b) => a.order_index - b.order_index)
+              .map(lesson => ({
+                ...lesson,
+                hasQuiz: lessonQuizMap.has(lesson.id),
+                quizId: lessonQuizMap.get(lesson.id) || null,
+              })),
             hasQuiz: moduleQuizMap.has(module.id),
           }));
 
@@ -143,6 +157,17 @@ const Course = () => {
           progressRes.data.filter(p => p.completed).map(p => p.lesson_id)
         );
         setCompletedLessons(completed);
+      }
+
+      // Fetch passed quizzes
+      const { data: passedQuizzesData } = await supabase
+        .from('user_quiz_attempts')
+        .select('quiz_id')
+        .eq('user_id', user?.id)
+        .eq('passed', true);
+
+      if (passedQuizzesData) {
+        setPassedQuizzes(new Set(passedQuizzesData.map(q => q.quiz_id)));
       }
     } catch (error) {
       console.error("Error loading course:", error);
@@ -415,6 +440,7 @@ const Course = () => {
               <ModuleAccordion
                 modules={modules}
                 completedLessons={completedLessons}
+                passedQuizzes={passedQuizzes}
                 currentLessonId={currentLesson?.id || null}
                 onSelectLesson={(lesson) => {
                   setCurrentLesson(lesson);
