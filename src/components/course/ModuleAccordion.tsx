@@ -43,19 +43,19 @@ export const ModuleAccordion = ({
   
   // Check if a lesson is unlocked
   const isLessonUnlocked = (lesson: Lesson, lessonIndex: number, moduleLessons: Lesson[]) => {
-    // First lesson is always unlocked
+    // First lesson of the module is always unlocked
     if (lessonIndex === 0) return true;
     
     // Check previous lesson
     const previousLesson = moduleLessons[lessonIndex - 1];
     
-    // If previous lesson has a quiz, user must pass it to unlock this lesson
+    // Previous lesson must have a quiz and user must pass it to unlock this lesson
     if (previousLesson.hasQuiz && previousLesson.quizId) {
       return passedQuizzes.has(previousLesson.quizId);
     }
     
-    // Otherwise, lesson is unlocked
-    return true;
+    // If previous lesson doesn't have a quiz, it must be completed
+    return completedLessons.has(previousLesson.id);
   };
   return (
     <Card>
@@ -135,7 +135,11 @@ export const ModuleAccordion = ({
                             {!isUnlocked && " (Bloqueada)"}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {!isUnlocked ? "Complete a prova anterior para desbloquear" : `${lesson.duration_minutes} min`}
+                            {!isUnlocked ? (
+                              lessonIndex > 0 && module.lessons[lessonIndex - 1].hasQuiz
+                                ? "Passe na prova anterior para desbloquear"
+                                : "Complete a aula anterior para desbloquear"
+                            ) : `${lesson.duration_minutes} min`}
                           </p>
                         </div>
                       </button>
