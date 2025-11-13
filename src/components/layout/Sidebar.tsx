@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Award, Users, LogOut, Moon, Sun, Shield, Library, User } from 'lucide-react';
+import { Home, BookOpen, Award, Users, LogOut, Moon, Sun, Shield, Library, User, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -63,6 +63,7 @@ export const Sidebar = () => {
     { icon: Library, label: 'Meus Cursos', path: '/my-courses' },
     { icon: BookOpen, label: 'Cursos', path: '/courses' },
     { icon: Award, label: 'Certificados', path: '/certificates' },
+    { icon: HelpCircle, label: 'FAQ', path: '/faq' },
     { icon: User, label: 'Meu Perfil', path: '/profile' },
   ];
 
@@ -71,6 +72,7 @@ export const Sidebar = () => {
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
     { icon: Shield, label: 'Acesso aos Cursos', path: '/admin/course-access' },
+    { icon: HelpCircle, label: 'Gerenciar FAQ', path: '/admin/faq' },
     { icon: BookOpen, label: 'Editor de Demo', path: '/admin/demo' },
     { icon: BookOpen, label: 'Configurações do Site', path: '/admin/settings' },
   ];

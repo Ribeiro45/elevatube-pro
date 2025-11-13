@@ -14,6 +14,7 @@ import Courses from "./pages/Courses";
 import Course from "./pages/Course";
 import Certificates from "./pages/Certificates";
 import Profile from "./pages/Profile";
+import FAQ from "./pages/FAQ";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -23,6 +24,7 @@ import AdminQuizzes from "./pages/admin/AdminQuizzes";
 import AdminSiteSettings from "./pages/admin/AdminSiteSettings";
 import AdminCourseAccess from "./pages/admin/AdminCourseAccess";
 import AdminDemo from "./pages/admin/AdminDemo";
+import AdminFAQ from "./pages/admin/AdminFAQ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,11 +46,13 @@ const App = () => (
           <Route path="/courses" element={<Courses />} />
           <Route path="/course/:id" element={<Course />} />
           <Route path="/certificates" element={<Certificates />} />
+          <Route path="/faq" element={<FAQ />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/courses" element={<AdminRoute><AdminCourses /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
           <Route path="/admin/course-access" element={<AdminRoute><AdminCourseAccess /></AdminRoute>} />
+          <Route path="/admin/faq" element={<AdminRoute><AdminFAQ /></AdminRoute>} />
           <Route path="/admin/quizzes" element={<EditorRoute><AdminQuizzes /></EditorRoute>} />
           <Route path="/admin/demo" element={<AdminRoute><AdminDemo /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
