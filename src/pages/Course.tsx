@@ -177,8 +177,16 @@ const Course = () => {
     }
   };
 
+  const isCourseComplete = lessons.length > 0 && completedLessons.size === lessons.length;
+
   const toggleLessonComplete = async (lessonId: string) => {
     const isCompleted = completedLessons.has(lessonId);
+    
+    // Prevent unmarking lessons if course is complete
+    if (isCompleted && isCourseComplete) {
+      toast.info("Curso concluído! As aulas não podem ser desmarcadas.");
+      return;
+    }
     
     try {
       if (isCompleted) {
@@ -342,12 +350,13 @@ const Course = () => {
                           <Button
                             onClick={() => toggleLessonComplete(currentLesson.id)}
                             variant={completedLessons.has(currentLesson.id) ? "secondary" : "default"}
+                            disabled={isCourseComplete && completedLessons.has(currentLesson.id)}
                             className="w-full"
                           >
                             {completedLessons.has(currentLesson.id) ? (
                               <>
                                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Marcar como não concluída
+                                {isCourseComplete ? "Aula concluída (Modo visualização)" : "Marcar como não concluída"}
                               </>
                             ) : (
                               <>
