@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Edit, Upload } from 'lucide-react';
+import { Loader2, Plus, Trash2, Edit, Upload, ArrowLeft } from 'lucide-react';
 
 interface FAQ {
   id: string;
@@ -21,6 +22,7 @@ interface FAQ {
 }
 
 export default function AdminFAQ() {
+  const navigate = useNavigate();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,12 +45,12 @@ export default function AdminFAQ() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('faqs')
+        .from('faqs' as any)
         .select('*')
         .order('order_index', { ascending: true });
 
       if (error) throw error;
-      setFaqs(data || []);
+      setFaqs(data as any || []);
     } catch (error) {
       console.error('Error loading FAQs:', error);
       toast.error('Erro ao carregar FAQs');
@@ -114,7 +116,7 @@ export default function AdminFAQ() {
 
       if (editingFAQ) {
         const { error } = await supabase
-          .from('faqs')
+          .from('faqs' as any)
           .update(faqData)
           .eq('id', editingFAQ.id);
 
@@ -122,7 +124,7 @@ export default function AdminFAQ() {
         toast.success('FAQ atualizado com sucesso');
       } else {
         const { error } = await supabase
-          .from('faqs')
+          .from('faqs' as any)
           .insert([faqData]);
 
         if (error) throw error;
@@ -163,7 +165,7 @@ export default function AdminFAQ() {
       }
 
       const { error } = await supabase
-        .from('faqs')
+        .from('faqs' as any)
         .delete()
         .eq('id', id);
 
@@ -197,6 +199,14 @@ export default function AdminFAQ() {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/admin/dashboard')}
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Voltar ao Dashboard
+      </Button>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold mb-2">Gerenciar FAQ</h1>
