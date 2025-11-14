@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -22,6 +23,7 @@ interface FAQ {
 }
 
 export default function FAQ() {
+  const navigate = useNavigate();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [userType, setUserType] = useState<string>('colaborador');
@@ -56,18 +58,20 @@ export default function FAQ() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('faqs')
+        .from('faqs' as any)
         .select('*')
         .order('order_index', { ascending: true });
 
       if (error) throw error;
-      setFaqs(data || []);
+      setFaqs(data as any || []);
       
       // Initialize page numbers
       const initialPages: { [key: string]: number } = {};
-      data?.forEach(faq => {
-        initialPages[faq.id] = 1;
-      });
+      if (data) {
+        (data as any[]).forEach((faq: any) => {
+          initialPages[faq.id] = 1;
+        });
+      }
       setPageNumbers(initialPages);
     } catch (error) {
       console.error('Error loading FAQs:', error);
@@ -106,6 +110,14 @@ export default function FAQ() {
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/dashboard')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar ao Dashboard
+        </Button>
         <h1 className="text-4xl font-bold mb-2">FAQ - Perguntas Frequentes</h1>
         <p className="text-muted-foreground">
           Encontre respostas para as perguntas mais comuns
