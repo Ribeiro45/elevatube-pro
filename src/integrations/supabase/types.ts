@@ -168,6 +168,56 @@ export type Database = {
         }
         Relationships: []
       }
+      faqs: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_section: boolean
+          order_index: number
+          parent_id: string | null
+          pdf_pages: Json | null
+          pdf_url: string | null
+          target_audience: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_section?: boolean
+          order_index?: number
+          parent_id?: string | null
+          pdf_pages?: Json | null
+          pdf_url?: string | null
+          target_audience: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_section?: boolean
+          order_index?: number
+          parent_id?: string | null
+          pdf_pages?: Json | null
+          pdf_url?: string | null
+          target_audience?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faqs_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "faqs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           course_id: string | null
