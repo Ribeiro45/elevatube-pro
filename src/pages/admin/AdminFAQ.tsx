@@ -19,6 +19,8 @@ interface FAQ {
   target_audience: string;
   pdf_url: string | null;
   order_index: number;
+  parent_id: string | null;
+  is_section: boolean;
 }
 
 export default function AdminFAQ() {
@@ -34,6 +36,8 @@ export default function AdminFAQ() {
     description: '',
     target_audience: 'ambos',
     order_index: 0,
+    parent_id: null as string | null,
+    is_section: false,
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
 
@@ -149,6 +153,8 @@ export default function AdminFAQ() {
       description: faq.description || '',
       target_audience: faq.target_audience,
       order_index: faq.order_index,
+      parent_id: faq.parent_id,
+      is_section: faq.is_section,
     });
     setIsDialogOpen(true);
   };
@@ -184,6 +190,8 @@ export default function AdminFAQ() {
       description: '',
       target_audience: 'ambos',
       order_index: 0,
+      parent_id: null,
+      is_section: false,
     });
     setPdfFile(null);
     setEditingFAQ(null);
@@ -233,13 +241,51 @@ export default function AdminFAQ() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="is_section">Tipo *</Label>
+                <Select
+                  value={formData.is_section ? 'section' : 'item'}
+                  onValueChange={(value) => setFormData({ ...formData, is_section: value === 'section' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="section">Seção Principal</SelectItem>
+                    <SelectItem value="item">Item de FAQ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {!formData.is_section && (
+                <div className="space-y-2">
+                  <Label htmlFor="parent_id">Seção Pai *</Label>
+                  <Select
+                    value={formData.parent_id || 'none'}
+                    onValueChange={(value) => setFormData({ ...formData, parent_id: value === 'none' ? null : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma seção" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem seção</SelectItem>
+                      {faqs.filter(f => f.is_section).map(section => (
+                        <SelectItem key={section.id} value={section.id}>
+                          {section.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
                 <Label htmlFor="title">Título *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
-                  placeholder="Digite o título do FAQ"
+                  placeholder={formData.is_section ? "Ex: FAQ-Administrativo" : "Digite o título do FAQ"}
                 />
               </div>
 
@@ -282,26 +328,28 @@ export default function AdminFAQ() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="pdf">PDF {!editingFAQ && '*'}</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="pdf"
-                    type="file"
-                    accept="application/pdf"
-                    onChange={handleFileChange}
-                    required={!editingFAQ}
-                  />
-                  {pdfFile && (
-                    <Upload className="w-5 h-5 text-green-500" />
+              {!formData.is_section && (
+                <div className="space-y-2">
+                  <Label htmlFor="pdf">PDF {!editingFAQ && '*'}</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="pdf"
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleFileChange}
+                      required={!editingFAQ && !formData.is_section}
+                    />
+                    {pdfFile && (
+                      <Upload className="w-5 h-5 text-green-500" />
+                    )}
+                  </div>
+                  {editingFAQ?.pdf_url && (
+                    <p className="text-sm text-muted-foreground">
+                      PDF atual: <a href={editingFAQ.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver PDF</a>
+                    </p>
                   )}
                 </div>
-                {editingFAQ?.pdf_url && (
-                  <p className="text-sm text-muted-foreground">
-                    PDF atual: <a href={editingFAQ.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver PDF</a>
-                  </p>
-                )}
-              </div>
+              )}
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -334,58 +382,154 @@ export default function AdminFAQ() {
               Nenhum FAQ cadastrado ainda.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ordem</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Público-alvo</TableHead>
-                  <TableHead>PDF</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {faqs.map((faq) => (
-                  <TableRow key={faq.id}>
-                    <TableCell>{faq.order_index}</TableCell>
-                    <TableCell className="font-medium">{faq.title}</TableCell>
-                    <TableCell className="capitalize">{faq.target_audience}</TableCell>
-                    <TableCell>
-                      {faq.pdf_url ? (
-                        <a
-                          href={faq.pdf_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          Ver PDF
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">Sem PDF</span>
+            <div className="space-y-6">
+              {faqs.filter(f => f.is_section).map(section => (
+                <div key={section.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">{section.title}</h3>
+                      {section.description && (
+                        <p className="text-sm text-muted-foreground">{section.description}</p>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(faq)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(faq.id, faq.pdf_url)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Público: <span className="capitalize">{section.target_audience}</span> | Ordem: {section.order_index}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(section)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(section.id, section.pdf_url)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="ml-4 space-y-2">
+                    {faqs.filter(f => f.parent_id === section.id).length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">Nenhum item nesta seção</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-16">Ordem</TableHead>
+                            <TableHead>Título</TableHead>
+                            <TableHead>PDF</TableHead>
+                            <TableHead className="text-right w-24">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {faqs.filter(f => f.parent_id === section.id).map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.order_index}</TableCell>
+                              <TableCell className="font-medium">{item.title}</TableCell>
+                              <TableCell>
+                                {item.pdf_url ? (
+                                  <a
+                                    href={item.pdf_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline text-sm"
+                                  >
+                                    Ver PDF
+                                  </a>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">Sem PDF</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEdit(item)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDelete(item.id, item.pdf_url)}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {faqs.filter(f => !f.is_section && !f.parent_id).length > 0 && (
+                <div className="border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-4">Itens sem seção</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ordem</TableHead>
+                        <TableHead>Título</TableHead>
+                        <TableHead>Público-alvo</TableHead>
+                        <TableHead>PDF</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {faqs.filter(f => !f.is_section && !f.parent_id).map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.order_index}</TableCell>
+                          <TableCell className="font-medium">{item.title}</TableCell>
+                          <TableCell className="capitalize">{item.target_audience}</TableCell>
+                          <TableCell>
+                            {item.pdf_url ? (
+                              <a
+                                href={item.pdf_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                Ver PDF
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">Sem PDF</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(item)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(item.id, item.pdf_url)}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

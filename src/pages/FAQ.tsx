@@ -20,6 +20,8 @@ interface FAQ {
   target_audience: string;
   pdf_url: string | null;
   pdf_pages: any;
+  parent_id: string | null;
+  is_section: boolean;
 }
 
 export default function FAQ() {
@@ -92,12 +94,14 @@ export default function FAQ() {
     }));
   };
 
-  const filteredFAQs = faqs.filter(faq => {
-    if (faq.target_audience === 'ambos') return true;
-    if (userType === 'cliente' && faq.target_audience === 'cliente') return true;
-    if (userType === 'colaborador' && faq.target_audience === 'colaborador') return true;
-    return false;
-  });
+  const filteredFAQs = (audience: string) => {
+    return faqs.filter(faq => {
+      if (faq.target_audience === 'ambos') return true;
+      if (audience === 'cliente' && faq.target_audience === 'cliente') return true;
+      if (audience === 'colaborador' && faq.target_audience === 'colaborador') return true;
+      return false;
+    });
+  };
 
   if (loading) {
     return (
