@@ -103,6 +103,85 @@ export default function FAQ() {
     });
   };
 
+  const renderFAQItem = (subFaq: FAQ) => (
+    <Card key={subFaq.id}>
+      <CardHeader>
+        <CardTitle className="text-lg">{subFaq.title}</CardTitle>
+        {subFaq.description && (
+          <CardDescription>{subFaq.description}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent>
+        {subFaq.pdf_url && (
+          <div className="space-y-4">
+            <div className="border rounded-lg overflow-hidden bg-muted/20">
+              <Document
+                file={subFaq.pdf_url}
+                onLoadSuccess={(pdf) => onDocumentLoadSuccess(subFaq.id, pdf)}
+                loading={
+                  <div className="flex items-center justify-center p-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                }
+              >
+                <Page
+                  pageNumber={pageNumbers[subFaq.id] || 1}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="mx-auto"
+                />
+              </Document>
+            </div>
+            
+            {numPages[subFaq.id] && numPages[subFaq.id] > 1 && (
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changePage(subFaq.id, -1)}
+                  disabled={(pageNumbers[subFaq.id] || 1) <= 1}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Anterior
+                </Button>
+                
+                <span className="text-sm text-muted-foreground">
+                  Página {pageNumbers[subFaq.id] || 1} de {numPages[subFaq.id]}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changePage(subFaq.id, 1)}
+                  disabled={(pageNumbers[subFaq.id] || 1) >= numPages[subFaq.id]}
+                >
+                  Próxima
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderFAQSection = (section: FAQ, sectionFAQs: FAQ[]) => (
+    <Card key={section.id}>
+      <CardHeader>
+        <CardTitle>{section.title}</CardTitle>
+        {section.description && (
+          <CardDescription>{section.description}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4 ml-6">
+          {sectionFAQs.map(renderFAQItem)}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -136,206 +215,35 @@ export default function FAQ() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-6">
-          {filteredFAQs.length === 0 ? (
+          {faqs.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground">Nenhum FAQ disponível no momento.</p>
               </CardContent>
             </Card>
           ) : (
-            filteredFAQs.map((faq) => (
-              <Card key={faq.id}>
-                <CardHeader>
-                  <CardTitle>{faq.title}</CardTitle>
-                  {faq.description && (
-                    <CardDescription>{faq.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {faq.pdf_url && (
-                    <div className="space-y-4">
-                      <div className="border rounded-lg overflow-hidden bg-muted/20">
-                        <Document
-                          file={faq.pdf_url}
-                          onLoadSuccess={(pdf) => onDocumentLoadSuccess(faq.id, pdf)}
-                          loading={
-                            <div className="flex items-center justify-center p-12">
-                              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            </div>
-                          }
-                        >
-                          <Page
-                            pageNumber={pageNumbers[faq.id] || 1}
-                            renderTextLayer={true}
-                            renderAnnotationLayer={true}
-                            className="mx-auto"
-                          />
-                        </Document>
-                      </div>
-                      
-                      {numPages[faq.id] && numPages[faq.id] > 1 && (
-                        <div className="flex items-center justify-center gap-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => changePage(faq.id, -1)}
-                            disabled={(pageNumbers[faq.id] || 1) <= 1}
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                            Anterior
-                          </Button>
-                          
-                          <span className="text-sm text-muted-foreground">
-                            Página {pageNumbers[faq.id] || 1} de {numPages[faq.id]}
-                          </span>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => changePage(faq.id, 1)}
-                            disabled={(pageNumbers[faq.id] || 1) >= numPages[faq.id]}
-                          >
-                            Próxima
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+            faqs.filter(f => f.is_section).map((section) => 
+              renderFAQSection(section, faqs.filter(subFaq => subFaq.parent_id === section.id))
+            )
           )}
         </TabsContent>
 
         <TabsContent value="cliente" className="space-y-6">
-          {filteredFAQs.filter(f => f.target_audience === 'cliente' || f.target_audience === 'ambos').map((faq) => (
-            <Card key={faq.id}>
-              <CardHeader>
-                <CardTitle>{faq.title}</CardTitle>
-                {faq.description && (
-                  <CardDescription>{faq.description}</CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                {faq.pdf_url && (
-                  <div className="space-y-4">
-                    <div className="border rounded-lg overflow-hidden bg-muted/20">
-                      <Document
-                        file={faq.pdf_url}
-                        onLoadSuccess={(pdf) => onDocumentLoadSuccess(faq.id, pdf)}
-                        loading={
-                          <div className="flex items-center justify-center p-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                          </div>
-                        }
-                      >
-                        <Page
-                          pageNumber={pageNumbers[faq.id] || 1}
-                          renderTextLayer={true}
-                          renderAnnotationLayer={true}
-                          className="mx-auto"
-                        />
-                      </Document>
-                    </div>
-                    
-                    {numPages[faq.id] && numPages[faq.id] > 1 && (
-                      <div className="flex items-center justify-center gap-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => changePage(faq.id, -1)}
-                          disabled={(pageNumbers[faq.id] || 1) <= 1}
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                          Anterior
-                        </Button>
-                        
-                        <span className="text-sm text-muted-foreground">
-                          Página {pageNumbers[faq.id] || 1} de {numPages[faq.id]}
-                        </span>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => changePage(faq.id, 1)}
-                          disabled={(pageNumbers[faq.id] || 1) >= numPages[faq.id]}
-                        >
-                          Próxima
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+          {filteredFAQs('cliente').filter(f => f.is_section).map((section) => 
+            renderFAQSection(
+              section, 
+              filteredFAQs('cliente').filter(subFaq => subFaq.parent_id === section.id)
+            )
+          )}
         </TabsContent>
 
         <TabsContent value="colaborador" className="space-y-6">
-          {filteredFAQs.filter(f => f.target_audience === 'colaborador' || f.target_audience === 'ambos').map((faq) => (
-            <Card key={faq.id}>
-              <CardHeader>
-                <CardTitle>{faq.title}</CardTitle>
-                {faq.description && (
-                  <CardDescription>{faq.description}</CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                {faq.pdf_url && (
-                  <div className="space-y-4">
-                    <div className="border rounded-lg overflow-hidden bg-muted/20">
-                      <Document
-                        file={faq.pdf_url}
-                        onLoadSuccess={(pdf) => onDocumentLoadSuccess(faq.id, pdf)}
-                        loading={
-                          <div className="flex items-center justify-center p-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                          </div>
-                        }
-                      >
-                        <Page
-                          pageNumber={pageNumbers[faq.id] || 1}
-                          renderTextLayer={true}
-                          renderAnnotationLayer={true}
-                          className="mx-auto"
-                        />
-                      </Document>
-                    </div>
-                    
-                    {numPages[faq.id] && numPages[faq.id] > 1 && (
-                      <div className="flex items-center justify-center gap-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => changePage(faq.id, -1)}
-                          disabled={(pageNumbers[faq.id] || 1) <= 1}
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                          Anterior
-                        </Button>
-                        
-                        <span className="text-sm text-muted-foreground">
-                          Página {pageNumbers[faq.id] || 1} de {numPages[faq.id]}
-                        </span>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => changePage(faq.id, 1)}
-                          disabled={(pageNumbers[faq.id] || 1) >= numPages[faq.id]}
-                        >
-                          Próxima
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+          {filteredFAQs('colaborador').filter(f => f.is_section).map((section) => 
+            renderFAQSection(
+              section, 
+              filteredFAQs('colaborador').filter(subFaq => subFaq.parent_id === section.id)
+            )
+          )}
         </TabsContent>
       </Tabs>
     </div>
