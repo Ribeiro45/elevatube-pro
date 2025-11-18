@@ -31,6 +31,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const form = useForm<ProfileFormData>({
@@ -115,6 +116,7 @@ const Profile = () => {
 
       setAvatarUrl(publicUrl);
       setAvatarFile(null);
+      setAvatarPreview("");
       toast({
         title: "Sucesso",
         description: "Foto atualizada com sucesso!",
@@ -184,7 +186,9 @@ const Profile = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
-                  {avatarUrl && <AvatarImage src={avatarUrl} className="object-cover" />}
+                  {(avatarPreview || avatarUrl) && (
+                    <AvatarImage src={avatarPreview || avatarUrl} className="object-cover" />
+                  )}
                   <AvatarFallback className="bg-primary/10 text-primary">
                     <User size={40} />
                   </AvatarFallback>
@@ -193,18 +197,42 @@ const Profile = () => {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setAvatarFile(file);
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setAvatarPreview(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      } else {
+                        setAvatarPreview("");
+                      }
+                    }}
                     disabled={uploadingAvatar}
                   />
                   {avatarFile && (
-                    <Button 
-                      onClick={handleAvatarUpload} 
-                      disabled={uploadingAvatar}
-                      className="w-full"
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      {uploadingAvatar ? "Enviando..." : "Salvar Foto"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleAvatarUpload} 
+                        disabled={uploadingAvatar}
+                        className="flex-1"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploadingAvatar ? "Enviando..." : "Salvar Foto"}
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setAvatarFile(null);
+                          setAvatarPreview("");
+                        }}
+                        disabled={uploadingAvatar}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
