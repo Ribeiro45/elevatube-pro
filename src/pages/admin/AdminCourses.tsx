@@ -35,7 +35,7 @@ const quizSchema = z.object({
   passing_score: z.number().min(0).max(100).default(70),
 });
 
-export default function AdminCourses() {
+function AdminCourses() {
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [lessons, setLessons] = useState<any[]>([]);
@@ -284,9 +284,8 @@ export default function AdminCourses() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 p-8">
+    <div className="space-y-8">
+      <main className="w-full">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex justify-between items-center">
             <div>
@@ -735,3 +734,5 @@ export default function AdminCourses() {
     </div>
   );
 }
+
+export default AdminCourses;

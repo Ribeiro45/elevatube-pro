@@ -106,7 +106,6 @@ export const Sidebar = () => {
   ];
 
   const editorMenuItems = [
-    { icon: Award, label: 'Gerenciar Provas', path: '/admin/quizzes' },
   ];
 
   return (

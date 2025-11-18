@@ -32,7 +32,7 @@ const answerSchema = z.object({
   is_correct: z.boolean(),
 });
 
-export default function AdminQuizzes() {
+function AdminQuizzes() {
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -214,9 +214,8 @@ export default function AdminQuizzes() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 p-8">
+    <div className="space-y-8">
+      <main className="w-full">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex justify-between items-center">
             <h1 className="text-4xl font-bold">Gerenciar Provas</h1>
@@ -507,3 +506,5 @@ export default function AdminQuizzes() {
     </div>
   );
 }
+
+export default AdminQuizzes;
