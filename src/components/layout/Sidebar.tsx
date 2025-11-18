@@ -24,6 +24,33 @@ export const Sidebar = () => {
 
   useEffect(() => {
     loadUserProfile();
+    
+    // Listen for profile changes in realtime
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          console.log('Profile updated:', payload);
+          if (payload.new.full_name) {
+            setUserName(payload.new.full_name);
+          }
+          if (payload.new.avatar_url) {
+            // Add timestamp to force cache refresh
+            setAvatarUrl(`${payload.new.avatar_url}?t=${Date.now()}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadUserProfile = async () => {
@@ -39,7 +66,8 @@ export const Sidebar = () => {
         setUserName(profile.full_name);
       }
       if (profile?.avatar_url) {
-        setAvatarUrl(profile.avatar_url);
+        // Add timestamp to force cache refresh
+        setAvatarUrl(`${profile.avatar_url}?t=${Date.now()}`);
       }
     }
   };
