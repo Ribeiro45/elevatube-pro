@@ -74,7 +74,12 @@ const Profile = () => {
           phone: data.phone || "",
           birth_date: data.birth_date || "",
         });
-        setAvatarUrl(data.avatar_url || "");
+        // Add timestamp to avatar URL to prevent caching
+        const avatarUrlWithTimestamp = data.avatar_url 
+          ? `${data.avatar_url}?t=${Date.now()}`
+          : "";
+        console.log("Avatar URL carregado:", avatarUrlWithTimestamp);
+        setAvatarUrl(avatarUrlWithTimestamp);
       }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
@@ -94,6 +99,7 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      console.log("Iniciando upload de avatar...");
       const fileExt = avatarFile.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
 
@@ -102,10 +108,15 @@ const Profile = () => {
         .upload(fileName, avatarFile, { upsert: true });
 
       if (uploadError) throw uploadError;
+      console.log("Upload realizado com sucesso");
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
+
+      // Add timestamp to force cache refresh
+      const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+      console.log("Nova URL do avatar:", urlWithTimestamp);
 
       const { error: updateError } = await supabase
         .from('profiles')
@@ -114,9 +125,16 @@ const Profile = () => {
 
       if (updateError) throw updateError;
 
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(urlWithTimestamp);
       setAvatarFile(null);
       setAvatarPreview("");
+      
+      // Force reload of avatar
+      const avatarElement = document.querySelector('[data-avatar-image]') as HTMLImageElement;
+      if (avatarElement) {
+        avatarElement.src = urlWithTimestamp;
+      }
+
       toast({
         title: "Sucesso",
         description: "Foto atualizada com sucesso!",
@@ -187,7 +205,12 @@ const Profile = () => {
               <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
                   {(avatarPreview || avatarUrl) && (
-                    <AvatarImage src={avatarPreview || avatarUrl} className="object-cover" />
+                    <AvatarImage 
+                      src={avatarPreview || avatarUrl} 
+                      className="object-cover" 
+                      data-avatar-image
+                      key={avatarUrl}
+                    />
                   )}
                   <AvatarFallback className="bg-primary/10 text-primary">
                     <User size={40} />
@@ -199,11 +222,18 @@ const Profile = () => {
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0] || null;
+                      console.log("Arquivo selecionado:", file?.name);
                       setAvatarFile(file);
                       if (file) {
+                        console.log("Criando preview da imagem...");
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          setAvatarPreview(reader.result as string);
+                          const result = reader.result as string;
+                          console.log("Preview criado, tamanho:", result.length);
+                          setAvatarPreview(result);
+                        };
+                        reader.onerror = () => {
+                          console.error("Erro ao criar preview");
                         };
                         reader.readAsDataURL(file);
                       } else {
@@ -225,6 +255,7 @@ const Profile = () => {
                       <Button 
                         variant="outline"
                         onClick={() => {
+                          console.log("Cancelando upload");
                           setAvatarFile(null);
                           setAvatarPreview("");
                         }}
