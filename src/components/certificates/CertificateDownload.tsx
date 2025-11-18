@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import logoNewStandard from "@/assets/logo-newstandard.png";
 
 interface CertificateDownloadProps {
   courseTitle: string;
@@ -27,7 +28,7 @@ export const generateCertificatePDF = ({
   // Load New Standard logo
   const logo = new Image();
   logo.crossOrigin = 'anonymous';
-  logo.src = '/src/assets/logo-newstandard.png';
+  logo.src = logoNewStandard;
   
   logo.onload = () => {
     // Background gradient
