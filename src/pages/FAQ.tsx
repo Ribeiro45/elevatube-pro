@@ -201,7 +201,7 @@ export default function FAQ() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Dashboard
         </Button>
-        <h1 className="text-4xl font-bold mb-2">FAQ - Perguntas Frequentes</h1>
+        <h1 className="text-4xl font-bold mb-2">Base de Conhecimento</h1>
         <p className="text-muted-foreground">
           Encontre respostas para as perguntas mais comuns
         </p>
