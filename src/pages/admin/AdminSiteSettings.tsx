@@ -193,6 +193,10 @@ const AdminSiteSettings = () => {
                 <Video className="w-4 h-4 mr-2" />
                 Demo
               </TabsTrigger>
+              <TabsTrigger value="registration">
+                <Settings className="w-4 h-4 mr-2" />
+                Cadastro
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="hero" className="space-y-4">
