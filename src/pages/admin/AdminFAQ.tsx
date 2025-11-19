@@ -217,9 +217,9 @@ export default function AdminFAQ() {
       </Button>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Gerenciar FAQ</h1>
+          <h1 className="text-4xl font-bold mb-2">Gerenciar Base de Conhecimento</h1>
           <p className="text-muted-foreground">
-            Crie e gerencie perguntas frequentes com PDFs
+            Crie e gerencie a base de conhecimento com PDFs
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
