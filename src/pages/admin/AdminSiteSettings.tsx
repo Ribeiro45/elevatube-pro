@@ -182,7 +182,7 @@ const AdminSiteSettings = () => {
           </div>
 
           <Tabs defaultValue="hero" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="hero">
                 <Home className="w-4 h-4 mr-2" />
                 Hero
