@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,25 @@ export const AuthForm = () => {
   const [show2FAChallenge, setShow2FAChallenge] = useState(false);
   const [factorId, setFactorId] = useState("");
   const [mfaCode, setMfaCode] = useState("");
+  const [allowClientRegistration, setAllowClientRegistration] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRegistrationSettings = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'registration_settings')
+        .maybeSingle();
+      
+      if (data?.setting_value) {
+        const settings = data.setting_value as { allow_client_registration: boolean };
+        setAllowClientRegistration(settings.allow_client_registration);
+      }
+    };
+    
+    fetchRegistrationSettings();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -553,12 +571,18 @@ export const AuthForm = () => {
                       variant={userType === "cliente" ? "default" : "outline"}
                       className={cn(
                         "flex flex-col items-center gap-2 h-auto py-4 transition-all",
-                        userType === "cliente" && "ring-2 ring-primary"
+                        userType === "cliente" && "ring-2 ring-primary",
+                        !allowClientRegistration && "opacity-50 cursor-not-allowed"
                       )}
-                      onClick={() => setUserType("cliente")}
+                      onClick={() => allowClientRegistration && setUserType("cliente")}
+                      disabled={!allowClientRegistration}
+                      title={!allowClientRegistration ? "Cadastro de clientes temporariamente desabilitado" : ""}
                     >
                       <Building className="w-6 h-6" />
                       <span className="text-sm font-medium">Cliente</span>
+                      {!allowClientRegistration && (
+                        <span className="text-xs text-muted-foreground">(Em breve)</span>
+                      )}
                     </Button>
                   </div>
                 </div>

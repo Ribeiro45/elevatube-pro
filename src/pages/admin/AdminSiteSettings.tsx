@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Video, Award } from "lucide-react";
+import { Home, Video, Award, Settings } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Switch } from "@/components/ui/switch";
 
 interface SiteSettings {
   homepage_hero: {
@@ -39,6 +40,9 @@ interface SiteSettings {
     step3_description: string;
     step4_title: string;
     step4_description: string;
+  };
+  registration_settings: {
+    allow_client_registration: boolean;
   };
 }
 
@@ -75,6 +79,9 @@ const AdminSiteSettings = () => {
       step3_description: "",
       step4_title: "",
       step4_description: "",
+    },
+    registration_settings: {
+      allow_client_registration: false,
     },
   });
 
@@ -489,6 +496,41 @@ const AdminSiteSettings = () => {
                         rows={2}
                       />
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="registration" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configurações de Cadastro</CardTitle>
+                  <CardDescription>
+                    Controle quem pode se cadastrar na plataforma
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="allow-client-registration">
+                        Permitir Cadastro de Clientes
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Quando desabilitado, apenas colaboradores poderão se cadastrar
+                      </p>
+                    </div>
+                    <Switch
+                      id="allow-client-registration"
+                      checked={settings.registration_settings.allow_client_registration}
+                      onCheckedChange={(checked) =>
+                        setSettings({
+                          ...settings,
+                          registration_settings: {
+                            allow_client_registration: checked,
+                          },
+                        })
+                      }
+                    />
                   </div>
                 </CardContent>
               </Card>
