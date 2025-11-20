@@ -17,9 +17,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { TwoFactorSetup } from "@/components/auth/TwoFactorSetup";
 
 const profileSchema = z.object({
-  full_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome muito longo"),
+  full_name: z.string()
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .max(100, "Nome muito longo")
+    .regex(/^[A-Za-zÀ-ÿ\s]+$/, "Nome deve conter apenas letras e espaços"),
   email: z.string().email("Email inválido"),
-  phone: z.string().optional(),
+  phone: z.string()
+    .regex(/^[0-9]*$/, "Telefone deve conter apenas números")
+    .optional()
+    .or(z.literal("")),
   birth_date: z.string().optional(),
 });
 
