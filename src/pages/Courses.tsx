@@ -5,9 +5,10 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { BookOpen, Clock, Award } from "lucide-react";
+import { BookOpen, Clock, Award, Info } from "lucide-react";
 
 interface Course {
   id: string;
@@ -30,6 +31,8 @@ const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [showCourseDialog, setShowCourseDialog] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -102,6 +105,11 @@ const Courses = () => {
     return enrollments.some(e => e.course_id === courseId);
   };
 
+  const handleViewCourse = (course: Course) => {
+    setSelectedCourse(course);
+    setShowCourseDialog(true);
+  };
+
   const handleEnroll = async (courseId: string) => {
     if (!user) return;
 
@@ -113,6 +121,7 @@ const Courses = () => {
       if (error) throw error;
 
       toast.success("Inscrito no curso com sucesso!");
+      setShowCourseDialog(false);
       loadData();
     } catch (error) {
       console.error("Error enrolling:", error);
@@ -184,7 +193,7 @@ const Courses = () => {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex gap-2">
                     {isEnrolled(course.id) ? (
                       <Button 
                         className="w-full" 
@@ -193,12 +202,22 @@ const Courses = () => {
                         Acessar Curso
                       </Button>
                     ) : (
-                      <Button 
-                        className="w-full" 
-                        onClick={() => handleEnroll(course.id)}
-                      >
-                        Inscrever-se
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleViewCourse(course)}
+                        >
+                          <Info className="w-4 h-4 mr-2" />
+                          Ver Detalhes
+                        </Button>
+                        <Button 
+                          className="flex-1" 
+                          onClick={() => handleEnroll(course.id)}
+                        >
+                          Inscrever-se
+                        </Button>
+                      </>
                     )}
                   </CardFooter>
                 </Card>
@@ -206,6 +225,62 @@ const Courses = () => {
             </div>
           )}
         </div>
+
+        <Dialog open={showCourseDialog} onOpenChange={setShowCourseDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{selectedCourse?.title}</DialogTitle>
+              <DialogDescription>{selectedCourse?.description}</DialogDescription>
+            </DialogHeader>
+            
+            {selectedCourse && (
+              <div className="space-y-4">
+                {selectedCourse.thumbnail_url && (
+                  <div className="aspect-video relative overflow-hidden rounded-lg">
+                    <img
+                      src={selectedCourse.thumbnail_url || "/placeholder.svg"}
+                      alt={selectedCourse.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-3 gap-4">
+                  {selectedCourse.total_modules && (
+                    <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                      <BookOpen className="w-6 h-6 text-primary mb-2" />
+                      <p className="text-xl font-bold text-primary">{selectedCourse.total_modules}</p>
+                      <p className="text-xs text-muted-foreground">Módulos</p>
+                    </div>
+                  )}
+                  {selectedCourse.total_lessons && (
+                    <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                      <Award className="w-6 h-6 text-primary mb-2" />
+                      <p className="text-xl font-bold text-primary">{selectedCourse.total_lessons}</p>
+                      <p className="text-xs text-muted-foreground">Aulas</p>
+                    </div>
+                  )}
+                  {selectedCourse.duration && (
+                    <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                      <Clock className="w-6 h-6 text-primary mb-2" />
+                      <p className="text-xl font-bold text-primary">{selectedCourse.duration}</p>
+                      <p className="text-xs text-muted-foreground">Duração</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCourseDialog(false)}>
+                Fechar
+              </Button>
+              <Button onClick={() => selectedCourse && handleEnroll(selectedCourse.id)}>
+                Inscrever-se Agora
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
