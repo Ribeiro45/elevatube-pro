@@ -218,7 +218,7 @@ const Courses = () => {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter className="flex gap-2">
+                  <CardFooter className="flex flex-col gap-2">
                     {isEnrolled(course.id) ? (
                       <Button 
                         className="w-full" 
@@ -230,14 +230,14 @@ const Courses = () => {
                       <>
                         <Button 
                           variant="outline"
-                          className="flex-1"
+                          className="w-full"
                           onClick={() => handleViewCourse(course)}
                         >
                           <Info className="w-4 h-4 mr-2" />
                           Ver Detalhes
                         </Button>
                         <Button 
-                          className="flex-1" 
+                          className="w-full" 
                           onClick={() => handleEnroll(course.id)}
                         >
                           Inscrever-se
