@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, Download, Calendar } from "lucide-react";
+import { Award, Eye, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -9,7 +9,7 @@ interface CertificateCardProps {
   certificateNumber: string;
   issuedAt: string;
   studentName: string;
-  onDownload: () => void;
+  onPreview: () => void;
 }
 
 export const CertificateCard = ({
@@ -17,7 +17,7 @@ export const CertificateCard = ({
   certificateNumber,
   issuedAt,
   studentName,
-  onDownload,
+  onPreview,
 }: CertificateCardProps) => {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
@@ -55,11 +55,11 @@ export const CertificateCard = ({
         </div>
 
         <Button 
-          onClick={onDownload}
+          onClick={onPreview}
           className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Baixar Certificado
+          <Eye className="w-4 h-4 mr-2" />
+          Visualizar Certificado
         </Button>
       </CardContent>
     </Card>
