@@ -89,7 +89,7 @@ export const Sidebar = () => {
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: Library, label: 'Meus Cursos', path: '/my-courses' },
-    { icon: BookOpen, label: 'Cursos', path: '/courses' },
+    { icon: BookOpen, label: 'Todos os Cursos', path: '/courses' },
     { icon: Award, label: 'Certificados', path: '/certificates' },
     { icon: HelpCircle, label: 'Base de Conhecimento', path: '/faq' },
     { icon: User, label: 'Meu Perfil', path: '/profile' },
