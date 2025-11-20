@@ -58,6 +58,31 @@ const Courses = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to enrollment changes (INSERT and DELETE)
+    const channel = supabase
+      .channel('enrollments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'enrollments',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadData = async () => {
     try {
       // Get user profile to check user_type

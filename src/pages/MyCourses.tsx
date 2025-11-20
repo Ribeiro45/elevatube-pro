@@ -61,13 +61,13 @@ const MyCourses = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to enrollment changes
+    // Subscribe to enrollment changes (INSERT and DELETE)
     const channel = supabase
       .channel('enrollments-changes')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'enrollments',
           filter: `user_id=eq.${user.id}`
