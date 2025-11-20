@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CertificateCard } from "@/components/certificates/CertificateCard";
-import { generateCertificatePDF } from "@/components/certificates/CertificateDownload";
+import { CertificatePreview } from "@/components/certificates/CertificatePreview";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Award } from "lucide-react";
 import { User } from "@supabase/supabase-js";
@@ -25,6 +25,8 @@ const Certificates = () => {
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -115,15 +117,9 @@ const Certificates = () => {
     }
   };
 
-  const handleDownload = (certificate: Certificate) => {
-    generateCertificatePDF({
-      courseTitle: certificate.course.title,
-      studentName: profile?.full_name || "Estudante",
-      certificateNumber: certificate.certificate_number,
-      issuedAt: certificate.issued_at,
-      totalHours: certificate.course.total_hours,
-    });
-    toast.success("Download iniciado!");
+  const handlePreview = (certificate: Certificate) => {
+    setSelectedCertificate(certificate);
+    setPreviewOpen(true);
   };
 
   return (
@@ -173,13 +169,25 @@ const Certificates = () => {
                     certificateNumber={certificate.certificate_number}
                     issuedAt={certificate.issued_at}
                     studentName={profile?.full_name || "Estudante"}
-                    onDownload={() => handleDownload(certificate)}
+                    onPreview={() => handlePreview(certificate)}
                   />
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {selectedCertificate && (
+          <CertificatePreview
+            open={previewOpen}
+            onOpenChange={setPreviewOpen}
+            courseTitle={selectedCertificate.course.title}
+            studentName={profile?.full_name || "Estudante"}
+            certificateNumber={selectedCertificate.certificate_number}
+            issuedAt={selectedCertificate.issued_at}
+            totalHours={selectedCertificate.course.total_hours}
+          />
+        )}
       </main>
     </div>
   );
