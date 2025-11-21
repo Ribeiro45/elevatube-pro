@@ -1,9 +1,14 @@
+import { useEffect, useRef, useState } from "react";
+
 interface VideoPlayerProps {
   youtubeUrl: string;
   title: string;
+  onProgress90?: () => void;
 }
 
-export const VideoPlayer = ({ youtubeUrl, title }: VideoPlayerProps) => {
+export const VideoPlayer = ({ youtubeUrl, title, onProgress90 }: VideoPlayerProps) => {
+  const [hasReached90, setHasReached90] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   // Extract video ID from YouTube URL
   const getYouTubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -12,6 +17,58 @@ export const VideoPlayer = ({ youtubeUrl, title }: VideoPlayerProps) => {
   };
 
   const videoId = getYouTubeId(youtubeUrl);
+
+  useEffect(() => {
+    setHasReached90(false);
+  }, [videoId]);
+
+  useEffect(() => {
+    if (!videoId || !onProgress90) return;
+
+    const checkProgress = () => {
+      if (!iframeRef.current || hasReached90) return;
+      
+      iframeRef.current.contentWindow?.postMessage(
+        '{"event":"command","func":"getCurrentTime","args":""}',
+        '*'
+      );
+      iframeRef.current.contentWindow?.postMessage(
+        '{"event":"command","func":"getDuration","args":""}',
+        '*'
+      );
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://www.youtube.com') return;
+      
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.event === 'infoDelivery' && data.info) {
+          const { currentTime, duration } = data.info;
+          
+          if (currentTime && duration && !hasReached90) {
+            const progress = (currentTime / duration) * 100;
+            
+            if (progress >= 90) {
+              setHasReached90(true);
+              onProgress90();
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore parsing errors
+      }
+    };
+
+    const interval = setInterval(checkProgress, 2000);
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [videoId, onProgress90, hasReached90]);
 
   if (!videoId) {
     return (
@@ -24,9 +81,10 @@ export const VideoPlayer = ({ youtubeUrl, title }: VideoPlayerProps) => {
   return (
     <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
       <iframe
+        ref={iframeRef}
         width="100%"
         height="100%"
-        src={`https://www.youtube.com/embed/${videoId}`}
+        src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen

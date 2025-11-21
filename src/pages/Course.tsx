@@ -340,6 +340,11 @@ const Course = () => {
                       <VideoPlayer 
                         youtubeUrl={currentLesson.youtube_url}
                         title={currentLesson.title}
+                        onProgress90={() => {
+                          if (!completedLessons.has(currentLesson.id)) {
+                            toggleLessonComplete(currentLesson.id);
+                          }
+                        }}
                       />
                       
                       <Card>
