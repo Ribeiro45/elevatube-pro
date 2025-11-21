@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
@@ -49,6 +50,8 @@ function AdminCourses() {
   const [selectedLessonForQuiz, setSelectedLessonForQuiz] = useState<any>(null);
   const [selectedModuleForQuiz, setSelectedModuleForQuiz] = useState<any>(null);
   const [quizType, setQuizType] = useState<'lesson' | 'module' | 'final'>('lesson');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<{ type: 'course' | 'lesson', id: string, name: string } | null>(null);
 
   const courseForm = useForm({
     resolver: zodResolver(courseSchema),
@@ -229,29 +232,39 @@ function AdminCourses() {
     }
   };
 
-  const deleteCourse = async (id: string) => {
-    const { error } = await supabase.from('courses').delete().eq('id', id);
-    
-    if (error) {
-      toast.error('Erro ao deletar curso');
-    } else {
-      toast.success('Curso deletado com sucesso!');
-      fetchCourses();
-      if (selectedCourse?.id === id) {
-        setSelectedCourse(null);
-      }
-    }
+  const handleDeleteClick = (type: 'course' | 'lesson', id: string, name: string) => {
+    setDeletingItem({ type, id, name });
+    setDeleteDialogOpen(true);
   };
 
-  const deleteLesson = async (id: string) => {
-    const { error } = await supabase.from('lessons').delete().eq('id', id);
-    
-    if (error) {
-      toast.error('Erro ao deletar aula');
+  const confirmDelete = async () => {
+    if (!deletingItem) return;
+
+    if (deletingItem.type === 'course') {
+      const { error } = await supabase.from('courses').delete().eq('id', deletingItem.id);
+      
+      if (error) {
+        toast.error('Erro ao deletar curso');
+      } else {
+        toast.success('Curso deletado com sucesso!');
+        fetchCourses();
+        if (selectedCourse?.id === deletingItem.id) {
+          setSelectedCourse(null);
+        }
+      }
     } else {
-      toast.success('Aula deletada com sucesso!');
-      fetchLessons(selectedCourse.id);
+      const { error } = await supabase.from('lessons').delete().eq('id', deletingItem.id);
+      
+      if (error) {
+        toast.error('Erro ao deletar aula');
+      } else {
+        toast.success('Aula deletada com sucesso!');
+        fetchLessons(selectedCourse.id);
+      }
     }
+
+    setDeleteDialogOpen(false);
+    setDeletingItem(null);
   };
 
   const onSubmitQuiz = async (values: z.infer<typeof quizSchema>) => {
@@ -464,7 +477,7 @@ function AdminCourses() {
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteCourse(course.id);
+                            handleDeleteClick('course', course.id, course.title);
                           }}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
@@ -595,13 +608,13 @@ function AdminCourses() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteLesson(lesson.id)}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick('lesson', lesson.id, lesson.title)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
                         </div>
                       </div>
                     </div>
@@ -730,6 +743,28 @@ function AdminCourses() {
             </DialogContent>
           </Dialog>
         </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir {deletingItem?.type === 'course' ? 'o curso' : 'a aula'} <strong>{deletingItem?.name}</strong>? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeletingItem(null)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

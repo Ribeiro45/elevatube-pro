@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Trash2, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -45,6 +46,8 @@ function AdminQuizzes() {
   const [answerDialogOpen, setAnswerDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
   const [quizType, setQuizType] = useState<'lesson' | 'module' | 'final'>('lesson');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<{ type: 'quiz' | 'question' | 'answer', id: string, name: string } | null>(null);
 
   const quizForm = useForm<z.infer<typeof quizSchema>>({
     resolver: zodResolver(quizSchema),
@@ -145,18 +148,46 @@ function AdminQuizzes() {
     }
   };
 
-  const deleteQuiz = async (id: string) => {
-    const { error } = await supabase.from('quizzes').delete().eq('id', id);
-    if (error) {
-      toast.error('Erro ao deletar prova');
+  const handleDeleteClick = (type: 'quiz' | 'question' | 'answer', id: string, name: string) => {
+    setDeletingItem({ type, id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingItem) return;
+
+    if (deletingItem.type === 'quiz') {
+      const { error } = await supabase.from('quizzes').delete().eq('id', deletingItem.id);
+      if (error) {
+        toast.error('Erro ao deletar prova');
+      } else {
+        toast.success('Prova deletada!');
+        fetchQuizzes();
+        if (selectedQuiz?.id === deletingItem.id) {
+          setSelectedQuiz(null);
+          setQuestions([]);
+        }
+      }
+    } else if (deletingItem.type === 'question') {
+      const { error } = await supabase.from('quiz_questions').delete().eq('id', deletingItem.id);
+      if (error) {
+        toast.error('Erro ao deletar questão');
+      } else {
+        toast.success('Questão deletada!');
+        fetchQuestions(selectedQuiz.id);
+      }
     } else {
-      toast.success('Prova deletada!');
-      fetchQuizzes();
-      if (selectedQuiz?.id === id) {
-        setSelectedQuiz(null);
-        setQuestions([]);
+      const { error } = await supabase.from('quiz_answers').delete().eq('id', deletingItem.id);
+      if (error) {
+        toast.error('Erro ao deletar resposta');
+      } else {
+        toast.success('Resposta deletada!');
+        fetchQuestions(selectedQuiz.id);
       }
     }
+
+    setDeleteDialogOpen(false);
+    setDeletingItem(null);
   };
 
   const onSubmitQuestion = async (values: any) => {
@@ -176,16 +207,6 @@ function AdminQuizzes() {
     }
   };
 
-  const deleteQuestion = async (id: string) => {
-    const { error } = await supabase.from('quiz_questions').delete().eq('id', id);
-    if (error) {
-      toast.error('Erro ao deletar questão');
-    } else {
-      toast.success('Questão deletada!');
-      fetchQuestions(selectedQuiz.id);
-    }
-  };
-
   const onSubmitAnswer = async (values: any) => {
     const { error } = await supabase.from('quiz_answers').insert([
       {
@@ -200,16 +221,6 @@ function AdminQuizzes() {
       fetchQuestions(selectedQuiz.id);
       setAnswerDialogOpen(false);
       answerForm.reset();
-    }
-  };
-
-  const deleteAnswer = async (id: string) => {
-    const { error } = await supabase.from('quiz_answers').delete().eq('id', id);
-    if (error) {
-      toast.error('Erro ao deletar resposta');
-    } else {
-      toast.success('Resposta deletada!');
-      fetchQuestions(selectedQuiz.id);
     }
   };
 
@@ -382,7 +393,7 @@ function AdminQuizzes() {
                         variant="destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteQuiz(quiz.id);
+                          handleDeleteClick('quiz', quiz.id, quiz.title);
                         }}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -436,7 +447,7 @@ function AdminQuizzes() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => deleteQuestion(q.id)}
+                          onClick={() => handleDeleteClick('question', q.id, q.question)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -453,7 +464,7 @@ function AdminQuizzes() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => deleteAnswer(a.id)}
+                              onClick={() => handleDeleteClick('answer', a.id, a.answer)}
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
@@ -502,6 +513,28 @@ function AdminQuizzes() {
             )}
           </div>
         </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir {deletingItem?.type === 'quiz' ? 'a prova' : deletingItem?.type === 'question' ? 'a questão' : 'a resposta'} <strong>{deletingItem?.name}</strong>? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeletingItem(null)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
