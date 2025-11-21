@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Edit, Upload, ArrowLeft } from 'lucide-react';
@@ -30,6 +31,8 @@ export default function AdminFAQ() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingFAQ, setDeletingFAQ] = useState<{ id: string, name: string, pdfUrl: string | null } | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -159,12 +162,17 @@ export default function AdminFAQ() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string, pdfUrl: string | null) => {
-    if (!confirm('Tem certeza que deseja excluir este FAQ?')) return;
+  const handleDeleteClick = (id: string, name: string, pdfUrl: string | null) => {
+    setDeletingFAQ({ id, name, pdfUrl });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingFAQ) return;
 
     try {
-      if (pdfUrl) {
-        const path = pdfUrl.split('/faq-pdfs/')[1];
+      if (deletingFAQ.pdfUrl) {
+        const path = deletingFAQ.pdfUrl.split('/faq-pdfs/')[1];
         if (path) {
           await supabase.storage.from('faq-pdfs').remove([path]);
         }
@@ -173,7 +181,7 @@ export default function AdminFAQ() {
       const { error } = await supabase
         .from('faqs' as any)
         .delete()
-        .eq('id', id);
+        .eq('id', deletingFAQ.id);
 
       if (error) throw error;
       toast.success('FAQ excluído com sucesso');
@@ -181,6 +189,9 @@ export default function AdminFAQ() {
     } catch (error) {
       console.error('Error deleting FAQ:', error);
       toast.error('Erro ao excluir FAQ');
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingFAQ(null);
     }
   };
 
@@ -406,7 +417,7 @@ export default function AdminFAQ() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(section.id, section.pdf_url)}
+                        onClick={() => handleDeleteClick(section.id, section.title, section.pdf_url)}
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
@@ -457,7 +468,7 @@ export default function AdminFAQ() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleDelete(item.id, item.pdf_url)}
+                                    onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}
                                   >
                                     <Trash2 className="w-4 h-4 text-destructive" />
                                   </Button>
@@ -514,13 +525,13 @@ export default function AdminFAQ() {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(item.id, item.pdf_url)}
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}
+                                >
+                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -533,6 +544,28 @@ export default function AdminFAQ() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o FAQ <strong>{deletingFAQ?.name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingFAQ(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
