@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, BookOpen, Layers, Award } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -106,7 +107,14 @@ function AdminQuizzes() {
   };
 
   const fetchQuizzes = async (courseId?: string) => {
-    let query = supabase.from('quizzes').select('*').order('title');
+    let query = supabase
+      .from('quizzes')
+      .select(`
+        *,
+        lessons(title),
+        modules(title)
+      `)
+      .order('title');
     
     if (courseId) {
       query = query.eq('course_id', courseId);
@@ -114,6 +122,37 @@ function AdminQuizzes() {
     
     const { data } = await query;
     setQuizzes(data || []);
+  };
+
+  const getQuizTypeInfo = (quiz: any) => {
+    if (quiz.is_final_exam) {
+      return { 
+        label: 'Prova Final', 
+        icon: Award, 
+        color: 'bg-purple-500 text-white',
+        description: 'Prova final do curso'
+      };
+    } else if (quiz.lesson_id) {
+      return { 
+        label: 'Prova de Aula', 
+        icon: BookOpen, 
+        color: 'bg-blue-500 text-white',
+        description: quiz.lessons?.title || 'Aula'
+      };
+    } else if (quiz.module_id) {
+      return { 
+        label: 'Prova de Módulo', 
+        icon: Layers, 
+        color: 'bg-green-500 text-white',
+        description: quiz.modules?.title || 'Módulo'
+      };
+    }
+    return { 
+      label: 'Prova', 
+      icon: BookOpen, 
+      color: 'bg-gray-500 text-white',
+      description: ''
+    };
   };
 
   const fetchQuestions = async (quizId: string) => {
@@ -377,29 +416,60 @@ function AdminQuizzes() {
                 <CardHeader>
                   <CardTitle>Provas - {selectedCourse.title}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {quizzes.map((quiz) => (
-                    <div
-                      key={quiz.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-muted cursor-pointer"
-                      onClick={() => {
-                        setSelectedQuiz(quiz);
-                        fetchQuestions(quiz.id);
-                      }}
-                    >
-                      <span className="font-medium">{quiz.title}</span>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick('quiz', quiz.id, quiz.title);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                <CardContent className="space-y-3">
+                  {quizzes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhuma prova criada para este curso
+                    </p>
+                  ) : (
+                    quizzes.map((quiz) => {
+                      const typeInfo = getQuizTypeInfo(quiz);
+                      const Icon = typeInfo.icon;
+                      
+                      return (
+                        <div
+                          key={quiz.id}
+                          className="p-4 rounded-lg border hover:bg-muted cursor-pointer transition-colors"
+                          onClick={() => {
+                            setSelectedQuiz(quiz);
+                            fetchQuestions(quiz.id);
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Icon className="w-4 h-4 text-muted-foreground" />
+                                <span className="font-medium">{quiz.title}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge className={typeInfo.color}>
+                                  {typeInfo.label}
+                                </Badge>
+                                {typeInfo.description && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {typeInfo.description}
+                                  </Badge>
+                                )}
+                                <Badge variant="secondary">
+                                  Nota mínima: {quiz.passing_score}%
+                                </Badge>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick('quiz', quiz.id, quiz.title);
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </CardContent>
               </Card>
             )}
