@@ -29,6 +29,12 @@ const lessonSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   youtube_url: z.string().url('URL do YouTube inválida'),
   duration_minutes: z.number().min(1, 'Duração deve ser maior que 0').optional(),
+  module_id: z.string().optional(),
+});
+
+const moduleSchema = z.object({
+  title: z.string().min(1, 'Título é obrigatório'),
+  description: z.string().optional(),
 });
 
 const quizSchema = z.object({
@@ -51,7 +57,9 @@ function AdminCourses() {
   const [selectedModuleForQuiz, setSelectedModuleForQuiz] = useState<any>(null);
   const [quizType, setQuizType] = useState<'lesson' | 'module' | 'final'>('lesson');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingItem, setDeletingItem] = useState<{ type: 'course' | 'lesson', id: string, name: string } | null>(null);
+  const [deletingItem, setDeletingItem] = useState<{ type: 'course' | 'lesson' | 'module', id: string, name: string } | null>(null);
+  const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
+  const [editingModule, setEditingModule] = useState<any>(null);
 
   const courseForm = useForm({
     resolver: zodResolver(courseSchema),
@@ -68,7 +76,12 @@ function AdminCourses() {
 
   const lessonForm = useForm({
     resolver: zodResolver(lessonSchema),
-    defaultValues: { title: '', youtube_url: '', duration_minutes: 0 },
+    defaultValues: { title: '', youtube_url: '', duration_minutes: 0, module_id: '' },
+  });
+
+  const moduleForm = useForm({
+    resolver: zodResolver(moduleSchema),
+    defaultValues: { title: '', description: '' },
   });
 
   const quizForm = useForm({
@@ -199,6 +212,7 @@ function AdminCourses() {
           title: values.title,
           youtube_url: values.youtube_url,
           duration_minutes: values.duration_minutes || null,
+          module_id: values.module_id || null,
         })
         .eq('id', editingLesson.id);
       
@@ -217,6 +231,7 @@ function AdminCourses() {
         title: values.title,
         youtube_url: values.youtube_url,
         duration_minutes: values.duration_minutes || null,
+        module_id: values.module_id || null,
         course_id: selectedCourse.id,
         order_index: lessons.length,
       }]);
@@ -232,7 +247,47 @@ function AdminCourses() {
     }
   };
 
-  const handleDeleteClick = (type: 'course' | 'lesson', id: string, name: string) => {
+  const onSubmitModule = async (values: z.infer<typeof moduleSchema>) => {
+    if (!selectedCourse) return;
+
+    if (editingModule) {
+      const { error } = await supabase
+        .from('modules')
+        .update({
+          title: values.title,
+          description: values.description || null,
+        })
+        .eq('id', editingModule.id);
+      
+      if (error) {
+        toast.error('Erro ao atualizar módulo');
+      } else {
+        toast.success('Módulo atualizado com sucesso!');
+        setModuleDialogOpen(false);
+        setEditingModule(null);
+        moduleForm.reset();
+        fetchModules(selectedCourse.id);
+      }
+    } else {
+      const { error } = await supabase.from('modules').insert([{
+        title: values.title,
+        description: values.description || null,
+        course_id: selectedCourse.id,
+        order_index: modules.length,
+      }]);
+      
+      if (error) {
+        toast.error('Erro ao criar módulo');
+      } else {
+        toast.success('Módulo criado com sucesso!');
+        setModuleDialogOpen(false);
+        moduleForm.reset();
+        fetchModules(selectedCourse.id);
+      }
+    }
+  };
+
+  const handleDeleteClick = (type: 'course' | 'lesson' | 'module', id: string, name: string) => {
     setDeletingItem({ type, id, name });
     setDeleteDialogOpen(true);
   };
@@ -251,6 +306,15 @@ function AdminCourses() {
         if (selectedCourse?.id === deletingItem.id) {
           setSelectedCourse(null);
         }
+      }
+    } else if (deletingItem.type === 'module') {
+      const { error } = await supabase.from('modules').delete().eq('id', deletingItem.id);
+      
+      if (error) {
+        toast.error('Erro ao deletar módulo');
+      } else {
+        toast.success('Módulo deletado com sucesso!');
+        fetchModules(selectedCourse.id);
       }
     } else {
       const { error } = await supabase.from('lessons').delete().eq('id', deletingItem.id);
@@ -493,145 +557,182 @@ function AdminCourses() {
               <Card>
                 <CardHeader>
                   <div className="flex justify-between items-center">
-                    <CardTitle>Aulas - {selectedCourse.title}</CardTitle>
-                    <Dialog 
-                      open={lessonDialogOpen} 
-                      onOpenChange={(open) => {
-                        setLessonDialogOpen(open);
-                        if (!open) {
-                          setEditingLesson(null);
-                          lessonForm.reset();
-                        }
-                      }}
-                    >
-                      <DialogTrigger asChild>
-                        <Button size="sm">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Adicionar Aula
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{editingLesson ? 'Editar Aula' : 'Adicionar Nova Aula'}</DialogTitle>
-                        </DialogHeader>
-                        <Form {...lessonForm}>
-                          <form onSubmit={lessonForm.handleSubmit(onSubmitLesson)} className="space-y-4">
-                            <FormField
-                              control={lessonForm.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Título</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={lessonForm.control}
-                              name="youtube_url"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>URL do YouTube</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="https://www.youtube.com/watch?v=..." />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={lessonForm.control}
-                              name="duration_minutes"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Duração (minutos)</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button type="submit" className="w-full">Adicionar Aula</Button>
-                          </form>
-                        </Form>
-                      </DialogContent>
-                    </Dialog>
+                    <CardTitle>Módulos e Aulas - {selectedCourse.title}</CardTitle>
+                    <div className="flex gap-2">
+                      <Dialog 
+                        open={moduleDialogOpen} 
+                        onOpenChange={(open) => {
+                          setModuleDialogOpen(open);
+                          if (!open) {
+                            setEditingModule(null);
+                            moduleForm.reset();
+                          }
+                        }}
+                      >
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Novo Módulo
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{editingModule ? 'Editar Módulo' : 'Criar Novo Módulo'}</DialogTitle>
+                          </DialogHeader>
+                          <Form {...moduleForm}>
+                            <form onSubmit={moduleForm.handleSubmit(onSubmitModule)} className="space-y-4">
+                              <FormField
+                                control={moduleForm.control}
+                                name="title"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Título do Módulo</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={moduleForm.control}
+                                name="description"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Descrição</FormLabel>
+                                    <FormControl>
+                                      <Textarea {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full">
+                                {editingModule ? 'Atualizar Módulo' : 'Criar Módulo'}
+                              </Button>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog 
+                        open={lessonDialogOpen} 
+                        onOpenChange={(open) => {
+                          setLessonDialogOpen(open);
+                          if (!open) {
+                            setEditingLesson(null);
+                            lessonForm.reset();
+                          }
+                        }}
+                      >
+                        <DialogTrigger asChild>
+                          <Button size="sm">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nova Aula
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{editingLesson ? 'Editar Aula' : 'Adicionar Nova Aula'}</DialogTitle>
+                          </DialogHeader>
+                          <Form {...lessonForm}>
+                            <form onSubmit={lessonForm.handleSubmit(onSubmitLesson)} className="space-y-4">
+                              <FormField
+                                control={lessonForm.control}
+                                name="title"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Título</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={lessonForm.control}
+                                name="youtube_url"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>URL do YouTube</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="https://www.youtube.com/watch?v=..." />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={lessonForm.control}
+                                name="duration_minutes"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Duração (minutos)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={lessonForm.control}
+                                name="module_id"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Módulo (opcional)</FormLabel>
+                                    <Select 
+                                      onValueChange={field.onChange} 
+                                      value={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione um módulo" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="">Sem módulo</SelectItem>
+                                        {modules.map((module) => (
+                                          <SelectItem key={module.id} value={module.id}>
+                                            {module.title}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button type="submit" className="w-full">
+                                {editingLesson ? 'Atualizar Aula' : 'Criar Aula'}
+                              </Button>
+                            </form>
+                          </Form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {lessons.map((lesson) => (
-                    <div key={lesson.id} className="p-4 border rounded-lg">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-medium">{lesson.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {lesson.duration_minutes} minutos
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedLessonForQuiz(lesson);
-                              setQuizType('lesson');
-                              quizForm.reset({ 
-                                title: `Prova - ${lesson.title}`,
-                                passing_score: 70 
-                              });
-                              setQuizDialogOpen(true);
-                            }}
-                          >
-                            <ClipboardList className="w-4 h-4 mr-2" />
-                            Criar Prova
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingLesson(lesson);
-                              lessonForm.reset({
-                                title: lesson.title,
-                                youtube_url: lesson.youtube_url,
-                                duration_minutes: lesson.duration_minutes || 0,
-                              });
-                              setLessonDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteClick('lesson', lesson.id, lesson.title)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {modules.length > 0 && (
-                    <div className="mt-6 pt-6 border-t">
-                      <h3 className="font-semibold mb-4">Módulos</h3>
-                      {modules.map((module) => (
-                        <div key={module.id} className="p-4 border rounded-lg mb-2">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-medium">{module.title}</h4>
+                  {/* Módulos com suas aulas */}
+                  {modules.map((module) => {
+                    const moduleLessons = lessons.filter(l => l.module_id === module.id);
+                    return (
+                      <div key={module.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg">{module.title}</h4>
+                            {module.description && (
                               <p className="text-sm text-muted-foreground mt-1">
                                 {module.description}
                               </p>
-                            </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -648,6 +749,148 @@ function AdminCourses() {
                               <ClipboardList className="w-4 h-4 mr-2" />
                               Criar Prova
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setEditingModule(module);
+                                moduleForm.reset({
+                                  title: module.title,
+                                  description: module.description || '',
+                                });
+                                setModuleDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick('module', module.id, module.title)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Aulas dentro do módulo */}
+                        {moduleLessons.length > 0 && (
+                          <div className="ml-4 space-y-2 mt-3">
+                            {moduleLessons.map((lesson) => (
+                              <div key={lesson.id} className="p-3 bg-muted/50 rounded-md">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-sm">{lesson.title}</h5>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {lesson.duration_minutes} minutos
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedLessonForQuiz(lesson);
+                                        setQuizType('lesson');
+                                        quizForm.reset({ 
+                                          title: `Prova - ${lesson.title}`,
+                                          passing_score: 70 
+                                        });
+                                        setQuizDialogOpen(true);
+                                      }}
+                                    >
+                                      <ClipboardList className="w-3 h-3 mr-1" />
+                                      Prova
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setEditingLesson(lesson);
+                                        lessonForm.reset({
+                                          title: lesson.title,
+                                          youtube_url: lesson.youtube_url,
+                                          duration_minutes: lesson.duration_minutes || 0,
+                                          module_id: lesson.module_id || '',
+                                        });
+                                        setLessonDialogOpen(true);
+                                      }}
+                                    >
+                                      <Edit className="w-3 h-3" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleDeleteClick('lesson', lesson.id, lesson.title)}
+                                    >
+                                      <Trash2 className="w-3 h-3 text-destructive" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Aulas sem módulo */}
+                  {lessons.filter(l => !l.module_id).length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm text-muted-foreground">Aulas sem módulo</h4>
+                      {lessons.filter(l => !l.module_id).map((lesson) => (
+                        <div key={lesson.id} className="p-4 border rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{lesson.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {lesson.duration_minutes} minutos
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedLessonForQuiz(lesson);
+                                  setQuizType('lesson');
+                                  quizForm.reset({ 
+                                    title: `Prova - ${lesson.title}`,
+                                    passing_score: 70 
+                                  });
+                                  setQuizDialogOpen(true);
+                                }}
+                              >
+                                <ClipboardList className="w-4 h-4 mr-2" />
+                                Criar Prova
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingLesson(lesson);
+                                  lessonForm.reset({
+                                    title: lesson.title,
+                                    youtube_url: lesson.youtube_url,
+                                    duration_minutes: lesson.duration_minutes || 0,
+                                    module_id: lesson.module_id || '',
+                                  });
+                                  setLessonDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteClick('lesson', lesson.id, lesson.title)}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -749,7 +992,11 @@ function AdminCourses() {
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir {deletingItem?.type === 'course' ? 'o curso' : 'a aula'} <strong>{deletingItem?.name}</strong>? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir {
+                  deletingItem?.type === 'course' ? 'o curso' : 
+                  deletingItem?.type === 'module' ? 'o módulo' : 
+                  'a aula'
+                } <strong>{deletingItem?.name}</strong>? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
