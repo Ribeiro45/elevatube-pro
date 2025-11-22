@@ -76,7 +76,7 @@ function AdminCourses() {
 
   const lessonForm = useForm({
     resolver: zodResolver(lessonSchema),
-    defaultValues: { title: '', youtube_url: '', duration_minutes: 0, module_id: '' },
+    defaultValues: { title: '', youtube_url: '', duration_minutes: 0, module_id: 'none' },
   });
 
   const moduleForm = useForm({
@@ -204,6 +204,8 @@ function AdminCourses() {
   const onSubmitLesson = async (values: z.infer<typeof lessonSchema>) => {
     if (!selectedCourse) return;
 
+    const moduleId = values.module_id === 'none' ? null : values.module_id;
+
     if (editingLesson) {
       // Update existing lesson
       const { error } = await supabase
@@ -212,7 +214,7 @@ function AdminCourses() {
           title: values.title,
           youtube_url: values.youtube_url,
           duration_minutes: values.duration_minutes || null,
-          module_id: values.module_id || null,
+          module_id: moduleId,
         })
         .eq('id', editingLesson.id);
       
@@ -231,7 +233,7 @@ function AdminCourses() {
         title: values.title,
         youtube_url: values.youtube_url,
         duration_minutes: values.duration_minutes || null,
-        module_id: values.module_id || null,
+        module_id: moduleId,
         course_id: selectedCourse.id,
         order_index: lessons.length,
       }]);
@@ -695,7 +697,7 @@ function AdminCourses() {
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-                                        <SelectItem value="">Sem módulo</SelectItem>
+                                        <SelectItem value="none">Sem módulo</SelectItem>
                                         {modules.map((module) => (
                                           <SelectItem key={module.id} value={module.id}>
                                             {module.title}
@@ -807,14 +809,14 @@ function AdminCourses() {
                                       size="icon"
                                       className="h-8 w-8"
                                       onClick={() => {
-                                        setEditingLesson(lesson);
-                                        lessonForm.reset({
-                                          title: lesson.title,
-                                          youtube_url: lesson.youtube_url,
-                                          duration_minutes: lesson.duration_minutes || 0,
-                                          module_id: lesson.module_id || '',
-                                        });
-                                        setLessonDialogOpen(true);
+                                      setEditingLesson(lesson);
+                                      lessonForm.reset({
+                                        title: lesson.title,
+                                        youtube_url: lesson.youtube_url,
+                                        duration_minutes: lesson.duration_minutes || 0,
+                                        module_id: lesson.module_id || 'none',
+                                      });
+                                      setLessonDialogOpen(true);
                                       }}
                                     >
                                       <Edit className="w-3 h-3" />
@@ -871,14 +873,14 @@ function AdminCourses() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {
-                                  setEditingLesson(lesson);
-                                  lessonForm.reset({
-                                    title: lesson.title,
-                                    youtube_url: lesson.youtube_url,
-                                    duration_minutes: lesson.duration_minutes || 0,
-                                    module_id: lesson.module_id || '',
-                                  });
-                                  setLessonDialogOpen(true);
+                                setEditingLesson(lesson);
+                                lessonForm.reset({
+                                  title: lesson.title,
+                                  youtube_url: lesson.youtube_url,
+                                  duration_minutes: lesson.duration_minutes || 0,
+                                  module_id: lesson.module_id || 'none',
+                                });
+                                setLessonDialogOpen(true);
                                 }}
                               >
                                 <Edit className="w-4 h-4" />
