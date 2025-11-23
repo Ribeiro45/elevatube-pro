@@ -120,24 +120,33 @@ const Dashboard = () => {
             setCourses(coursesData as Course[]);
           }
 
-          // Buscar apenas as aulas dos cursos em que o usuário está inscrito
-          const { data: lessonsData } = await supabase
-            .from("lessons")
-            .select("*")
-            .in("course_id", courseIds);
+          // Buscar aulas com base nas lições que o usuário possui progresso
+          const lessonIds = Array.from(
+            new Set(((progressRes.data as any[]) || []).map((p: any) => p.lesson_id))
+          );
 
-          if (lessonsData) {
-            setLessons(lessonsData as Lesson[]);
+          if (lessonIds.length > 0) {
+            const { data: lessonsData } = await supabase
+              .from("lessons")
+              .select("*")
+              .in("id", lessonIds);
 
-            // Calcular tempo de estudo com base nas aulas concluídas do usuário
-            const completedLessonIds = (progressRes.data || [])
-              .filter((p: any) => p.completed)
-              .map((p: any) => p.lesson_id);
+            if (lessonsData) {
+              setLessons(lessonsData as Lesson[]);
 
-            const totalMinutes = (lessonsData as Lesson[])
-              .filter((l) => completedLessonIds.includes(l.id))
-              .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
-            setStudyTime(totalMinutes);
+              // Calcular tempo de estudo com base nas aulas concluídas do usuário
+              const completedLessonIds = ((progressRes.data as any[]) || [])
+                .filter((p: any) => p.completed)
+                .map((p: any) => p.lesson_id);
+
+              const totalMinutes = (lessonsData as Lesson[])
+                .filter((l) => completedLessonIds.includes(l.id))
+                .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+              setStudyTime(totalMinutes);
+            }
+          } else {
+            setLessons([]);
+            setStudyTime(0);
           }
         } else {
           setCourses([]);
@@ -180,10 +189,7 @@ const Dashboard = () => {
     };
   };
 
-  // Filtrar progresso apenas das aulas dos cursos inscritos
-  const enrolledLessonIds = lessons.map(l => l.id);
-  const relevantProgress = progress.filter(p => enrolledLessonIds.includes(p.lesson_id));
-  const completedLessonsCount = relevantProgress.filter(p => p.completed).length;
+  const completedLessonsCount = progress.filter(p => p.completed).length;
   
   // Cursos finalizados são aqueles que possuem certificado
   const completedCoursesCount = certificatesCount;
