@@ -180,11 +180,13 @@ const Dashboard = () => {
     };
   };
 
-  const completedLessonsCount = progress.filter(p => p.completed).length;
-  const completedCoursesCount = courses.filter(course => {
-    const stats = getCourseStats(course.id);
-    return stats.progress === 100;
-  }).length;
+  // Filtrar progresso apenas das aulas dos cursos inscritos
+  const enrolledLessonIds = lessons.map(l => l.id);
+  const relevantProgress = progress.filter(p => enrolledLessonIds.includes(p.lesson_id));
+  const completedLessonsCount = relevantProgress.filter(p => p.completed).length;
+  
+  // Cursos finalizados são aqueles que possuem certificado
+  const completedCoursesCount = certificatesCount;
   const enrolledCoursesCount = courses.length;
 
   return (
