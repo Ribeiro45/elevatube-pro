@@ -5,8 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/AppSidebar';
+import { Sidebar } from '@/components/layout/Sidebar';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -190,39 +189,32 @@ export default function FAQ() {
     : 'Encontre respostas para as perguntas mais comuns';
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-        <main className="flex-1">
-          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-14 items-center px-4">
-              <SidebarTrigger />
-            </div>
+    <div className="flex h-screen bg-muted/10">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto p-8">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
+            <p className="text-muted-foreground">
+              {pageDescription}
+            </p>
           </div>
-          <div className="container mx-auto p-6 max-w-7xl">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
-              <p className="text-muted-foreground">
-                {pageDescription}
-              </p>
-            </div>
 
-            <div className="space-y-6">
-              {filteredFAQs.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <p className="text-muted-foreground">Nenhum conteúdo disponível no momento.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                filteredFAQs.filter(f => f.is_section).map((section) => 
-                  renderFAQSection(section, filteredFAQs.filter(subFaq => subFaq.parent_id === section.id))
-                )
-              )}
-            </div>
+          <div className="space-y-6">
+            {filteredFAQs.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">Nenhum conteúdo disponível no momento.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredFAQs.filter(f => f.is_section).map((section) => 
+                renderFAQSection(section, filteredFAQs.filter(subFaq => subFaq.parent_id === section.id))
+              )
+            )}
           </div>
-        </main>
+        </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
