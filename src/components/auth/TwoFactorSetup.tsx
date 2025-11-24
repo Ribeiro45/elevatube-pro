@@ -71,18 +71,28 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
 
       setLoading(true);
 
+      // Get the unverified factor
       const factors = await supabase.auth.mfa.listFactors();
       if (factors.error) throw factors.error;
 
       const totpFactor = factors.data?.totp?.[0];
       if (!totpFactor) throw new Error('Fator MFA não encontrado');
 
-      const { error } = await supabase.auth.mfa.challengeAndVerify({
+      // Create a challenge for the unverified factor
+      const challenge = await supabase.auth.mfa.challenge({
+        factorId: totpFactor.id
+      });
+
+      if (challenge.error) throw challenge.error;
+
+      // Verify the code with the challenge
+      const verify = await supabase.auth.mfa.verify({
         factorId: totpFactor.id,
+        challengeId: challenge.data.id,
         code: verifyCode,
       });
 
-      if (error) throw error;
+      if (verify.error) throw verify.error;
 
       toast.success('2FA ativado com sucesso!');
       setIs2FAEnabled(true);
@@ -91,7 +101,7 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
       setVerifyCode('');
       onComplete?.();
     } catch (error: any) {
-      toast.error(error.message || 'Código inválido');
+      toast.error(error.message || 'Código inválido. Verifique se está usando o código correto do autenticador.');
       console.error('Error verifying MFA:', error);
     } finally {
       setLoading(false);
