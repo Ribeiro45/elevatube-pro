@@ -6,10 +6,12 @@ import { OverallProgress } from "@/components/dashboard/OverallProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Award, Download, Search, Lightbulb, BookOpen, AlertCircle, Code, FileText } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import * as LucideIcons from "lucide-react";
 
 interface Course {
   id: string;
@@ -38,6 +40,16 @@ interface Progress {
   completed: boolean;
 }
 
+interface TopicCard {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  order_index: number;
+  link_url: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -48,6 +60,8 @@ const Dashboard = () => {
   const [certificatesCount, setCertificatesCount] = useState(0);
   const [studyTime, setStudyTime] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [topicCards, setTopicCards] = useState<TopicCard[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -71,7 +85,24 @@ const Dashboard = () => {
     if (user) {
       loadData();
     }
+    loadTopicCards();
   }, [user]);
+
+  const loadTopicCards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("topic_cards")
+        .select("*")
+        .order("order_index");
+
+      if (error) throw error;
+      if (data) {
+        setTopicCards(data);
+      }
+    } catch (error) {
+      console.error("Error loading topic cards:", error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -195,6 +226,17 @@ const Dashboard = () => {
   const completedCoursesCount = certificatesCount;
   const enrolledCoursesCount = courses.length;
 
+  const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+      Lightbulb,
+      BookOpen,
+      AlertCircle,
+      Code,
+      FileText,
+    };
+    return iconMap[iconName] || FileText;
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -205,6 +247,48 @@ const Dashboard = () => {
             <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
             <p className="text-muted-foreground">Continue seu aprendizado de onde parou</p>
           </div>
+
+          {/* Barra de pesquisa */}
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
+              placeholder="Pesquisar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 text-base bg-card border-border"
+            />
+          </div>
+
+          {/* Navegação por Tópicos */}
+          {topicCards.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Navegação por Tópicos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {topicCards.map((card) => {
+                  const IconComponent = getIconComponent(card.icon);
+                  return (
+                    <Card
+                      key={card.id}
+                      className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
+                      onClick={() => navigate(card.link_url)}
+                    >
+                      <CardContent className="p-6 space-y-4">
+                        <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
+                          <IconComponent className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg mb-1">{card.title}</h3>
+                          {card.description && (
+                            <p className="text-sm text-muted-foreground">{card.description}</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <Skeleton className="h-48 w-full" />

@@ -7,9 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Video, Award, Settings } from "lucide-react";
+import { Home, Video, Award, Settings, Folder, Trash2, Plus } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SiteSettings {
   homepage_hero: {
@@ -46,10 +53,21 @@ interface SiteSettings {
   };
 }
 
+interface TopicCard {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  order_index: number;
+  link_url: string;
+}
+
 const AdminSiteSettings = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [topicCards, setTopicCards] = useState<TopicCard[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({
     homepage_hero: {
       badge_text: "",
@@ -87,7 +105,29 @@ const AdminSiteSettings = () => {
 
   useEffect(() => {
     fetchSettings();
+    fetchTopicCards();
   }, []);
+
+  const fetchTopicCards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("topic_cards")
+        .select("*")
+        .order("order_index");
+
+      if (error) throw error;
+      if (data) {
+        setTopicCards(data);
+      }
+    } catch (error) {
+      console.error("Error fetching topic cards:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar cards de tópicos",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -158,6 +198,82 @@ const AdminSiteSettings = () => {
     }));
   };
 
+  const handleAddTopicCard = async () => {
+    try {
+      const { error } = await supabase.from("topic_cards").insert({
+        title: "Novo Tópico",
+        description: "Descrição do tópico",
+        icon: "FileText",
+        color: "orange",
+        order_index: topicCards.length + 1,
+        link_url: "/faq",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Card de tópico criado com sucesso!",
+      });
+
+      fetchTopicCards();
+    } catch (error) {
+      console.error("Error creating topic card:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar card de tópico",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateTopicCard = async (id: string, updates: Partial<TopicCard>) => {
+    try {
+      const { error } = await supabase
+        .from("topic_cards")
+        .update(updates)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Card atualizado com sucesso!",
+      });
+
+      fetchTopicCards();
+    } catch (error) {
+      console.error("Error updating topic card:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar card",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTopicCard = async (id: string) => {
+    try {
+      const { error } = await supabase.from("topic_cards").delete().eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Card removido com sucesso!",
+      });
+
+      fetchTopicCards();
+    } catch (error) {
+      console.error("Error deleting topic card:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover card",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen">
@@ -182,7 +298,7 @@ const AdminSiteSettings = () => {
           </div>
 
           <Tabs defaultValue="hero" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="hero">
                 <Home className="w-4 h-4 mr-2" />
                 Hero
@@ -192,6 +308,10 @@ const AdminSiteSettings = () => {
               <TabsTrigger value="demo">
                 <Video className="w-4 h-4 mr-2" />
                 Demo
+              </TabsTrigger>
+              <TabsTrigger value="topics">
+                <Folder className="w-4 h-4 mr-2" />
+                Tópicos
               </TabsTrigger>
               <TabsTrigger value="registration">
                 <Settings className="w-4 h-4 mr-2" />
@@ -501,6 +621,119 @@ const AdminSiteSettings = () => {
                       />
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="topics" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Cards de Navegação por Tópicos</CardTitle>
+                      <CardDescription>
+                        Gerencie os cards que aparecem no dashboard
+                      </CardDescription>
+                    </div>
+                    <Button onClick={handleAddTopicCard}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Card
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {topicCards.map((card, index) => (
+                    <div key={card.id} className="p-4 border rounded-lg space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">Card {index + 1}</h3>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteTopicCard(card.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Título</Label>
+                          <Input
+                            value={card.title}
+                            onChange={(e) =>
+                              handleUpdateTopicCard(card.id, { title: e.target.value })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label>Ícone</Label>
+                          <Select
+                            value={card.icon}
+                            onValueChange={(value) =>
+                              handleUpdateTopicCard(card.id, { icon: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Lightbulb">Lightbulb</SelectItem>
+                              <SelectItem value="BookOpen">BookOpen</SelectItem>
+                              <SelectItem value="AlertCircle">AlertCircle</SelectItem>
+                              <SelectItem value="Code">Code</SelectItem>
+                              <SelectItem value="FileText">FileText</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Cor (Tailwind)</Label>
+                          <Input
+                            value={card.color}
+                            onChange={(e) =>
+                              handleUpdateTopicCard(card.id, { color: e.target.value })
+                            }
+                            placeholder="orange, blue, green, etc"
+                          />
+                        </div>
+                        <div>
+                          <Label>Link</Label>
+                          <Input
+                            value={card.link_url}
+                            onChange={(e) =>
+                              handleUpdateTopicCard(card.id, { link_url: e.target.value })
+                            }
+                            placeholder="/courses, /faq, etc"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label>Descrição</Label>
+                          <Textarea
+                            value={card.description || ""}
+                            onChange={(e) =>
+                              handleUpdateTopicCard(card.id, { description: e.target.value })
+                            }
+                            rows={2}
+                          />
+                        </div>
+                        <div>
+                          <Label>Ordem</Label>
+                          <Input
+                            type="number"
+                            value={card.order_index}
+                            onChange={(e) =>
+                              handleUpdateTopicCard(card.id, {
+                                order_index: parseInt(e.target.value),
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {topicCards.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhum card de tópico criado ainda.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
