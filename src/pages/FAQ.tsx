@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Loader2, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, X, Search, FileText, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -32,6 +33,7 @@ export default function FAQ() {
   const [numPages, setNumPages] = useState<{ [key: string]: number }>({});
   const [pageNumbers, setPageNumbers] = useState<{ [key: string]: number }>({});
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadUserType();
@@ -96,28 +98,28 @@ export default function FAQ() {
   };
 
   const filteredFAQs = faqs.filter(faq => {
-    return faq.target_audience === userType || faq.target_audience === 'ambos';
+    const matchesAudience = faq.target_audience === userType || faq.target_audience === 'ambos';
+    const matchesSearch = searchQuery === '' || 
+      faq.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (faq.description && faq.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesAudience && matchesSearch;
   });
 
   const renderFAQItem = (subFaq: FAQ) => (
     <Card 
       key={subFaq.id} 
-      className="cursor-pointer hover:shadow-lg transition-shadow"
+      className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 bg-card border-border/50 overflow-hidden h-full"
       onClick={() => setSelectedFaq(subFaq)}
     >
-      <CardHeader>
-        <CardTitle className="text-base">{subFaq.title}</CardTitle>
+      <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[160px]">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+          <FileText className="w-6 h-6 text-primary" />
+        </div>
+        <h3 className="font-semibold text-sm line-clamp-2 mb-2">{subFaq.title}</h3>
         {subFaq.description && (
-          <CardDescription className="line-clamp-2">{subFaq.description}</CardDescription>
+          <p className="text-xs text-muted-foreground line-clamp-2">{subFaq.description}</p>
         )}
-      </CardHeader>
-      {subFaq.pdf_url && (
-        <CardContent>
-          <div className="text-sm text-muted-foreground">
-            Clique para visualizar o conteúdo
-          </div>
-        </CardContent>
-      )}
+      </CardContent>
     </Card>
   );
 
@@ -126,31 +128,34 @@ export default function FAQ() {
     const childItems = filteredFAQs.filter(f => !f.is_section && f.parent_id === section.id);
 
     return (
-      <div key={section.id} className={level > 0 ? 'ml-6 mt-4' : ''}>
-        <Accordion type="multiple" className="border rounded-lg">
+      <div key={section.id} className={level > 0 ? 'mt-6' : ''}>
+        <Accordion type="multiple" className="border-none">
           <AccordionItem value={section.id} className="border-none">
-            <AccordionTrigger className="px-4 hover:no-underline">
-              <div>
-                <div className={`text-left font-semibold ${level === 0 ? 'text-lg' : 'text-base'}`}>
-                  {level > 0 && '↳ '}{section.title}
+            <AccordionTrigger className="px-0 hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Folder className="w-4 h-4 text-primary" />
                 </div>
-                {section.description && (
-                  <div className="text-sm font-normal text-muted-foreground text-left">
-                    {section.description}
+                <div className="text-left">
+                  <div className={`font-semibold ${level === 0 ? 'text-lg' : 'text-base'}`}>
+                    {section.title}
                   </div>
-                )}
+                  {section.description && (
+                    <div className="text-sm font-normal text-muted-foreground">
+                      {section.description}
+                    </div>
+                  )}
+                </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-4">
-              <div className="space-y-4 pt-2">
-                {/* Render child items in grid */}
+            <AccordionContent className="px-0 pt-4">
+              <div className="space-y-6">
                 {childItems.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {childItems.map(renderFAQItem)}
                   </div>
                 )}
                 
-                {/* Render child sections recursively */}
                 {childSections.map(childSection => renderSection(childSection, level + 1))}
               </div>
             </AccordionContent>
@@ -176,26 +181,44 @@ export default function FAQ() {
     : 'Encontre respostas para as perguntas mais comuns';
 
   return (
-    <div className="flex h-screen bg-muted/10">
+    <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto p-8">
+        <div className="max-w-[1400px] mx-auto p-6 md:p-8">
+          {/* Search Bar */}
+          <div className="mb-8 flex items-center gap-4">
+            <div className="relative flex-1 max-w-2xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Pesquisar conteúdo..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-card border-border/50"
+              />
+            </div>
+          </div>
+
+          {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
+            <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
             <p className="text-muted-foreground">
               {pageDescription}
             </p>
           </div>
 
-          <div className="space-y-6">
+          {/* Content */}
+          <div className="space-y-8">
             {filteredFAQs.length === 0 ? (
-              <Card>
+              <Card className="border-border/50">
                 <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">Nenhum conteúdo disponível no momento.</p>
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'Nenhum resultado encontrado.' : 'Nenhum conteúdo disponível no momento.'}
+                  </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {topLevelSections.map(section => renderSection(section, 0))}
               </div>
             )}
@@ -205,30 +228,30 @@ export default function FAQ() {
 
       {/* Fullscreen Dialog */}
       <Dialog open={!!selectedFaq} onOpenChange={() => setSelectedFaq(null)}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] h-[95vh] p-0">
-          <DialogHeader className="p-6 pb-0">
-            <div className="flex items-start justify-between">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] h-[95vh] p-0 bg-card border-border">
+          <DialogHeader className="p-6 pb-4 border-b border-border/50">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <DialogTitle className="text-2xl">{selectedFaq?.title}</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">{selectedFaq?.title}</DialogTitle>
                 {selectedFaq?.description && (
-                  <p className="text-muted-foreground mt-2">{selectedFaq.description}</p>
+                  <p className="text-muted-foreground mt-2 text-sm">{selectedFaq.description}</p>
                 )}
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setSelectedFaq(null)}
-                className="shrink-0"
+                className="shrink-0 hover:bg-muted"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </Button>
             </div>
           </DialogHeader>
           
-          <div className="flex-1 overflow-auto p-6">
+          <div className="flex-1 overflow-auto p-6 bg-muted/30">
             {selectedFaq?.pdf_url && (
-              <div className="space-y-4">
-                <div className="border rounded-lg overflow-hidden bg-muted/20">
+              <div className="space-y-6">
+                <div className="border rounded-xl overflow-hidden bg-background shadow-sm">
                   <Document
                     file={selectedFaq.pdf_url}
                     onLoadSuccess={(pdf) => onDocumentLoadSuccess(selectedFaq.id, pdf)}
@@ -249,18 +272,19 @@ export default function FAQ() {
                 </div>
                 
                 {numPages[selectedFaq.id] && numPages[selectedFaq.id] > 1 && (
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-4 pb-4">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => changePage(selectedFaq.id, -1)}
                       disabled={(pageNumbers[selectedFaq.id] || 1) <= 1}
+                      className="gap-2"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       Anterior
                     </Button>
                     
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm font-medium px-4 py-2 bg-card rounded-lg border border-border/50">
                       Página {pageNumbers[selectedFaq.id] || 1} de {numPages[selectedFaq.id]}
                     </span>
                     
@@ -269,6 +293,7 @@ export default function FAQ() {
                       size="sm"
                       onClick={() => changePage(selectedFaq.id, 1)}
                       disabled={(pageNumbers[selectedFaq.id] || 1) >= numPages[selectedFaq.id]}
+                      className="gap-2"
                     >
                       Próxima
                       <ChevronRight className="w-4 h-4" />
