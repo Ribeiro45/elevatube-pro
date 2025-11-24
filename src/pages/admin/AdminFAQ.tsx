@@ -12,7 +12,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Edit, Upload, ArrowLeft } from 'lucide-react';
-
 interface FAQ {
   id: string;
   title: string;
@@ -23,7 +22,6 @@ interface FAQ {
   parent_id: string | null;
   is_section: boolean;
 }
-
 export default function AdminFAQ() {
   const navigate = useNavigate();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -32,30 +30,32 @@ export default function AdminFAQ() {
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingFAQ, setDeletingFAQ] = useState<{ id: string, name: string, pdfUrl: string | null } | null>(null);
-  
+  const [deletingFAQ, setDeletingFAQ] = useState<{
+    id: string;
+    name: string;
+    pdfUrl: string | null;
+  } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     target_audience: 'ambos',
     order_index: 0,
     parent_id: null as string | null,
-    is_section: false,
+    is_section: false
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-
   useEffect(() => {
     loadFAQs();
   }, []);
-
   const loadFAQs = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('faqs' as any)
-        .select('*')
-        .order('order_index', { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from('faqs' as any).select('*').order('order_index', {
+        ascending: true
+      });
       if (error) throw error;
       setFaqs(data as any || []);
     } catch (error) {
@@ -65,7 +65,6 @@ export default function AdminFAQ() {
       setLoading(false);
     }
   };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -76,23 +75,20 @@ export default function AdminFAQ() {
       }
     }
   };
-
   const uploadPDF = async (file: File): Promise<string | null> => {
     try {
       const fileExt = 'pdf';
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('faq-pdfs')
-        .upload(filePath, file);
-
+      const {
+        error: uploadError
+      } = await supabase.storage.from('faq-pdfs').upload(filePath, file);
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('faq-pdfs')
-        .getPublicUrl(filePath);
-
+      const {
+        data: {
+          publicUrl
+        }
+      } = supabase.storage.from('faq-pdfs').getPublicUrl(filePath);
       return publicUrl;
     } catch (error) {
       console.error('Error uploading PDF:', error);
@@ -100,14 +96,11 @@ export default function AdminFAQ() {
       return null;
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
-
     try {
       let pdfUrl = editingFAQ?.pdf_url || null;
-
       if (pdfFile) {
         pdfUrl = await uploadPDF(pdfFile);
         if (!pdfUrl) {
@@ -115,29 +108,23 @@ export default function AdminFAQ() {
           return;
         }
       }
-
       const faqData = {
         ...formData,
-        pdf_url: pdfUrl,
+        pdf_url: pdfUrl
       };
-
       if (editingFAQ) {
-        const { error } = await supabase
-          .from('faqs' as any)
-          .update(faqData)
-          .eq('id', editingFAQ.id);
-
+        const {
+          error
+        } = await supabase.from('faqs' as any).update(faqData).eq('id', editingFAQ.id);
         if (error) throw error;
         toast.success('FAQ atualizado com sucesso');
       } else {
-        const { error } = await supabase
-          .from('faqs' as any)
-          .insert([faqData]);
-
+        const {
+          error
+        } = await supabase.from('faqs' as any).insert([faqData]);
         if (error) throw error;
         toast.success('FAQ criado com sucesso');
       }
-
       resetForm();
       loadFAQs();
       setIsDialogOpen(false);
@@ -148,7 +135,6 @@ export default function AdminFAQ() {
       setUploading(false);
     }
   };
-
   const handleEdit = (faq: FAQ) => {
     setEditingFAQ(faq);
     setFormData({
@@ -157,19 +143,20 @@ export default function AdminFAQ() {
       target_audience: faq.target_audience,
       order_index: faq.order_index,
       parent_id: faq.parent_id,
-      is_section: faq.is_section,
+      is_section: faq.is_section
     });
     setIsDialogOpen(true);
   };
-
   const handleDeleteClick = (id: string, name: string, pdfUrl: string | null) => {
-    setDeletingFAQ({ id, name, pdfUrl });
+    setDeletingFAQ({
+      id,
+      name,
+      pdfUrl
+    });
     setDeleteDialogOpen(true);
   };
-
   const confirmDelete = async () => {
     if (!deletingFAQ) return;
-
     try {
       if (deletingFAQ.pdfUrl) {
         const path = deletingFAQ.pdfUrl.split('/faq-pdfs/')[1];
@@ -177,12 +164,9 @@ export default function AdminFAQ() {
           await supabase.storage.from('faq-pdfs').remove([path]);
         }
       }
-
-      const { error } = await supabase
-        .from('faqs' as any)
-        .delete()
-        .eq('id', deletingFAQ.id);
-
+      const {
+        error
+      } = await supabase.from('faqs' as any).delete().eq('id', deletingFAQ.id);
       if (error) throw error;
       toast.success('FAQ excluído com sucesso');
       loadFAQs();
@@ -194,7 +178,6 @@ export default function AdminFAQ() {
       setDeletingFAQ(null);
     }
   };
-
   const resetForm = () => {
     setFormData({
       title: '',
@@ -202,27 +185,18 @@ export default function AdminFAQ() {
       target_audience: 'ambos',
       order_index: 0,
       parent_id: null,
-      is_section: false,
+      is_section: false
     });
     setPdfFile(null);
     setEditingFAQ(null);
   };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
+    return <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/admin/dashboard')}
-        className="mb-4"
-      >
+  return <div className="container mx-auto p-6 max-w-7xl">
+      <Button variant="ghost" onClick={() => navigate('/admin/dashboard')} className="mb-4">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Voltar ao Dashboard
       </Button>
@@ -233,14 +207,14 @@ export default function AdminFAQ() {
             Crie e gerencie a base de conhecimento com PDFs
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
+        <Dialog open={isDialogOpen} onOpenChange={open => {
+        setIsDialogOpen(open);
+        if (!open) resetForm();
+      }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Novo FAQ
+              Novo Campo  
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -253,10 +227,10 @@ export default function AdminFAQ() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="is_section">Tipo *</Label>
-                <Select
-                  value={formData.is_section ? 'section' : 'item'}
-                  onValueChange={(value) => setFormData({ ...formData, is_section: value === 'section' })}
-                >
+                <Select value={formData.is_section ? 'section' : 'item'} onValueChange={value => setFormData({
+                ...formData,
+                is_section: value === 'section'
+              })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -267,56 +241,46 @@ export default function AdminFAQ() {
                 </Select>
               </div>
 
-              {!formData.is_section && (
-                <div className="space-y-2">
+              {!formData.is_section && <div className="space-y-2">
                   <Label htmlFor="parent_id">Seção Pai *</Label>
-                  <Select
-                    value={formData.parent_id || 'none'}
-                    onValueChange={(value) => setFormData({ ...formData, parent_id: value === 'none' ? null : value })}
-                  >
+                  <Select value={formData.parent_id || 'none'} onValueChange={value => setFormData({
+                ...formData,
+                parent_id: value === 'none' ? null : value
+              })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma seção" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Sem seção</SelectItem>
-                      {faqs.filter(f => f.is_section).map(section => (
-                        <SelectItem key={section.id} value={section.id}>
+                      {faqs.filter(f => f.is_section).map(section => <SelectItem key={section.id} value={section.id}>
                           {section.title}
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                </div>}
 
               <div className="space-y-2">
                 <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                  placeholder={formData.is_section ? "Ex: FAQ-Administrativo" : "Digite o título do FAQ"}
-                />
+                <Input id="title" value={formData.title} onChange={e => setFormData({
+                ...formData,
+                title: e.target.value
+              })} required placeholder={formData.is_section ? "Ex: FAQ-Administrativo" : "Digite o título do FAQ"} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Digite uma descrição (opcional)"
-                  rows={3}
-                />
+                <Textarea id="description" value={formData.description} onChange={e => setFormData({
+                ...formData,
+                description: e.target.value
+              })} placeholder="Digite uma descrição (opcional)" rows={3} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="target_audience">Público-alvo *</Label>
-                <Select
-                  value={formData.target_audience}
-                  onValueChange={(value) => setFormData({ ...formData, target_audience: value })}
-                >
+                <Select value={formData.target_audience} onValueChange={value => setFormData({
+                ...formData,
+                target_audience: value
+              })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -330,51 +294,32 @@ export default function AdminFAQ() {
 
               <div className="space-y-2">
                 <Label htmlFor="order_index">Ordem de exibição</Label>
-                <Input
-                  id="order_index"
-                  type="number"
-                  value={formData.order_index}
-                  onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
-                  min={0}
-                />
+                <Input id="order_index" type="number" value={formData.order_index} onChange={e => setFormData({
+                ...formData,
+                order_index: parseInt(e.target.value)
+              })} min={0} />
               </div>
 
-              {!formData.is_section && (
-                <div className="space-y-2">
+              {!formData.is_section && <div className="space-y-2">
                   <Label htmlFor="pdf">PDF {!editingFAQ && '*'}</Label>
                   <div className="flex items-center gap-2">
-                    <Input
-                      id="pdf"
-                      type="file"
-                      accept="application/pdf"
-                      onChange={handleFileChange}
-                      required={!editingFAQ && !formData.is_section}
-                    />
-                    {pdfFile && (
-                      <Upload className="w-5 h-5 text-green-500" />
-                    )}
+                    <Input id="pdf" type="file" accept="application/pdf" onChange={handleFileChange} required={!editingFAQ && !formData.is_section} />
+                    {pdfFile && <Upload className="w-5 h-5 text-green-500" />}
                   </div>
-                  {editingFAQ?.pdf_url && (
-                    <p className="text-sm text-muted-foreground">
+                  {editingFAQ?.pdf_url && <p className="text-sm text-muted-foreground">
                       PDF atual: <a href={editingFAQ.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Ver PDF</a>
-                    </p>
-                  )}
-                </div>
-              )}
+                    </p>}
+                </div>}
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={uploading}>
-                  {uploading ? (
-                    <>
+                  {uploading ? <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Salvando...
-                    </>
-                  ) : (
-                    'Salvar'
-                  )}
+                    </> : 'Salvar'}
                 </Button>
               </DialogFooter>
             </form>
@@ -385,50 +330,33 @@ export default function AdminFAQ() {
       <Card>
         <CardHeader>
           <CardTitle>FAQs Cadastrados</CardTitle>
-          <CardDescription>Lista de todos os FAQs disponíveis</CardDescription>
+          <CardDescription>Lista de todos os campos disponíveis</CardDescription>
         </CardHeader>
         <CardContent>
-          {faqs.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
+          {faqs.length === 0 ? <p className="text-center text-muted-foreground py-8">
               Nenhum FAQ cadastrado ainda.
-            </p>
-          ) : (
-            <div className="space-y-6">
-              {faqs.filter(f => f.is_section).map(section => (
-                <div key={section.id} className="border rounded-lg p-4">
+            </p> : <div className="space-y-6">
+              {faqs.filter(f => f.is_section).map(section => <div key={section.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-lg font-semibold">{section.title}</h3>
-                      {section.description && (
-                        <p className="text-sm text-muted-foreground">{section.description}</p>
-                      )}
+                      {section.description && <p className="text-sm text-muted-foreground">{section.description}</p>}
                       <p className="text-xs text-muted-foreground mt-1">
                         Público: <span className="capitalize">{section.target_audience}</span> | Ordem: {section.order_index}
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(section)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(section)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(section.id, section.title, section.pdf_url)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(section.id, section.title, section.pdf_url)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
                   
                   <div className="ml-4 space-y-2">
-                    {faqs.filter(f => f.parent_id === section.id).length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">Nenhum item nesta seção</p>
-                    ) : (
-                      <Table>
+                    {faqs.filter(f => f.parent_id === section.id).length === 0 ? <p className="text-sm text-muted-foreground italic">Nenhum item nesta seção</p> : <Table>
                         <TableHeader>
                           <TableRow>
                             <TableHead className="w-16">Ordem</TableHead>
@@ -438,53 +366,31 @@ export default function AdminFAQ() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {faqs.filter(f => f.parent_id === section.id).map((item) => (
-                            <TableRow key={item.id}>
+                          {faqs.filter(f => f.parent_id === section.id).map(item => <TableRow key={item.id}>
                               <TableCell>{item.order_index}</TableCell>
                               <TableCell className="font-medium">{item.title}</TableCell>
                               <TableCell>
-                                {item.pdf_url ? (
-                                  <a
-                                    href={item.pdf_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline text-sm"
-                                  >
+                                {item.pdf_url ? <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
                                     Ver PDF
-                                  </a>
-                                ) : (
-                                  <span className="text-muted-foreground text-sm">Sem PDF</span>
-                                )}
+                                  </a> : <span className="text-muted-foreground text-sm">Sem PDF</span>}
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEdit(item)}
-                                  >
+                                  <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                                     <Edit className="w-4 h-4" />
                                   </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}
-                                  >
+                                  <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}>
                                     <Trash2 className="w-4 h-4 text-destructive" />
                                   </Button>
                                 </div>
                               </TableCell>
-                            </TableRow>
-                          ))}
+                            </TableRow>)}
                         </TableBody>
-                      </Table>
-                    )}
+                      </Table>}
                   </div>
-                </div>
-              ))}
+                </div>)}
               
-              {faqs.filter(f => !f.is_section && !f.parent_id).length > 0 && (
-                <div className="border rounded-lg p-4">
+              {faqs.filter(f => !f.is_section && !f.parent_id).length > 0 && <div className="border rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-4">Itens sem seção</h3>
                   <Table>
                     <TableHeader>
@@ -497,51 +403,30 @@ export default function AdminFAQ() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {faqs.filter(f => !f.is_section && !f.parent_id).map((item) => (
-                        <TableRow key={item.id}>
+                      {faqs.filter(f => !f.is_section && !f.parent_id).map(item => <TableRow key={item.id}>
                           <TableCell>{item.order_index}</TableCell>
                           <TableCell className="font-medium">{item.title}</TableCell>
                           <TableCell className="capitalize">{item.target_audience}</TableCell>
                           <TableCell>
-                            {item.pdf_url ? (
-                              <a
-                                href={item.pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
+                            {item.pdf_url ? <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                 Ver PDF
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground">Sem PDF</span>
-                            )}
+                              </a> : <span className="text-muted-foreground">Sem PDF</span>}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(item)}
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                                 <Edit className="w-4 h-4" />
                               </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}>
                                   <Trash2 className="w-4 h-4 text-destructive" />
                                 </Button>
                             </div>
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
                   </Table>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
         </CardContent>
       </Card>
 
@@ -557,15 +442,11 @@ export default function AdminFAQ() {
             <AlertDialogCancel onClick={() => setDeletingFAQ(null)}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 }
