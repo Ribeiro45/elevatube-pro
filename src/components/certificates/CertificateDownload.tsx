@@ -128,7 +128,7 @@ const drawCertificate = (
 
   ctx.font = '16px Arial';
   ctx.fillStyle = '#1a365d';
-  ctx.fillText('New Standard Academy', canvas.width / 2, 775);
+  ctx.fillText('New Standard Software', canvas.width / 2, 775);
 };
 
 export const generateCertificateImage = (
