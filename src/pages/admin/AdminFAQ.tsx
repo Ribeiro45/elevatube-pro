@@ -191,6 +191,88 @@ export default function AdminFAQ() {
     setPdfFile(null);
     setEditingFAQ(null);
   };
+
+  const renderSection = (section: FAQ, level: number = 0): JSX.Element => {
+    const childSections = faqs.filter(f => f.is_section && f.parent_id === section.id);
+    const childItems = faqs.filter(f => !f.is_section && f.parent_id === section.id);
+
+    return (
+      <div key={section.id} className={`border rounded-lg p-4 ${level > 0 ? 'ml-6 mt-4' : ''}`}>
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className={`${level === 0 ? 'text-lg' : 'text-base'} font-semibold`}>
+              {level > 0 && '↳ '}
+              {section.title}
+            </h3>
+            {section.description && <p className="text-sm text-muted-foreground">{section.description}</p>}
+            <p className="text-xs text-muted-foreground mt-1">
+              Público: <span className="capitalize">{section.target_audience}</span> | Ordem: {section.order_index}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => handleEdit(section)}>
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(section.id, section.title, section.pdf_url)}>
+              <Trash2 className="w-4 h-4 text-destructive" />
+            </Button>
+          </div>
+        </div>
+
+        {childItems.length > 0 && (
+          <div className="ml-4 mb-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Ordem</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>PDF</TableHead>
+                  <TableHead className="text-right w-24">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {childItems.map(item => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.order_index}</TableCell>
+                    <TableCell className="font-medium">{item.title}</TableCell>
+                    <TableCell>
+                      {item.pdf_url ? (
+                        <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
+                          Ver PDF
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Sem PDF</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {childSections.length > 0 && (
+          <div className="space-y-2">
+            {childSections.map(childSection => renderSection(childSection, level + 1))}
+          </div>
+        )}
+
+        {childItems.length === 0 && childSections.length === 0 && (
+          <p className="text-sm text-muted-foreground italic ml-4">Nenhum item ou sub-seção nesta seção</p>
+        )}
+      </div>
+    );
+  };
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -355,64 +437,16 @@ export default function AdminFAQ() {
           <CardDescription>Lista de todos os campos disponíveis</CardDescription>
         </CardHeader>
         <CardContent>
-          {faqs.length === 0 ? <p className="text-center text-muted-foreground py-8">
+          {faqs.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
               Nenhum FAQ cadastrado ainda.
-            </p> : <div className="space-y-6">
-              {faqs.filter(f => f.is_section).map(section => <div key={section.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">{section.title}</h3>
-                      {section.description && <p className="text-sm text-muted-foreground">{section.description}</p>}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Público: <span className="capitalize">{section.target_audience}</span> | Ordem: {section.order_index}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(section)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(section.id, section.title, section.pdf_url)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="ml-4 space-y-2">
-                    {faqs.filter(f => f.parent_id === section.id).length === 0 ? <p className="text-sm text-muted-foreground italic">Nenhum item nesta seção</p> : <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-16">Ordem</TableHead>
-                            <TableHead>Título</TableHead>
-                            <TableHead>PDF</TableHead>
-                            <TableHead className="text-right w-24">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {faqs.filter(f => f.parent_id === section.id).map(item => <TableRow key={item.id}>
-                              <TableCell>{item.order_index}</TableCell>
-                              <TableCell className="font-medium">{item.title}</TableCell>
-                              <TableCell>
-                                {item.pdf_url ? <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
-                                    Ver PDF
-                                  </a> : <span className="text-muted-foreground text-sm">Sem PDF</span>}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}>
-                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>)}
-                        </TableBody>
-                      </Table>}
-                  </div>
-                </div>)}
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {faqs.filter(f => f.is_section && !f.parent_id).map(section => renderSection(section))}
               
-              {faqs.filter(f => !f.is_section && !f.parent_id).length > 0 && <div className="border rounded-lg p-4">
+              {faqs.filter(f => !f.is_section && !f.parent_id).length > 0 && (
+                <div className="border rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-4">Itens sem seção</h3>
                   <Table>
                     <TableHeader>
@@ -425,30 +459,38 @@ export default function AdminFAQ() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {faqs.filter(f => !f.is_section && !f.parent_id).map(item => <TableRow key={item.id}>
+                      {faqs.filter(f => !f.is_section && !f.parent_id).map(item => (
+                        <TableRow key={item.id}>
                           <TableCell>{item.order_index}</TableCell>
                           <TableCell className="font-medium">{item.title}</TableCell>
                           <TableCell className="capitalize">{item.target_audience}</TableCell>
                           <TableCell>
-                            {item.pdf_url ? <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {item.pdf_url ? (
+                              <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                 Ver PDF
-                              </a> : <span className="text-muted-foreground">Sem PDF</span>}
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">Sem PDF</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                                 <Edit className="w-4 h-4" />
                               </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}>
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item.id, item.title, item.pdf_url)}>
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
                             </div>
                           </TableCell>
-                        </TableRow>)}
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
-                </div>}
-            </div>}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
