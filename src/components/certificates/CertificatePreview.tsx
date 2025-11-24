@@ -15,6 +15,7 @@ interface CertificatePreviewProps {
   onOpenChange: (open: boolean) => void;
   courseTitle: string;
   studentName: string;
+  studentCPF: string;
   certificateNumber: string;
   issuedAt: string;
   totalHours: number;
@@ -25,6 +26,7 @@ export const CertificatePreview = ({
   onOpenChange,
   courseTitle,
   studentName,
+  studentCPF,
   certificateNumber,
   issuedAt,
   totalHours,
@@ -36,6 +38,7 @@ export const CertificatePreview = ({
       generateCertificateImage({
         courseTitle,
         studentName,
+        studentCPF,
         certificateNumber,
         issuedAt,
         totalHours,
@@ -49,7 +52,7 @@ export const CertificatePreview = ({
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [open, courseTitle, studentName, certificateNumber, issuedAt, totalHours]);
+  }, [open, courseTitle, studentName, studentCPF, certificateNumber, issuedAt, totalHours]);
 
   const handleDownload = () => {
     if (previewUrl) {
