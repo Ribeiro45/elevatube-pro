@@ -50,6 +50,7 @@ export const AuthForm = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [show2FAChallenge, setShow2FAChallenge] = useState(false);
   const [factorId, setFactorId] = useState("");
+  const [challengeId, setChallengeId] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [allowClientRegistration, setAllowClientRegistration] = useState(true);
   const navigate = useNavigate();
@@ -107,8 +108,9 @@ export const AuthForm = () => {
         if (challengeError) throw challengeError;
 
         setFactorId(totpFactor.id);
+        setChallengeId(challengeData.id);
         setShow2FAChallenge(true);
-        toast.info('Digite o código do seu autenticador');
+        toast.info('Digite o código do seu autenticador para completar o login');
         return;
       }
 
@@ -165,12 +167,12 @@ export const AuthForm = () => {
 
       const { error } = await supabase.auth.mfa.verify({
         factorId,
-        challengeId: factorId,
+        challengeId,
         code: mfaCode,
       });
 
       if (error) {
-        toast.error('Código inválido. Tente novamente.');
+        toast.error('Código inválido. Verifique seu autenticador e tente novamente.');
         return;
       }
 
@@ -455,6 +457,7 @@ export const AuthForm = () => {
                     setShow2FAChallenge(false);
                     setMfaCode('');
                     setFactorId('');
+                    setChallengeId('');
                   }}
                 >
                   Voltar ao Login
