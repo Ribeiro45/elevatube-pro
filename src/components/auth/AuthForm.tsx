@@ -96,49 +96,68 @@ export const AuthForm = () => {
         throw error;
       }
 
-      // Check if 2FA is required
+      if (!data.user) {
+        toast.error('Erro ao fazer login');
+        return;
+      }
+
+      // CRITICAL: Check if 2FA is enabled BEFORE allowing access
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const totpFactor = factorsData?.totp?.find(f => f.status === 'verified');
 
-      if (totpFactor && data.session) {
+      console.log('MFA Status:', { 
+        hasFactors: !!factorsData?.totp?.length, 
+        factorStatus: factorsData?.totp?.[0]?.status,
+        totpFactor 
+      });
+
+      if (totpFactor) {
+        // MFA is enabled - create challenge and require code
         const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: totpFactor.id,
         });
 
-        if (challengeError) throw challengeError;
+        if (challengeError) {
+          console.error('Challenge error:', challengeError);
+          throw challengeError;
+        }
 
+        // Store challenge info and show 2FA input
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
         setShow2FAChallenge(true);
+        
+        // Sign out the partial session until MFA is verified
+        await supabase.auth.signOut();
+        
         toast.info('Digite o código do seu autenticador para completar o login');
+        setLoading(false);
         return;
       }
 
-      // Verify user type matches selected type
-      if (data.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', data.user.id)
-          .single();
+      // No MFA - verify user type and proceed
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', data.user.id)
+        .single();
 
-        if (profileError) {
-          console.error('Erro ao buscar perfil:', profileError);
-          toast.error('Erro ao verificar tipo de usuário');
-          await supabase.auth.signOut();
-          return;
-        }
+      if (profileError) {
+        console.error('Erro ao buscar perfil:', profileError);
+        toast.error('Erro ao verificar tipo de usuário');
+        await supabase.auth.signOut();
+        return;
+      }
 
-        const profileUserType = profile?.user_type || 'colaborador';
-        if (profileUserType !== userType) {
-          await supabase.auth.signOut();
-          toast.error(
-            userType === 'colaborador' 
-              ? 'Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.'
-              : 'Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.'
-          );
-          return;
-        }
+      const profileUserType = profile?.user_type || 'colaborador';
+      if (profileUserType !== userType) {
+        await supabase.auth.signOut();
+        toast.error(
+          userType === 'colaborador' 
+            ? 'Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.'
+            : 'Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.'
+        );
+        return;
       }
 
       toast.success("Login realizado com sucesso!");
@@ -165,13 +184,26 @@ export const AuthForm = () => {
 
       setLoading(true);
 
-      const { error } = await supabase.auth.mfa.verify({
+      // Re-authenticate with password first
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (authError) {
+        toast.error('Erro ao autenticar. Por favor, faça login novamente.');
+        setShow2FAChallenge(false);
+        return;
+      }
+
+      // Verify the MFA code
+      const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId,
         challengeId,
         code: mfaCode,
       });
 
-      if (error) {
+      if (verifyError) {
         toast.error('Código inválido. Verifique seu autenticador e tente novamente.');
         return;
       }
