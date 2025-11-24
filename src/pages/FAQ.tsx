@@ -167,31 +167,33 @@ export default function FAQ() {
     const childItems = filteredFAQs.filter(f => !f.is_section && f.parent_id === section.id);
 
     return (
-      <AccordionItem key={section.id} value={section.id} className={level > 0 ? 'ml-6' : ''}>
-        <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-          <div>
-            <div className="text-left">{section.title}</div>
-            {section.description && (
-              <div className="text-sm font-normal text-muted-foreground text-left">
-                {section.description}
+      <div key={section.id} className={level > 0 ? 'ml-6 mt-4' : ''}>
+        <Accordion type="multiple" className="border rounded-lg">
+          <AccordionItem value={section.id} className="border-none">
+            <AccordionTrigger className="px-4 hover:no-underline">
+              <div>
+                <div className={`text-left font-semibold ${level === 0 ? 'text-lg' : 'text-base'}`}>
+                  {level > 0 && '↳ '}{section.title}
+                </div>
+                {section.description && (
+                  <div className="text-sm font-normal text-muted-foreground text-left">
+                    {section.description}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="space-y-4 pt-4">
-            {/* Render child sections recursively */}
-            {childSections.length > 0 && (
-              <Accordion type="multiple" className="space-y-2">
+            </AccordionTrigger>
+            <AccordionContent className="px-4">
+              <div className="space-y-4 pt-2">
+                {/* Render child items */}
+                {childItems.map(renderFAQItem)}
+                
+                {/* Render child sections recursively */}
                 {childSections.map(childSection => renderSection(childSection, level + 1))}
-              </Accordion>
-            )}
-            
-            {/* Render child items */}
-            {childItems.map(renderFAQItem)}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
     );
   };
 
@@ -230,9 +232,9 @@ export default function FAQ() {
                 </CardContent>
               </Card>
             ) : (
-              <Accordion type="multiple" className="space-y-4">
+              <div className="space-y-4">
                 {topLevelSections.map(section => renderSection(section, 0))}
-              </Accordion>
+              </div>
             )}
           </div>
         </div>
