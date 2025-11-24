@@ -112,10 +112,9 @@ export const AuthForm = () => {
       });
 
       if (totpFactor) {
-        // MFA is enabled - IMMEDIATELY sign out and require 2FA
-        console.log('2FA detected - signing out and requiring code');
+        console.log('2FA detected - creating challenge WITHOUT signing out');
         
-        // Create challenge BEFORE signing out
+        // Create challenge while session is still active
         const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: totpFactor.id,
         });
@@ -126,20 +125,21 @@ export const AuthForm = () => {
           throw challengeError;
         }
 
-        // Store credentials and challenge info
+        console.log('Challenge created successfully:', challengeData);
+
+        // Store ALL necessary info including credentials for re-auth
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
         
         // Mark that we're in 2FA flow to prevent auto-navigation
         sessionStorage.setItem('awaiting_2fa_verification', 'true');
+        sessionStorage.setItem('mfa_factor_id', totpFactor.id);
+        sessionStorage.setItem('mfa_challenge_id', challengeData.id);
         
-        // CRITICAL: Sign out to prevent unauthorized access
-        await supabase.auth.signOut();
-        
-        // Show 2FA form
+        // Show 2FA form WITHOUT signing out
         setShow2FAChallenge(true);
         
-        console.log('Challenge created, 2FA form displayed, sessionStorage set');
+        console.log('2FA form displayed, awaiting code input');
         toast.info('Digite o código do seu autenticador para completar o login');
         setLoading(false);
         return;
@@ -194,28 +194,16 @@ export const AuthForm = () => {
 
       setLoading(true);
 
-      console.log('Re-authenticating with password for MFA verification');
+      // Get stored challenge info
+      const storedFactorId = sessionStorage.getItem('mfa_factor_id') || factorId;
+      const storedChallengeId = sessionStorage.getItem('mfa_challenge_id') || challengeId;
 
-      // CRITICAL: Re-authenticate with password to get a new session
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
-      });
+      console.log('Verifying MFA code with factorId:', storedFactorId, 'challengeId:', storedChallengeId);
 
-      if (authError) {
-        console.error('Re-auth error:', authError);
-        toast.error('Erro ao autenticar. Por favor, faça login novamente.');
-        setShow2FAChallenge(false);
-        setMfaCode('');
-        return;
-      }
-
-      console.log('Verifying MFA code with factorId:', factorId, 'challengeId:', challengeId);
-
-      // Verify the MFA code
-      const { error: verifyError } = await supabase.auth.mfa.verify({
-        factorId,
-        challengeId,
+      // Verify the MFA code (session should still be active)
+      const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: storedFactorId,
+        challengeId: storedChallengeId,
         code: mfaCode,
       });
 
@@ -224,6 +212,7 @@ export const AuthForm = () => {
         toast.error('Código inválido. Verifique seu autenticador e tente novamente.');
         return;
       }
+
 
       // Verify user type matches selected type after MFA
       const { data: { user } } = await supabase.auth.getUser();
@@ -253,8 +242,10 @@ export const AuthForm = () => {
         }
       }
 
-      // Clear 2FA flow marker
+      // Clear 2FA flow markers
       sessionStorage.removeItem('awaiting_2fa_verification');
+      sessionStorage.removeItem('mfa_factor_id');
+      sessionStorage.removeItem('mfa_challenge_id');
 
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard");
@@ -511,6 +502,10 @@ export const AuthForm = () => {
                     setFactorId('');
                     setChallengeId('');
                     sessionStorage.removeItem('awaiting_2fa_verification');
+                    sessionStorage.removeItem('mfa_factor_id');
+                    sessionStorage.removeItem('mfa_challenge_id');
+                    // Sign out to clear the partial session
+                    supabase.auth.signOut();
                   }}
                 >
                   Voltar ao Login
