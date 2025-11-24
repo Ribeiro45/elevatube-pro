@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -97,83 +98,104 @@ export default function FAQ() {
   });
 
   const renderFAQItem = (subFaq: FAQ) => (
-    <Card key={subFaq.id}>
-      <CardHeader>
-        <CardTitle className="text-lg">{subFaq.title}</CardTitle>
-        {subFaq.description && (
-          <CardDescription>{subFaq.description}</CardDescription>
-        )}
-      </CardHeader>
-      <CardContent>
-        {subFaq.pdf_url && (
-          <div className="space-y-4">
-            <div className="border rounded-lg overflow-hidden bg-muted/20">
-              <Document
-                file={subFaq.pdf_url}
-                onLoadSuccess={(pdf) => onDocumentLoadSuccess(subFaq.id, pdf)}
-                loading={
-                  <div className="flex items-center justify-center p-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                }
-              >
-                <Page
-                  pageNumber={pageNumbers[subFaq.id] || 1}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  className="mx-auto"
-                />
-              </Document>
+    <div key={subFaq.id} className="ml-4 mb-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{subFaq.title}</CardTitle>
+          {subFaq.description && (
+            <CardDescription>{subFaq.description}</CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
+          {subFaq.pdf_url && (
+            <div className="space-y-4">
+              <div className="border rounded-lg overflow-hidden bg-muted/20">
+                <Document
+                  file={subFaq.pdf_url}
+                  onLoadSuccess={(pdf) => onDocumentLoadSuccess(subFaq.id, pdf)}
+                  loading={
+                    <div className="flex items-center justify-center p-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  }
+                >
+                  <Page
+                    pageNumber={pageNumbers[subFaq.id] || 1}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="mx-auto"
+                  />
+                </Document>
+              </div>
+              
+              {numPages[subFaq.id] && numPages[subFaq.id] > 1 && (
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => changePage(subFaq.id, -1)}
+                    disabled={(pageNumbers[subFaq.id] || 1) <= 1}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Anterior
+                  </Button>
+                  
+                  <span className="text-sm text-muted-foreground">
+                    Página {pageNumbers[subFaq.id] || 1} de {numPages[subFaq.id]}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => changePage(subFaq.id, 1)}
+                    disabled={(pageNumbers[subFaq.id] || 1) >= numPages[subFaq.id]}
+                  >
+                    Próxima
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
-            
-            {numPages[subFaq.id] && numPages[subFaq.id] > 1 && (
-              <div className="flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => changePage(subFaq.id, -1)}
-                  disabled={(pageNumbers[subFaq.id] || 1) <= 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Anterior
-                </Button>
-                
-                <span className="text-sm text-muted-foreground">
-                  Página {pageNumbers[subFaq.id] || 1} de {numPages[subFaq.id]}
-                </span>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => changePage(subFaq.id, 1)}
-                  disabled={(pageNumbers[subFaq.id] || 1) >= numPages[subFaq.id]}
-                >
-                  Próxima
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderSection = (section: FAQ, level: number = 0): React.ReactNode => {
+    const childSections = filteredFAQs.filter(f => f.is_section && f.parent_id === section.id);
+    const childItems = filteredFAQs.filter(f => !f.is_section && f.parent_id === section.id);
+
+    return (
+      <AccordionItem key={section.id} value={section.id} className={level > 0 ? 'ml-6' : ''}>
+        <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+          <div>
+            <div className="text-left">{section.title}</div>
+            {section.description && (
+              <div className="text-sm font-normal text-muted-foreground text-left">
+                {section.description}
               </div>
             )}
           </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+        </AccordionTrigger>
+        <AccordionContent>
+          <div className="space-y-4 pt-4">
+            {/* Render child sections recursively */}
+            {childSections.length > 0 && (
+              <Accordion type="multiple" className="space-y-2">
+                {childSections.map(childSection => renderSection(childSection, level + 1))}
+              </Accordion>
+            )}
+            
+            {/* Render child items */}
+            {childItems.map(renderFAQItem)}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    );
+  };
 
-  const renderFAQSection = (section: FAQ, sectionFAQs: FAQ[]) => (
-    <Card key={section.id}>
-      <CardHeader>
-        <CardTitle>{section.title}</CardTitle>
-        {section.description && (
-          <CardDescription>{section.description}</CardDescription>
-        )}
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4 ml-6">
-          {sectionFAQs.map(renderFAQItem)}
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const topLevelSections = filteredFAQs.filter(f => f.is_section && !f.parent_id);
 
   if (loading) {
     return (
@@ -208,9 +230,9 @@ export default function FAQ() {
                 </CardContent>
               </Card>
             ) : (
-              filteredFAQs.filter(f => f.is_section).map((section) => 
-                renderFAQSection(section, filteredFAQs.filter(subFaq => subFaq.parent_id === section.id))
-              )
+              <Accordion type="multiple" className="space-y-4">
+                {topLevelSections.map(section => renderSection(section, 0))}
+              </Accordion>
             )}
           </div>
         </div>
