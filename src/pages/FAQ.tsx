@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Loader2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -94,11 +93,9 @@ export default function FAQ() {
     }));
   };
 
-  const filteredFAQs = (audience: string) => {
-    return faqs.filter(faq => {
-      return faq.target_audience === audience;
-    });
-  };
+  const filteredFAQs = faqs.filter(faq => {
+    return faq.target_audience === userType || faq.target_audience === 'ambos';
+  });
 
   const renderFAQItem = (subFaq: FAQ) => (
     <Card key={subFaq.id}>
@@ -187,6 +184,11 @@ export default function FAQ() {
     );
   }
 
+  const pageTitle = userType === 'cliente' ? 'FAQ' : 'Base de Conhecimento';
+  const pageDescription = userType === 'cliente' 
+    ? 'Perguntas frequentes'
+    : 'Encontre respostas para as perguntas mais comuns';
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
@@ -198,51 +200,25 @@ export default function FAQ() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar ao Dashboard
         </Button>
-        <h1 className="text-4xl font-bold mb-2">Base de Conhecimento</h1>
+        <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
         <p className="text-muted-foreground">
-          Encontre respostas para as perguntas mais comuns
+          {pageDescription}
         </p>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="cliente">Clientes</TabsTrigger>
-          <TabsTrigger value="colaborador">Colaboradores</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="space-y-6">
-          {faqs.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">Nenhum FAQ disponível no momento.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            faqs.filter(f => f.is_section).map((section) => 
-              renderFAQSection(section, faqs.filter(subFaq => subFaq.parent_id === section.id))
-            )
-          )}
-        </TabsContent>
-
-        <TabsContent value="cliente" className="space-y-6">
-          {filteredFAQs('cliente').filter(f => f.is_section).map((section) => 
-            renderFAQSection(
-              section, 
-              filteredFAQs('cliente').filter(subFaq => subFaq.parent_id === section.id)
-            )
-          )}
-        </TabsContent>
-
-        <TabsContent value="colaborador" className="space-y-6">
-          {filteredFAQs('colaborador').filter(f => f.is_section).map((section) => 
-            renderFAQSection(
-              section, 
-              filteredFAQs('colaborador').filter(subFaq => subFaq.parent_id === section.id)
-            )
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-6">
+        {filteredFAQs.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">Nenhum conteúdo disponível no momento.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredFAQs.filter(f => f.is_section).map((section) => 
+            renderFAQSection(section, filteredFAQs.filter(subFaq => subFaq.parent_id === section.id))
+          )
+        )}
+      </div>
     </div>
   );
 }
