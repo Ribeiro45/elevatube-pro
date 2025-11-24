@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Loader2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -24,7 +25,6 @@ interface FAQ {
 }
 
 export default function FAQ() {
-  const navigate = useNavigate();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [userType, setUserType] = useState<string>('colaborador');
@@ -190,35 +190,39 @@ export default function FAQ() {
     : 'Encontre respostas para as perguntas mais comuns';
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dashboard')}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar ao Dashboard
-        </Button>
-        <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
-        <p className="text-muted-foreground">
-          {pageDescription}
-        </p>
-      </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <main className="flex-1">
+          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex h-14 items-center px-4">
+              <SidebarTrigger />
+            </div>
+          </div>
+          <div className="container mx-auto p-6 max-w-7xl">
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
+              <p className="text-muted-foreground">
+                {pageDescription}
+              </p>
+            </div>
 
-      <div className="space-y-6">
-        {filteredFAQs.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">Nenhum conteúdo disponível no momento.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredFAQs.filter(f => f.is_section).map((section) => 
-            renderFAQSection(section, filteredFAQs.filter(subFaq => subFaq.parent_id === section.id))
-          )
-        )}
+            <div className="space-y-6">
+              {filteredFAQs.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <p className="text-muted-foreground">Nenhum conteúdo disponível no momento.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredFAQs.filter(f => f.is_section).map((section) => 
+                  renderFAQSection(section, filteredFAQs.filter(subFaq => subFaq.parent_id === section.id))
+                )
+              )}
+            </div>
+          </div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
