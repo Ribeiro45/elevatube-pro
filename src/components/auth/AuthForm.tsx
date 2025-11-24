@@ -29,6 +29,7 @@ const authSchema = z.object({
     .string()
     .min(2, "Nome deve ter no mínimo 2 caracteres")
     .max(100, "Nome muito longo")
+    .regex(/^[A-Za-zÀ-ÿ\s\-]+$/, "Nome deve conter apenas letras, espaços e hífens")
     .optional(),
 });
 
@@ -598,7 +599,13 @@ export const AuthForm = () => {
                       type="text"
                       placeholder={userType === 'cliente' ? "Nome do responsável" : "Seu nome completo"}
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Permite apenas letras, espaços e hífens
+                        if (value === '' || /^[A-Za-zÀ-ÿ\s\-]+$/.test(value)) {
+                          setFullName(value);
+                        }
+                      }}
                       required
                     />
                   </div>
