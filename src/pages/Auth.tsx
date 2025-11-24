@@ -10,14 +10,22 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/dashboard");
-      }
-    });
+    // Check if we're in 2FA verification flow
+    const is2FAFlow = sessionStorage.getItem('awaiting_2fa_verification') === 'true';
+    
+    if (!is2FAFlow) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          navigate("/dashboard");
+        }
+      });
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      const is2FAFlow = sessionStorage.getItem('awaiting_2fa_verification') === 'true';
+      
+      // Only auto-navigate if NOT in 2FA flow
+      if (session && !is2FAFlow) {
         navigate("/dashboard");
       }
     });

@@ -130,13 +130,16 @@ export const AuthForm = () => {
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
         
+        // Mark that we're in 2FA flow to prevent auto-navigation
+        sessionStorage.setItem('awaiting_2fa_verification', 'true');
+        
         // CRITICAL: Sign out to prevent unauthorized access
         await supabase.auth.signOut();
         
         // Show 2FA form
         setShow2FAChallenge(true);
         
-        console.log('Challenge created, 2FA form displayed');
+        console.log('Challenge created, 2FA form displayed, sessionStorage set');
         toast.info('Digite o código do seu autenticador para completar o login');
         setLoading(false);
         return;
@@ -249,6 +252,9 @@ export const AuthForm = () => {
           return;
         }
       }
+
+      // Clear 2FA flow marker
+      sessionStorage.removeItem('awaiting_2fa_verification');
 
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard");
@@ -504,6 +510,7 @@ export const AuthForm = () => {
                     setMfaCode('');
                     setFactorId('');
                     setChallengeId('');
+                    sessionStorage.removeItem('awaiting_2fa_verification');
                   }}
                 >
                   Voltar ao Login
