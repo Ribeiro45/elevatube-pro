@@ -61,17 +61,17 @@ const drawCertificate = (
   // Main text
   ctx.font = '19px Arial';
   ctx.fillStyle = '#333';
-  ctx.fillText('Certificamos que', canvas.width / 2, 330);
+  ctx.fillText('Certificamos que', canvas.width / 2, 310);
 
   // Student name
   ctx.font = 'bold 38px Arial';
   ctx.fillStyle = '#1a365d';
-  ctx.fillText(studentName, canvas.width / 2, 385);
+  ctx.fillText(studentName, canvas.width / 2, 365);
   
   // Student CPF
   ctx.font = '18px Arial';
   ctx.fillStyle = '#666';
-  ctx.fillText(`CPF: ${studentCPF}`, canvas.width / 2, 420);
+  ctx.fillText(`CPF: ${studentCPF}`, canvas.width / 2, 400);
 
   // Course completion text
   ctx.font = '19px Arial';
