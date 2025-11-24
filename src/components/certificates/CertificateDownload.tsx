@@ -122,13 +122,13 @@ const drawCertificate = (
   ctx.strokeStyle = '#1a365d';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(canvas.width / 2 - 150, 770);
-  ctx.lineTo(canvas.width / 2 + 150, 770);
+  ctx.moveTo(canvas.width / 2 - 150, 750);
+  ctx.lineTo(canvas.width / 2 + 150, 750);
   ctx.stroke();
 
   ctx.font = '16px Arial';
   ctx.fillStyle = '#1a365d';
-  ctx.fillText('New Standard Academy', canvas.width / 2, 795);
+  ctx.fillText('New Standard Academy', canvas.width / 2, 775);
 };
 
 export const generateCertificateImage = (
