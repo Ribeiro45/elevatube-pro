@@ -99,66 +99,72 @@ export default function FAQ() {
 
   const renderFAQItem = (subFaq: FAQ) => (
     <div key={subFaq.id} className="ml-4 mb-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{subFaq.title}</CardTitle>
-          {subFaq.description && (
-            <CardDescription>{subFaq.description}</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
-          {subFaq.pdf_url && (
-            <div className="space-y-4">
-              <div className="border rounded-lg overflow-hidden bg-muted/20">
-                <Document
-                  file={subFaq.pdf_url}
-                  onLoadSuccess={(pdf) => onDocumentLoadSuccess(subFaq.id, pdf)}
-                  loading={
-                    <div className="flex items-center justify-center p-12">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                  }
-                >
-                  <Page
-                    pageNumber={pageNumbers[subFaq.id] || 1}
-                    renderTextLayer={true}
-                    renderAnnotationLayer={true}
-                    className="mx-auto"
-                  />
-                </Document>
-              </div>
-              
-              {numPages[subFaq.id] && numPages[subFaq.id] > 1 && (
-                <div className="flex items-center justify-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => changePage(subFaq.id, -1)}
-                    disabled={(pageNumbers[subFaq.id] || 1) <= 1}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Anterior
-                  </Button>
-                  
-                  <span className="text-sm text-muted-foreground">
-                    Página {pageNumbers[subFaq.id] || 1} de {numPages[subFaq.id]}
-                  </span>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => changePage(subFaq.id, 1)}
-                    disabled={(pageNumbers[subFaq.id] || 1) >= numPages[subFaq.id]}
-                  >
-                    Próxima
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
+      <Accordion type="multiple" className="border rounded-lg">
+        <AccordionItem value={subFaq.id} className="border-none">
+          <AccordionTrigger className="px-4 hover:no-underline">
+            <div className="text-left">
+              <div className="font-medium">{subFaq.title}</div>
+              {subFaq.description && (
+                <div className="text-sm font-normal text-muted-foreground">
+                  {subFaq.description}
                 </div>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </AccordionTrigger>
+          <AccordionContent className="px-4">
+            {subFaq.pdf_url && (
+              <div className="space-y-4">
+                <div className="border rounded-lg overflow-hidden bg-muted/20">
+                  <Document
+                    file={subFaq.pdf_url}
+                    onLoadSuccess={(pdf) => onDocumentLoadSuccess(subFaq.id, pdf)}
+                    loading={
+                      <div className="flex items-center justify-center p-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      </div>
+                    }
+                  >
+                    <Page
+                      pageNumber={pageNumbers[subFaq.id] || 1}
+                      renderTextLayer={true}
+                      renderAnnotationLayer={true}
+                      className="mx-auto"
+                    />
+                  </Document>
+                </div>
+                
+                {numPages[subFaq.id] && numPages[subFaq.id] > 1 && (
+                  <div className="flex items-center justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => changePage(subFaq.id, -1)}
+                      disabled={(pageNumbers[subFaq.id] || 1) <= 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Anterior
+                    </Button>
+                    
+                    <span className="text-sm text-muted-foreground">
+                      Página {pageNumbers[subFaq.id] || 1} de {numPages[subFaq.id]}
+                    </span>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => changePage(subFaq.id, 1)}
+                      disabled={(pageNumbers[subFaq.id] || 1) >= numPages[subFaq.id]}
+                    >
+                      Próxima
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 
