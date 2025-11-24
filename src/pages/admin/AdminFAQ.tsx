@@ -236,11 +236,32 @@ export default function AdminFAQ() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="section">Seção Principal</SelectItem>
+                    <SelectItem value="section">Seção</SelectItem>
                     <SelectItem value="item">Item de FAQ</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.is_section && <div className="space-y-2">
+                  <Label htmlFor="parent_section">Seção Pai (Opcional)</Label>
+                  <Select value={formData.parent_id || 'none'} onValueChange={value => setFormData({
+                ...formData,
+                parent_id: value === 'none' ? null : value
+              })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhuma (Seção principal)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma (Seção principal)</SelectItem>
+                      {faqs.filter(f => f.is_section && f.id !== editingFAQ?.id).map(section => <SelectItem key={section.id} value={section.id}>
+                          {section.title}
+                        </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Deixe vazio para criar uma seção principal, ou selecione para criar uma sub-seção
+                  </p>
+                </div>}
 
               {!formData.is_section && <div className="space-y-2">
                   <Label htmlFor="parent_id">Seção Pai *</Label>
