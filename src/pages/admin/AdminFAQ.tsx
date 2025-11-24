@@ -329,7 +329,7 @@ export default function AdminFAQ() {
 
       <Card>
         <CardHeader>
-          <CardTitle>FAQs Cadastrados</CardTitle>
+          <CardTitle>Campos da Base De Conhecimento        </CardTitle>
           <CardDescription>Lista de todos os campos disponíveis</CardDescription>
         </CardHeader>
         <CardContent>
