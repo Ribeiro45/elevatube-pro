@@ -16,6 +16,7 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [secret, setSecret] = useState("");
+  const [factorId, setFactorId] = useState(""); // Armazenar o factor ID
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
@@ -50,7 +51,8 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
 
       if (error) throw error;
 
-      // Use the URI for QR code generation, not the qr_code image data
+      // Armazenar o factor ID para usar na verificação
+      setFactorId(data.id);
       setQrCode(data.totp.uri);
       setSecret(data.totp.secret);
       toast.success('Escaneie o QR Code com seu aplicativo autenticador!');
@@ -69,25 +71,25 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
         return;
       }
 
+      if (!factorId) {
+        toast.error('Erro: ID do fator não encontrado. Por favor, comece novamente.');
+        setQrCode('');
+        setSecret('');
+        return;
+      }
+
       setLoading(true);
 
-      // Get the unverified factor
-      const factors = await supabase.auth.mfa.listFactors();
-      if (factors.error) throw factors.error;
-
-      const totpFactor = factors.data?.totp?.[0];
-      if (!totpFactor) throw new Error('Fator MFA não encontrado');
-
-      // Create a challenge for the unverified factor
+      // Create a challenge for the factor
       const challenge = await supabase.auth.mfa.challenge({
-        factorId: totpFactor.id
+        factorId: factorId
       });
 
       if (challenge.error) throw challenge.error;
 
       // Verify the code with the challenge
       const verify = await supabase.auth.mfa.verify({
-        factorId: totpFactor.id,
+        factorId: factorId,
         challengeId: challenge.data.id,
         code: verifyCode,
       });
@@ -98,6 +100,7 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
       setIs2FAEnabled(true);
       setQrCode('');
       setSecret('');
+      setFactorId('');
       setVerifyCode('');
       onComplete?.();
     } catch (error: any) {
@@ -257,6 +260,7 @@ export const TwoFactorSetup = ({ onComplete }: TwoFactorSetupProps) => {
                 onClick={() => {
                   setQrCode('');
                   setSecret('');
+                  setFactorId('');
                   setVerifyCode('');
                 }}
                 disabled={loading}
