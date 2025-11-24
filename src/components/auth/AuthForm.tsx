@@ -122,13 +122,12 @@ export const AuthForm = () => {
           throw challengeError;
         }
 
+        console.log('Challenge created, showing 2FA input');
+        
         // Store challenge info and show 2FA input
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
         setShow2FAChallenge(true);
-        
-        // Sign out the partial session until MFA is verified
-        await supabase.auth.signOut();
         
         toast.info('Digite o código do seu autenticador para completar o login');
         setLoading(false);
@@ -184,17 +183,7 @@ export const AuthForm = () => {
 
       setLoading(true);
 
-      // Re-authenticate with password first
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
-      });
-
-      if (authError) {
-        toast.error('Erro ao autenticar. Por favor, faça login novamente.');
-        setShow2FAChallenge(false);
-        return;
-      }
+      console.log('Verifying MFA code with factorId:', factorId, 'challengeId:', challengeId);
 
       // Verify the MFA code
       const { error: verifyError } = await supabase.auth.mfa.verify({
@@ -204,6 +193,7 @@ export const AuthForm = () => {
       });
 
       if (verifyError) {
+        console.error('MFA verification error:', verifyError);
         toast.error('Código inválido. Verifique seu autenticador e tente novamente.');
         return;
       }
