@@ -22,7 +22,7 @@ interface Certificate {
 const Certificates = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ full_name: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; cpf: string } | null>(null);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -70,7 +70,7 @@ const Certificates = () => {
           .order("issued_at", { ascending: false }),
         supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, cpf")
           .eq("id", user?.id)
           .single(),
       ]);
@@ -183,6 +183,7 @@ const Certificates = () => {
             onOpenChange={setPreviewOpen}
             courseTitle={selectedCertificate.course.title}
             studentName={profile?.full_name || "Estudante"}
+            studentCPF={profile?.cpf || "000.000.000-00"}
             certificateNumber={selectedCertificate.certificate_number}
             issuedAt={selectedCertificate.issued_at}
             totalHours={selectedCertificate.course.total_hours}

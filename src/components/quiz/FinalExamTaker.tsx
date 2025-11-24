@@ -39,7 +39,7 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
     // Fetch profile
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, cpf')
       .eq('id', user.id)
       .single();
     setProfile(profileData);
@@ -258,6 +258,7 @@ export const FinalExamTaker = ({ courseId, courseTitle, onComplete }: FinalExamT
     generateCertificatePDF({
       courseTitle,
       studentName: profile?.full_name || "Estudante",
+      studentCPF: profile?.cpf || "000.000.000-00",
       certificateNumber: certificate.certificate_number,
       issuedAt: certificate.issued_at,
       totalHours,
