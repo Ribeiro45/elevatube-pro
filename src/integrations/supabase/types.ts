@@ -489,6 +489,42 @@ export type Database = {
         }
         Relationships: []
       }
+      topic_cards: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          link_url: string | null
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          link_url?: string | null
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          link_url?: string | null
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           completed: boolean | null
