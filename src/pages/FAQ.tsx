@@ -96,10 +96,7 @@ export default function FAQ() {
 
   const filteredFAQs = (audience: string) => {
     return faqs.filter(faq => {
-      if (faq.target_audience === 'ambos') return true;
-      if (audience === 'cliente' && faq.target_audience === 'cliente') return true;
-      if (audience === 'colaborador' && faq.target_audience === 'colaborador') return true;
-      return false;
+      return faq.target_audience === audience;
     });
   };
 
