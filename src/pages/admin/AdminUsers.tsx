@@ -609,7 +609,13 @@ const AdminUsers = () => {
               <Input
                 id="edit-name"
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Permite apenas letras, espaços e hífens
+                  if (value === '' || /^[A-Za-zÀ-ÿ\s\-]+$/.test(value)) {
+                    setEditName(value);
+                  }
+                }}
                 placeholder="Nome do usuário"
               />
             </div>
