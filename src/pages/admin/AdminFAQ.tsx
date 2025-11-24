@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Edit, Upload, ArrowLeft } from 'lucide-react';
+import { Loader2, Plus, Trash2, Edit, Upload } from 'lucide-react';
 interface FAQ {
   id: string;
   title: string;
@@ -195,18 +196,18 @@ export default function AdminFAQ() {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }
-  return <div className="container mx-auto p-6 max-w-7xl">
-      <Button variant="ghost" onClick={() => navigate('/admin/dashboard')} className="mb-4">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Voltar ao Dashboard
-      </Button>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Gerenciar Base de Conhecimento</h1>
-          <p className="text-muted-foreground">
-            Crie e gerencie a base de conhecimento com PDFs
-          </p>
-        </div>
+  return (
+    <div className="flex h-screen bg-muted/10">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto p-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Gerenciar Base de Conhecimento</h1>
+              <p className="text-muted-foreground">
+                Crie e gerencie a base de conhecimento com PDFs
+              </p>
+            </div>
         <Dialog open={isDialogOpen} onOpenChange={open => {
         setIsDialogOpen(open);
         if (!open) resetForm();
@@ -448,5 +449,8 @@ export default function AdminFAQ() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+        </div>
+      </div>
+    </div>
+  );
 }
