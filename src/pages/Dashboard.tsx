@@ -259,37 +259,6 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* Navegação por Tópicos */}
-          {topicCards.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Navegação por Tópicos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {topicCards.map((card) => {
-                  const IconComponent = getIconComponent(card.icon);
-                  return (
-                    <Card
-                      key={card.id}
-                      className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
-                      onClick={() => navigate(card.link_url)}
-                    >
-                      <CardContent className="p-6 space-y-4">
-                        <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                          <IconComponent className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg mb-1">{card.title}</h3>
-                          {card.description && (
-                            <p className="text-sm text-muted-foreground">{card.description}</p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {loading ? (
             <Skeleton className="h-48 w-full" />
           ) : (
@@ -391,6 +360,37 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Navegação por Tópicos */}
+          {topicCards.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Navegação por Tópicos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {topicCards.map((card) => {
+                  const IconComponent = getIconComponent(card.icon);
+                  return (
+                    <Card
+                      key={card.id}
+                      className="cursor-pointer hover:shadow-lg transition-all duration-300 group"
+                      onClick={() => navigate(card.link_url)}
+                    >
+                      <CardContent className="p-6 space-y-4">
+                        <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
+                          <IconComponent className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg mb-1">{card.title}</h3>
+                          {card.description && (
+                            <p className="text-sm text-muted-foreground">{card.description}</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}
