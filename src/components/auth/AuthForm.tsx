@@ -112,23 +112,31 @@ export const AuthForm = () => {
       });
 
       if (totpFactor) {
-        // MFA is enabled - create challenge and require code
+        // MFA is enabled - IMMEDIATELY sign out and require 2FA
+        console.log('2FA detected - signing out and requiring code');
+        
+        // Create challenge BEFORE signing out
         const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: totpFactor.id,
         });
 
         if (challengeError) {
           console.error('Challenge error:', challengeError);
+          await supabase.auth.signOut();
           throw challengeError;
         }
 
-        console.log('Challenge created, showing 2FA input');
-        
-        // Store challenge info and show 2FA input
+        // Store credentials and challenge info
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
+        
+        // CRITICAL: Sign out to prevent unauthorized access
+        await supabase.auth.signOut();
+        
+        // Show 2FA form
         setShow2FAChallenge(true);
         
+        console.log('Challenge created, 2FA form displayed');
         toast.info('Digite o código do seu autenticador para completar o login');
         setLoading(false);
         return;
@@ -182,6 +190,22 @@ export const AuthForm = () => {
       }
 
       setLoading(true);
+
+      console.log('Re-authenticating with password for MFA verification');
+
+      // CRITICAL: Re-authenticate with password to get a new session
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (authError) {
+        console.error('Re-auth error:', authError);
+        toast.error('Erro ao autenticar. Por favor, faça login novamente.');
+        setShow2FAChallenge(false);
+        setMfaCode('');
+        return;
+      }
 
       console.log('Verifying MFA code with factorId:', factorId, 'challengeId:', challengeId);
 
