@@ -25,7 +25,7 @@ type User = {
   email: string | null;
 };
 
-export default function AdminGroups() {
+export function AdminGroupsTab() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,10 +61,8 @@ export default function AdminGroups() {
 
       if (error) throw error;
 
-      // Load leader names and member counts
       const groupsWithDetails = await Promise.all(
         (groupsData || []).map(async (group) => {
-          // Get leader name
           let leader_name = 'Sem líder';
           if (group.leader_id) {
             const { data: leaderProfile } = await supabase
@@ -75,7 +73,6 @@ export default function AdminGroups() {
             leader_name = leaderProfile?.full_name || 'Sem líder';
           }
 
-          // Get member count
           const { count } = await supabase
             .from('group_members')
             .select('*', { count: 'exact', head: true })
@@ -162,7 +159,6 @@ export default function AdminGroups() {
 
     try {
       if (selectedGroup) {
-        // Update existing group
         const { error } = await supabase
           .from('groups')
           .update({
@@ -174,7 +170,6 @@ export default function AdminGroups() {
 
         if (error) throw error;
 
-        // Update leader role
         await updateLeaderRole(formData.leader_id);
 
         toast({
@@ -182,7 +177,6 @@ export default function AdminGroups() {
           description: 'O grupo foi atualizado com sucesso.',
         });
       } else {
-        // Create new group
         const { error } = await supabase.from('groups').insert({
           name: formData.name,
           description: formData.description,
@@ -191,7 +185,6 @@ export default function AdminGroups() {
 
         if (error) throw error;
 
-        // Add leader role
         await updateLeaderRole(formData.leader_id);
 
         toast({
@@ -213,7 +206,6 @@ export default function AdminGroups() {
   };
 
   const updateLeaderRole = async (userId: string) => {
-    // Check if user already has leader role
     const { data: existingRole } = await supabase
       .from('user_roles')
       .select('id')
@@ -337,9 +329,8 @@ export default function AdminGroups() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Gerenciar Grupos</h1>
+    <>
+      <div className="flex justify-end mb-6">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
@@ -454,7 +445,6 @@ export default function AdminGroups() {
         ))}
       </div>
 
-      {/* Members Dialog */}
       <Dialog open={membersDialogOpen} onOpenChange={setMembersDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -510,6 +500,6 @@ export default function AdminGroups() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
