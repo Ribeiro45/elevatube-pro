@@ -252,7 +252,7 @@ export default function AdminGroups() {
     setFormData({
       name: group.name,
       description: group.description || '',
-      leader_id: group.leader_id || '',
+      leader_id: group.leader_id || 'none',
     });
     setDialogOpen(true);
   };
@@ -322,7 +322,7 @@ export default function AdminGroups() {
     setFormData({
       name: '',
       description: '',
-      leader_id: '',
+      leader_id: 'none',
     });
     setSelectedGroup(null);
   };
@@ -378,14 +378,14 @@ export default function AdminGroups() {
                 <Select
                   value={formData.leader_id}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, leader_id: value })
+                    setFormData({ ...formData, leader_id: value === 'none' ? '' : value })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um líder" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem líder</SelectItem>
+                    <SelectItem value="none">Sem líder</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.full_name || user.email}
