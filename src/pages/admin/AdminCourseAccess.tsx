@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -175,10 +174,8 @@ const AdminCourseAccess = () => {
   );
 
   return (
-    <div className="flex h-screen bg-muted/10">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto p-8">
+    <div className="p-8">
+      <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Gerenciamento de Acesso aos Cursos</h1>
             <p className="text-muted-foreground">
@@ -224,7 +221,6 @@ const AdminCourseAccess = () => {
           </Card>
         </div>
       </div>
-    </div>
   );
 };
 
