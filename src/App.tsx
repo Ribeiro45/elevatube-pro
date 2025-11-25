@@ -27,6 +27,7 @@ import AdminCourseAccess from "./pages/admin/AdminCourseAccess";
 import AdminDemo from "./pages/admin/AdminDemo";
 import AdminFAQ from "./pages/admin/AdminFAQ";
 import AdminGroups from "./pages/admin/AdminGroups";
+import AdminLeaders from "./pages/admin/AdminLeaders";
 import LeaderGroup from "./pages/LeaderGroup";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/courses" element={<EditorRoute><AdminCoursesManagement /></EditorRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/leaders" element={<AdminRoute><AdminLeaders /></AdminRoute>} />
           <Route path="/admin/groups" element={<AdminRoute><AdminGroups /></AdminRoute>} />
           <Route path="/admin/course-access" element={<AdminRoute><AdminCourseAccess /></AdminRoute>} />
           <Route path="/admin/faq" element={<AdminRoute><AdminFAQ /></AdminRoute>} />

@@ -151,6 +151,15 @@ export default function AdminGroups() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.leader_id) {
+      toast({
+        title: 'Erro',
+        description: 'É necessário selecionar um líder para o grupo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       if (selectedGroup) {
         // Update existing group
@@ -159,16 +168,14 @@ export default function AdminGroups() {
           .update({
             name: formData.name,
             description: formData.description,
-            leader_id: formData.leader_id || null,
+            leader_id: formData.leader_id,
           })
           .eq('id', selectedGroup.id);
 
         if (error) throw error;
 
         // Update leader role
-        if (formData.leader_id) {
-          await updateLeaderRole(formData.leader_id);
-        }
+        await updateLeaderRole(formData.leader_id);
 
         toast({
           title: 'Grupo atualizado',
@@ -179,15 +186,13 @@ export default function AdminGroups() {
         const { error } = await supabase.from('groups').insert({
           name: formData.name,
           description: formData.description,
-          leader_id: formData.leader_id || null,
+          leader_id: formData.leader_id,
         });
 
         if (error) throw error;
 
         // Add leader role
-        if (formData.leader_id) {
-          await updateLeaderRole(formData.leader_id);
-        }
+        await updateLeaderRole(formData.leader_id);
 
         toast({
           title: 'Grupo criado',
@@ -252,7 +257,7 @@ export default function AdminGroups() {
     setFormData({
       name: group.name,
       description: group.description || '',
-      leader_id: group.leader_id || 'none',
+      leader_id: group.leader_id || '',
     });
     setDialogOpen(true);
   };
@@ -322,7 +327,7 @@ export default function AdminGroups() {
     setFormData({
       name: '',
       description: '',
-      leader_id: 'none',
+      leader_id: '',
     });
     setSelectedGroup(null);
   };
@@ -378,15 +383,15 @@ export default function AdminGroups() {
                 <Select
                   value={formData.leader_id}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, leader_id: value === 'none' ? '' : value })
+                    setFormData({ ...formData, leader_id: value })
                   }
+                  required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um líder" />
+                    <SelectValue placeholder="Selecione um líder *" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Sem líder</SelectItem>
-                    {users.map((user) => (
+                    {users.filter(u => u.id).map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.full_name || user.email}
                       </SelectItem>
