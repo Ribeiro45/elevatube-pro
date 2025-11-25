@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
@@ -68,10 +67,8 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 p-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+    <div className="p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">Painel Administrativo</h1>
             <p className="text-muted-foreground">Visão geral do progresso dos colaboradores</p>
@@ -142,7 +139,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-      </main>
     </div>
   );
 }

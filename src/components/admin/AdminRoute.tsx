@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAdmin } from '@/hooks/useAdmin';
+import { Sidebar } from '@/components/layout/Sidebar';
 
 export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAdmin, loading } = useAdmin();
@@ -16,5 +17,12 @@ export const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="flex min-h-screen w-full">
+      <Sidebar />
+      <main className="flex-1">
+        {children}
+      </main>
+    </div>
+  );
 };

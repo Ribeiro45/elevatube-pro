@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useEditor } from '@/hooks/useEditor';
+import { Sidebar } from '@/components/layout/Sidebar';
 
 export const EditorRoute = ({ children }: { children: React.ReactNode }) => {
   const { isEditor, loading } = useEditor();
@@ -16,5 +17,12 @@ export const EditorRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="flex min-h-screen w-full">
+      <Sidebar />
+      <main className="flex-1">
+        {children}
+      </main>
+    </div>
+  );
 };

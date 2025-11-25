@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Home, Video, Award, Settings, Folder, Trash2, Plus } from "lucide-react";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -276,9 +275,8 @@ const AdminSiteSettings = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
+      <div className="p-8">
+        <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </div>
@@ -286,10 +284,8 @@ const AdminSiteSettings = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 p-8">
-        <div className="max-w-5xl mx-auto space-y-8">
+    <div className="p-8">
+      <div className="max-w-5xl mx-auto space-y-8">
           <div>
             <h1 className="text-3xl font-bold">Configurações do Site</h1>
             <p className="text-muted-foreground mt-2">
@@ -780,8 +776,7 @@ const AdminSiteSettings = () => {
             </Button>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
   );
 };
 
