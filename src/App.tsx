@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AdminRoute } from "@/components/admin/AdminRoute";
 import { EditorRoute } from "@/components/admin/EditorRoute";
+import { LeaderRoute } from "@/components/admin/LeaderRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Demo from "./pages/Demo";
@@ -25,6 +26,8 @@ import AdminSiteSettings from "./pages/admin/AdminSiteSettings";
 import AdminCourseAccess from "./pages/admin/AdminCourseAccess";
 import AdminDemo from "./pages/admin/AdminDemo";
 import AdminFAQ from "./pages/admin/AdminFAQ";
+import AdminGroups from "./pages/admin/AdminGroups";
+import LeaderGroup from "./pages/LeaderGroup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,10 +54,12 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/courses" element={<EditorRoute><AdminCoursesManagement /></EditorRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/groups" element={<AdminRoute><AdminGroups /></AdminRoute>} />
           <Route path="/admin/course-access" element={<AdminRoute><AdminCourseAccess /></AdminRoute>} />
           <Route path="/admin/faq" element={<AdminRoute><AdminFAQ /></AdminRoute>} />
           <Route path="/admin/demo" element={<AdminRoute><AdminDemo /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
+          <Route path="/leader/group" element={<LeaderRoute><LeaderGroup /></LeaderRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

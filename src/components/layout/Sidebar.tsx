@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useEditor } from '@/hooks/useEditor';
+import { useLeader } from '@/hooks/useLeader';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -23,6 +24,7 @@ export const Sidebar = () => {
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
   const { isEditor } = useEditor();
+  const { isLeader } = useLeader();
   const { isDarkMode, toggleTheme } = useTheme();
 
   const toggleCollapsed = () => {
@@ -104,10 +106,15 @@ export const Sidebar = () => {
     { icon: User, label: 'Meu Perfil', path: '/profile' },
   ];
 
+  const leaderMenuItems = [
+    { icon: Users, label: 'Meu Grupo', path: '/leader/group' },
+  ];
+
   const adminMenuItems = [
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
     { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
+    { icon: Users, label: 'Gerenciar Grupos', path: '/admin/groups' },
     { icon: Shield, label: 'Acesso aos Cursos', path: '/admin/course-access' },
     { icon: HelpCircle, label: 'Gerenciar Base de Conhecimento', path: '/admin/faq' },
     { icon: BookOpen, label: 'Editor de Demo', path: '/admin/demo' },
@@ -177,6 +184,30 @@ export const Sidebar = () => {
               </Link>
             );
           })}
+
+          {isLeader && !isAdmin && (
+            <>
+              <div className="my-4 border-t border-sidebar-border" />
+              {leaderMenuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                    }`}
+                  >
+                    <Icon size={20} />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </>
+          )}
 
           {(isAdmin || isEditor) && (
             <>
