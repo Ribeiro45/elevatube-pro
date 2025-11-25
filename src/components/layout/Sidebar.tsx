@@ -113,9 +113,7 @@ export const Sidebar = () => {
   const adminMenuItems = [
     { icon: Shield, label: 'Painel Admin', path: '/admin/dashboard' },
     { icon: BookOpen, label: 'Gerenciar Cursos', path: '/admin/courses' },
-    { icon: Users, label: 'Gerenciar Usuários', path: '/admin/users' },
-    { icon: Shield, label: 'Gerenciar Líderes', path: '/admin/leaders' },
-    { icon: Users, label: 'Gerenciar Grupos', path: '/admin/groups' },
+    { icon: Users, label: 'Gerenciamento', path: '/admin/management' },
     { icon: Shield, label: 'Acesso aos Cursos', path: '/admin/course-access' },
     { icon: HelpCircle, label: 'Gerenciar Base de Conhecimento', path: '/admin/faq' },
     { icon: BookOpen, label: 'Editor de Demo', path: '/admin/demo' },

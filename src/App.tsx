@@ -20,14 +20,12 @@ import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCourses from "./pages/admin/AdminCourses";
-import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCoursesManagement from "./pages/admin/AdminCoursesManagement";
 import AdminSiteSettings from "./pages/admin/AdminSiteSettings";
 import AdminCourseAccess from "./pages/admin/AdminCourseAccess";
 import AdminDemo from "./pages/admin/AdminDemo";
 import AdminFAQ from "./pages/admin/AdminFAQ";
-import AdminGroups from "./pages/admin/AdminGroups";
-import AdminLeaders from "./pages/admin/AdminLeaders";
+import AdminManagement from "./pages/admin/AdminManagement";
 import LeaderGroup from "./pages/LeaderGroup";
 import NotFound from "./pages/NotFound";
 
@@ -54,9 +52,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/courses" element={<EditorRoute><AdminCoursesManagement /></EditorRoute>} />
-          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-          <Route path="/admin/leaders" element={<AdminRoute><AdminLeaders /></AdminRoute>} />
-          <Route path="/admin/groups" element={<AdminRoute><AdminGroups /></AdminRoute>} />
+            <Route path="/admin/management" element={<AdminRoute><AdminManagement /></AdminRoute>} />
           <Route path="/admin/course-access" element={<AdminRoute><AdminCourseAccess /></AdminRoute>} />
           <Route path="/admin/faq" element={<AdminRoute><AdminFAQ /></AdminRoute>} />
           <Route path="/admin/demo" element={<AdminRoute><AdminDemo /></AdminRoute>} />

@@ -55,7 +55,7 @@ interface UserWithRole {
   total_certificates: number;
 }
 
-const AdminUsers = () => {
+export function AdminUsersTab() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -85,7 +85,6 @@ const AdminUsers = () => {
     try {
       setLoading(true);
       
-      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -93,19 +92,16 @@ const AdminUsers = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fetch all user roles (admin and editor)
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*");
 
       if (rolesError) throw rolesError;
 
-      // Get progress count for each user
       const { data: progressData } = await supabase
         .from("user_progress")
         .select("user_id, completed");
 
-      // Get certificates count
       const { data: certificatesData } = await supabase
         .from("certificates")
         .select("user_id");
@@ -147,13 +143,11 @@ const AdminUsers = () => {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      // Remove all existing roles
       await supabase
         .from("user_roles")
         .delete()
         .eq("user_id", userId);
 
-      // Add new role if not 'user'
       if (newRole !== "user") {
         const { error } = await supabase
           .from("user_roles")
@@ -182,7 +176,6 @@ const AdminUsers = () => {
     setSelectedUser(user);
     setEditName(user.full_name || "");
     
-    // Fetch full profile data to get email, cpf, phone, birth_date
     supabase
       .from("profiles")
       .select("email, cpf, phone, birth_date")
@@ -387,210 +380,202 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className="p-8">
-      <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Painel de Administração</h1>
-              <p className="text-muted-foreground">
-                Controle total sobre usuários e permissões
-              </p>
-            </div>
-            <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Key className="w-4 h-4" />
-                  Trocar Minha Senha
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Trocar Senha</DialogTitle>
-                  <DialogDescription>
-                    Digite sua nova senha abaixo
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Senha</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Digite a senha novamente"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setChangePasswordOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleChangePassword}>Alterar Senha</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Lista de Usuários</CardTitle>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <>
+      <div className="flex justify-end mb-4">
+        <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Key className="w-4 h-4" />
+              Trocar Minha Senha
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Trocar Senha</DialogTitle>
+              <DialogDescription>
+                Digite sua nova senha abaixo
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova Senha</Label>
                 <Input
-                  placeholder="Buscar por nome ou ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
                 />
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center p-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>ID</TableHead>
-                      <TableHead className="text-center">Aulas</TableHead>
-                      <TableHead className="text-center">Certificados</TableHead>
-                      <TableHead>Cadastrado</TableHead>
-                      <TableHead>Permissão</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                          {user.full_name || "Sem nome"}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={user.user_type || 'colaborador'}
-                            onValueChange={(value) => handleUserTypeChange(user.id, value)}
-                          >
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="colaborador">Colaborador New</SelectItem>
-                              <SelectItem value="cliente">Cliente</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {user.id.slice(0, 8)}...
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{user.completed_lessons}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="inline-flex items-center gap-1">
-                            <Award className="h-4 w-4 text-yellow-500" />
-                            {user.total_certificates}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(user.created_at).toLocaleDateString("pt-BR")}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={user.is_admin_master ? "admin_master" : user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
-                            onValueChange={(value) => handleRoleChange(user.id, value)}
-                          >
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">
-                                <div className="flex items-center gap-2">
-                                  <ShieldOff className="w-3 h-3" />
-                                  Usuário
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="editor">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="w-3 h-3" />
-                                  Editor
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="admin">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="w-3 h-3" />
-                                  Admin
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="admin_master">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="w-3 h-3 text-primary" />
-                                  Admin Master
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUserForPassword(user);
-                                setUserPasswordDialogOpen(true);
-                              }}
-                              title="Trocar senha"
-                            >
-                              <Key className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar Senha</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Digite a senha novamente"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setChangePasswordOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleChangePassword}>Alterar Senha</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-        {/* Edit User Dialog */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Usuários</CardTitle>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead className="text-center">Aulas</TableHead>
+                  <TableHead className="text-center">Certificados</TableHead>
+                  <TableHead>Cadastrado</TableHead>
+                  <TableHead>Permissão</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">
+                      {user.full_name || "Sem nome"}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.user_type || 'colaborador'}
+                        onValueChange={(value) => handleUserTypeChange(user.id, value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="colaborador">Colaborador New</SelectItem>
+                          <SelectItem value="cliente">Cliente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {user.id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline">{user.completed_lessons}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center gap-1">
+                        <Award className="h-4 w-4 text-yellow-500" />
+                        {user.total_certificates}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(user.created_at).toLocaleDateString("pt-BR")}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.is_admin_master ? "admin_master" : user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
+                        onValueChange={(value) => handleRoleChange(user.id, value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">
+                            <div className="flex items-center gap-2">
+                              <ShieldOff className="w-3 h-3" />
+                              Usuário
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="editor">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-3 h-3" />
+                              Editor
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-3 h-3" />
+                              Admin
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="admin_master">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-3 h-3 text-primary" />
+                              Admin Master
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUserForPassword(user);
+                            setUserPasswordDialogOpen(true);
+                          }}
+                          title="Trocar senha"
+                        >
+                          <Key className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setUserToDelete(user);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Usuário</DialogTitle>
@@ -606,7 +591,6 @@ const AdminUsers = () => {
                 value={editName}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Permite apenas letras, espaços e hífens
                   if (value === '' || /^[A-Za-zÀ-ÿ\s\-]+$/.test(value)) {
                     setEditName(value);
                   }
@@ -662,7 +646,6 @@ const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete User Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -687,7 +670,6 @@ const AdminUsers = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Change User Password Dialog */}
       <Dialog open={userPasswordDialogOpen} onOpenChange={setUserPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -732,11 +714,8 @@ const AdminUsers = () => {
             </Button>
             <Button onClick={handleChangeUserPassword}>Alterar Senha</Button>
           </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-};
-
-export default AdminUsers;
+}
