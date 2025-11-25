@@ -400,45 +400,49 @@ export function AdminGroupsTab() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {groups.map((group) => (
-          <Card key={group.id}>
-            <CardHeader>
-              <CardTitle>{group.name}</CardTitle>
-              <CardDescription>
+          <Card key={group.id} className="flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">{group.name}</CardTitle>
+              <CardDescription className="text-sm">
                 Líder: {group.leader_name}
                 <br />
                 Membros: {group.member_count}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col gap-4">
               {group.description && (
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground">
                   {group.description}
                 </p>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 mt-auto">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleManageMembers(group)}
+                  className="w-full justify-start"
                 >
                   <Users className="mr-2 h-4 w-4" />
-                  Membros
+                  Gerenciar Membros
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(group)}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(group.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(group)}
+                    className="flex-1"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(group.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
