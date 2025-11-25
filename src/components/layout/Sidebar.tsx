@@ -12,7 +12,10 @@ import logoNewStandard from '@/assets/logo-newstandard.png';
 import logoNewStandardDark from '@/assets/logo-newstandard-dark.png';
 
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
   const [userName, setUserName] = useState('Usuário');
   const [avatarUrl, setAvatarUrl] = useState('');
   const location = useLocation();
@@ -21,6 +24,12 @@ export const Sidebar = () => {
   const { isAdmin } = useAdmin();
   const { isEditor } = useEditor();
   const { isDarkMode, toggleTheme } = useTheme();
+
+  const toggleCollapsed = () => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem('sidebar-collapsed', String(newState));
+  };
 
   useEffect(() => {
     loadUserProfile();
@@ -122,7 +131,7 @@ export const Sidebar = () => {
               />
             </Link>
             <button
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={toggleCollapsed}
               className="text-sidebar-foreground hover:text-sidebar-primary"
             >
               {collapsed ? '>>' : '<<'}
