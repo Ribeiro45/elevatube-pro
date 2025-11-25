@@ -125,7 +125,7 @@ export const Sidebar = () => {
               onClick={() => setCollapsed(!collapsed)}
               className="text-sidebar-foreground hover:text-sidebar-primary"
             >
-              {collapsed ? '→' : '<<'}
+              {collapsed ? '>>' : '<<'}
             </button>
           </div>
         </div>
