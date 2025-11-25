@@ -209,7 +209,7 @@ const Dashboard = () => {
           {/* Barra de pesquisa */}
           <div className="relative max-w-2xl mx-auto">
             
-            <Input placeholder="Pesquisar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-12 text-base bg-card border-border" />
+            
           </div>
 
           {loading ? <Skeleton className="h-48 w-full" /> : <>
