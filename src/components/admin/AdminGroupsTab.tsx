@@ -135,7 +135,31 @@ export function AdminGroupsTab() {
       if (profilesError) throw profilesError;
 
       setGroupMembers(profiles || []);
-      setAvailableUsers(users.filter((u) => !memberIds.includes(u.id)));
+
+      // Get all users who are already in other groups
+      const { data: allGroupMembers } = await supabase
+        .from('group_members')
+        .select('user_id');
+
+      const usersInGroups = allGroupMembers?.map((m) => m.user_id) || [];
+
+      // Get all users with admin or lider roles
+      const { data: restrictedRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['admin', 'lider']);
+
+      const restrictedUserIds = restrictedRoles?.map((r) => r.user_id) || [];
+
+      // Filter available users: not in current group, not in any group, not admin/lider
+      const available = users.filter(
+        (u) =>
+          !memberIds.includes(u.id) &&
+          !usersInGroups.includes(u.id) &&
+          !restrictedUserIds.includes(u.id)
+      );
+
+      setAvailableUsers(available);
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar membros',
@@ -278,6 +302,7 @@ export function AdminGroupsTab() {
 
       loadGroupMembers(selectedGroup.id);
       loadGroups();
+      setMembersDialogOpen(false);
     } catch (error: any) {
       toast({
         title: 'Erro ao adicionar membro',
