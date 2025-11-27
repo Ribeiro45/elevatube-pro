@@ -21,11 +21,38 @@ const Auth = () => {
       });
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const is2FAFlow = sessionStorage.getItem('awaiting_2fa_verification') === 'true';
       
-      // Only auto-navigate if NOT in 2FA flow
-      if (session && !is2FAFlow) {
+      console.log('Auth state change:', { event, hasSession: !!session, is2FAFlow });
+      
+      // Se está em fluxo de 2FA, não redireciona
+      if (is2FAFlow) {
+        console.log('In 2FA flow - blocking navigation');
+        return;
+      }
+      
+      // Se há sessão, verifica o AAL (Assurance Level)
+      if (session) {
+        // Verifica se o usuário tem 2FA habilitado
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const has2FA = factors?.totp?.some(f => f.status === 'verified');
+        
+        if (has2FA) {
+          // Obtém a sessão completa para verificar o AAL
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          const aal = (currentSession as any)?.aal;
+          console.log('User has 2FA, AAL level:', aal);
+          
+          // AAL1 significa que o 2FA ainda não foi verificado
+          if (aal === 'aal1') {
+            console.log('AAL1 detected - 2FA not verified yet, blocking navigation');
+            return;
+          }
+        }
+        
+        // Se não tem 2FA ou AAL é 2, pode navegar
+        console.log('Navigation allowed');
         navigate("/dashboard");
       }
     });
