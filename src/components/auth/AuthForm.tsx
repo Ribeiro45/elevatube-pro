@@ -76,6 +76,17 @@ export const AuthForm = () => {
     e.preventDefault();
     
     try {
+      // CRITICAL: Deslogar qualquer sessão anterior para garantir que o 2FA seja sempre solicitado
+      // Isso evita que o sistema pule a verificação 2FA em logins subsequentes
+      await supabase.auth.signOut();
+      
+      // Limpar qualquer estado de 2FA anterior ao iniciar novo login
+      sessionStorage.removeItem('awaiting_2fa_verification');
+      sessionStorage.removeItem('mfa_factor_id');
+      sessionStorage.removeItem('mfa_challenge_id');
+      setShow2FAChallenge(false);
+      setMfaCode('');
+      
       // Validar CPF/CNPJ baseado no tipo de usuário
       if (userType === 'colaborador') {
         if (!cpf) {
@@ -186,9 +197,10 @@ export const AuthForm = () => {
       });
 
       if (totpFactor) {
-        console.log('2FA detected - creating challenge WITHOUT signing out');
+        console.log('2FA detected - user must verify on EVERY login');
         
-        // Create challenge while session is still active
+        // CRITICAL: Create a fresh MFA challenge for EVERY login attempt
+        // This ensures 2FA is required on every login, not just the first one
         const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: totpFactor.id,
         });
@@ -199,9 +211,9 @@ export const AuthForm = () => {
           throw challengeError;
         }
 
-        console.log('Challenge created successfully:', challengeData);
+        console.log('Challenge created successfully - 2FA required for this login:', challengeData);
 
-        // Store ALL necessary info including credentials for re-auth
+        // Store challenge info
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
         
@@ -210,10 +222,10 @@ export const AuthForm = () => {
         sessionStorage.setItem('mfa_factor_id', totpFactor.id);
         sessionStorage.setItem('mfa_challenge_id', challengeData.id);
         
-        // Show 2FA form WITHOUT signing out
+        // Show 2FA form - session remains active but unverified
         setShow2FAChallenge(true);
         
-        console.log('2FA form displayed, awaiting code input');
+        console.log('2FA verification form displayed - awaiting code');
         toast.info('Digite o código do seu autenticador para completar o login');
         setLoading(false);
         return;
