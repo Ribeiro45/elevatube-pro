@@ -76,6 +76,33 @@ export const AuthForm = () => {
     e.preventDefault();
     
     try {
+      // Validar CPF/CNPJ baseado no tipo de usuário
+      if (userType === 'colaborador') {
+        if (!cpf) {
+          toast.error("CPF é obrigatório para Colaborador New");
+          return;
+        }
+        try {
+          cpfSchema.parse(cpf.replace(/\D/g, ''));
+        } catch {
+          toast.error("CPF inválido - deve conter 11 dígitos");
+          return;
+        }
+      }
+
+      if (userType === 'cliente') {
+        if (!cnpj) {
+          toast.error("CNPJ é obrigatório para Cliente");
+          return;
+        }
+        try {
+          cnpjSchema.parse(cnpj.replace(/\D/g, ''));
+        } catch {
+          toast.error("CNPJ inválido - deve conter 14 dígitos");
+          return;
+        }
+      }
+
       const validatedData = authSchema.parse({ email: email.trim(), password });
       setLoading(true);
 
@@ -99,6 +126,53 @@ export const AuthForm = () => {
       if (!data.user) {
         toast.error('Erro ao fazer login');
         return;
+      }
+
+      // Verificar CPF/CNPJ corresponde ao usuário
+      if (userType === 'colaborador') {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('cpf, user_type')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!profile || profile.user_type !== 'colaborador') {
+          await supabase.auth.signOut();
+          toast.error('Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.');
+          return;
+        }
+
+        if (profile.cpf !== cpf.replace(/\D/g, '')) {
+          await supabase.auth.signOut();
+          toast.error('CPF não corresponde ao cadastrado para este usuário');
+          return;
+        }
+      }
+
+      if (userType === 'cliente') {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!profile || profile.user_type !== 'cliente') {
+          await supabase.auth.signOut();
+          toast.error('Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.');
+          return;
+        }
+
+        const { data: companyProfile } = await supabase
+          .from('company_profiles')
+          .select('cnpj')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (!companyProfile || companyProfile.cnpj !== cnpj.replace(/\D/g, '')) {
+          await supabase.auth.signOut();
+          toast.error('CNPJ não corresponde ao cadastrado para este usuário');
+          return;
+        }
       }
 
       // CRITICAL: Check if 2FA is enabled BEFORE allowing access
@@ -145,31 +219,7 @@ export const AuthForm = () => {
         return;
       }
 
-      // No MFA - verify user type and proceed
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', data.user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Erro ao buscar perfil:', profileError);
-        toast.error('Erro ao verificar tipo de usuário');
-        await supabase.auth.signOut();
-        return;
-      }
-
-      const profileUserType = profile?.user_type || 'colaborador';
-      if (profileUserType !== userType) {
-        await supabase.auth.signOut();
-        toast.error(
-          userType === 'colaborador' 
-            ? 'Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.'
-            : 'Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.'
-        );
-        return;
-      }
-
+      // No MFA - proceed with login
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard");
     } catch (error: any) {
@@ -214,33 +264,7 @@ export const AuthForm = () => {
       }
 
 
-      // Verify user type matches selected type after MFA
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Erro ao buscar perfil:', profileError);
-          toast.error('Erro ao verificar tipo de usuário');
-          await supabase.auth.signOut();
-          return;
-        }
-
-        const profileUserType = profile?.user_type || 'colaborador';
-        if (profileUserType !== userType) {
-          await supabase.auth.signOut();
-          toast.error(
-            userType === 'colaborador' 
-              ? 'Este usuário é cadastrado como Cliente. Por favor, selecione a opção correta para fazer login.'
-              : 'Este usuário é cadastrado como Colaborador New. Por favor, selecione a opção correta para fazer login.'
-          );
-          return;
-        }
-      }
+      // Verificações já foram feitas no login inicial, apenas prosseguir
 
       // Clear 2FA flow markers
       sessionStorage.removeItem('awaiting_2fa_verification');
@@ -565,6 +589,48 @@ export const AuthForm = () => {
                       required
                     />
                   </div>
+
+                  {userType === 'colaborador' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="login-cpf" className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-primary" />
+                        CPF
+                      </Label>
+                      <Input
+                        id="login-cpf"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        value={cpf}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          setCpf(value);
+                        }}
+                        maxLength={11}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {userType === 'cliente' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="login-cnpj" className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-primary" />
+                        CNPJ
+                      </Label>
+                      <Input
+                        id="login-cnpj"
+                        type="text"
+                        placeholder="00.000.000/0000-00"
+                        value={cnpj}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          setCnpj(value);
+                        }}
+                        maxLength={14}
+                        required
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="login-password" className="flex items-center gap-2">
