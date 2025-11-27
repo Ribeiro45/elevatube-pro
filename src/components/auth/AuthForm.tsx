@@ -76,10 +76,6 @@ export const AuthForm = () => {
     e.preventDefault();
     
     try {
-      // CRITICAL: Deslogar qualquer sessão anterior para garantir que o 2FA seja sempre solicitado
-      // Isso evita que o sistema pule a verificação 2FA em logins subsequentes
-      await supabase.auth.signOut();
-      
       // Limpar qualquer estado de 2FA anterior ao iniciar novo login
       sessionStorage.removeItem('awaiting_2fa_verification');
       sessionStorage.removeItem('mfa_factor_id');
@@ -199,14 +195,17 @@ export const AuthForm = () => {
       if (totpFactor) {
         console.log('2FA detected - user must verify on EVERY login');
         
-        // CRITICAL: Create a fresh MFA challenge for EVERY login attempt
-        // This ensures 2FA is required on every login, not just the first one
+        // CRITICAL: Seta a flag ANTES de criar o challenge para evitar race condition
+        sessionStorage.setItem('awaiting_2fa_verification', 'true');
+        
+        // Create a fresh MFA challenge for EVERY login attempt
         const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
           factorId: totpFactor.id,
         });
 
         if (challengeError) {
           console.error('Challenge error:', challengeError);
+          sessionStorage.removeItem('awaiting_2fa_verification');
           await supabase.auth.signOut();
           throw challengeError;
         }
@@ -216,9 +215,6 @@ export const AuthForm = () => {
         // Store challenge info
         setFactorId(totpFactor.id);
         setChallengeId(challengeData.id);
-        
-        // Mark that we're in 2FA flow to prevent auto-navigation
-        sessionStorage.setItem('awaiting_2fa_verification', 'true');
         sessionStorage.setItem('mfa_factor_id', totpFactor.id);
         sessionStorage.setItem('mfa_challenge_id', challengeData.id);
         
