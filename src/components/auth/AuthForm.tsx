@@ -76,6 +76,9 @@ export const AuthForm = () => {
     e.preventDefault();
     
     try {
+      // Marcar que um login está em progresso para evitar redirecionamentos prematuros
+      sessionStorage.setItem('login_in_progress', 'true');
+      
       // Limpar qualquer estado de 2FA anterior ao iniciar novo login
       sessionStorage.removeItem('awaiting_2fa_verification');
       sessionStorage.removeItem('mfa_factor_id');
@@ -237,6 +240,7 @@ export const AuthForm = () => {
         toast.error(error.message || "Erro ao fazer login");
       }
     } finally {
+      sessionStorage.removeItem('login_in_progress');
       setLoading(false);
     }
   };
