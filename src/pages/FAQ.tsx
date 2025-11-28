@@ -34,6 +34,7 @@ export default function FAQ() {
   const [pageNumbers, setPageNumbers] = useState<{ [key: string]: number }>({});
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
 
   useEffect(() => {
     loadUserType();
@@ -105,67 +106,36 @@ export default function FAQ() {
     return matchesAudience && matchesSearch;
   });
 
-  const renderFAQItem = (subFaq: FAQ) => (
-    <Card 
-      key={subFaq.id} 
-      className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 bg-card border-border/50 overflow-hidden h-full"
-      onClick={() => setSelectedFaq(subFaq)}
-    >
-      <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[160px]">
-        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-          <FileText className="w-6 h-6 text-primary" />
-        </div>
-        <h3 className="font-semibold text-sm line-clamp-2 mb-2">{subFaq.title}</h3>
-        {subFaq.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2">{subFaq.description}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
+  // Get all sections (topics)
+  const allSections = filteredFAQs.filter(f => f.is_section);
+  
+  // Get recent documents (items with PDF)
+  const recentDocs = filteredFAQs
+    .filter(f => !f.is_section && f.pdf_url)
+    .sort((a, b) => {
+      // Assuming FAQs have a created_at or updated_at field
+      const dateA = new Date((a as any).created_at || (a as any).updated_at || 0);
+      const dateB = new Date((b as any).created_at || (b as any).updated_at || 0);
+      return dateB.getTime() - dateA.getTime();
+    })
+    .slice(0, 5);
 
-  const renderSection = (section: FAQ, level: number = 0): React.ReactNode => {
-    const childSections = filteredFAQs.filter(f => f.is_section && f.parent_id === section.id);
-    const childItems = filteredFAQs.filter(f => !f.is_section && f.parent_id === section.id);
-
-    return (
-      <div key={section.id} className={level > 0 ? 'mt-6' : ''}>
-        <Accordion type="multiple" className="border-none">
-          <AccordionItem value={section.id} className="border-none">
-            <AccordionTrigger className="px-0 hover:no-underline group">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Folder className="w-4 h-4 text-primary" />
-                </div>
-                <div className="text-left">
-                  <div className={`font-semibold ${level === 0 ? 'text-lg' : 'text-base'}`}>
-                    {section.title}
-                  </div>
-                  {section.description && (
-                    <div className="text-sm font-normal text-muted-foreground">
-                      {section.description}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-0 pt-4">
-              <div className="space-y-6">
-                {childItems.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {childItems.map(renderFAQItem)}
-                  </div>
-                )}
-                
-                {childSections.map(childSection => renderSection(childSection, level + 1))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
-    );
+  // Get items for selected section
+  const getItemsForSection = (sectionId: string): FAQ[] => {
+    const items: FAQ[] = [];
+    const collectItems = (parentId: string) => {
+      const directItems = filteredFAQs.filter(f => !f.is_section && f.parent_id === parentId);
+      items.push(...directItems);
+      
+      const childSections = filteredFAQs.filter(f => f.is_section && f.parent_id === parentId);
+      childSections.forEach(section => collectItems(section.id));
+    };
+    collectItems(sectionId);
+    return items;
   };
 
-  const topLevelSections = filteredFAQs.filter(f => f.is_section && !f.parent_id);
+  const selectedSectionItems = selectedSection ? getItemsForSection(selectedSection) : [];
+  const selectedSectionData = allSections.find(s => s.id === selectedSection);
 
   if (loading) {
     return (
@@ -184,10 +154,16 @@ export default function FAQ() {
     <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="max-w-[1400px] mx-auto p-6 md:p-8">
+        <div className="max-w-[1600px] mx-auto p-6 md:p-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
+            <p className="text-muted-foreground">{pageDescription}</p>
+          </div>
+
           {/* Search Bar */}
-          <div className="mb-8 flex items-center gap-4">
-            <div className="relative flex-1 max-w-2xl">
+          <div className="mb-6">
+            <div className="relative max-w-2xl">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 type="text"
@@ -199,29 +175,141 @@ export default function FAQ() {
             </div>
           </div>
 
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
-            <p className="text-muted-foreground">
-              {pageDescription}
-            </p>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-8">
-            {filteredFAQs.length === 0 ? (
+          {/* Main Layout: Topics (Left) + Recent Docs (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Topics Section - Left Side */}
+            <div className="lg:col-span-2 space-y-6">
               <Card className="border-border/50">
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">
-                    {searchQuery ? 'Nenhum resultado encontrado.' : 'Nenhum conteúdo disponível no momento.'}
-                  </p>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Folder className="w-5 h-5 text-primary" />
+                    Todos os Tópicos
+                  </CardTitle>
+                  <CardDescription>Selecione um tópico para ver os documentos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {allSections.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Nenhum tópico disponível
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {allSections.map((section) => (
+                        <button
+                          key={section.id}
+                          onClick={() => setSelectedSection(section.id === selectedSection ? null : section.id)}
+                          className={`text-left p-4 rounded-lg border transition-all hover:shadow-md ${
+                            selectedSection === section.id
+                              ? 'bg-primary/10 border-primary'
+                              : 'bg-card border-border/50 hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                              selectedSection === section.id ? 'bg-primary/20' : 'bg-muted'
+                            }`}>
+                              <Folder className={`w-5 h-5 ${
+                                selectedSection === section.id ? 'text-primary' : 'text-muted-foreground'
+                              }`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-sm mb-1 line-clamp-2">{section.title}</h3>
+                              {section.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">{section.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            ) : (
-              <div className="space-y-6">
-                {topLevelSections.map(section => renderSection(section, 0))}
-              </div>
-            )}
+
+              {/* Selected Topic Documents */}
+              {selectedSection && (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-primary" />
+                      {selectedSectionData?.title}
+                    </CardTitle>
+                    <CardDescription>
+                      {selectedSectionItems.length} {selectedSectionItems.length === 1 ? 'documento' : 'documentos'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedSectionItems.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        Nenhum documento neste tópico
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {selectedSectionItems.map((item) => (
+                          <Card
+                            key={item.id}
+                            className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 bg-card border-border/50"
+                            onClick={() => setSelectedFaq(item)}
+                          >
+                            <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[140px]">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                                <FileText className="w-6 h-6 text-primary" />
+                              </div>
+                              <h3 className="font-semibold text-sm line-clamp-2 mb-2">{item.title}</h3>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Recent Documents - Right Side */}
+            <div className="lg:col-span-1">
+              <Card className="border-border/50 sticky top-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Documentos Recentes
+                  </CardTitle>
+                  <CardDescription>Últimos documentos adicionados</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {recentDocs.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhum documento recente
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {recentDocs.map((doc) => (
+                        <button
+                          key={doc.id}
+                          onClick={() => setSelectedFaq(doc)}
+                          className="w-full text-left p-4 rounded-lg border border-border/50 bg-card hover:bg-muted/50 hover:border-primary/50 transition-all group"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                              <FileText className="w-4 h-4 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm mb-1 line-clamp-2">{doc.title}</h4>
+                              {doc.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-2">{doc.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
