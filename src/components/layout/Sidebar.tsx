@@ -16,6 +16,7 @@ import logoNewStandardDark from '@/assets/logo-newstandard-dark.png';
 interface FAQSection {
   id: string;
   title: string;
+  parent_id: string | null;
 }
 
 export const Sidebar = () => {
@@ -107,7 +108,7 @@ export const Sidebar = () => {
 
       const { data, error } = await supabase
         .from('faqs' as any)
-        .select('id, title')
+        .select('id, title, parent_id')
         .eq('is_section', true)
         .in('target_audience', [userType, 'ambos'])
         .order('order_index', { ascending: true });
@@ -226,9 +227,10 @@ export const Sidebar = () => {
           {/* Base de Conhecimento - Expandable Menu */}
           <Collapsible open={faqExpanded} onOpenChange={setFaqExpanded}>
             <CollapsibleTrigger asChild>
-              <button
+              <Link
+                to="/faq"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full ${
-                  location.pathname === '/faq' || location.pathname.startsWith('/faq/')
+                  location.pathname === '/faq'
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
                 }`}
@@ -240,33 +242,48 @@ export const Sidebar = () => {
                     <ChevronDown size={16} className={`transition-transform ${faqExpanded ? 'rotate-180' : ''}`} />
                   </>
                 )}
-              </button>
+              </Link>
             </CollapsibleTrigger>
             {!collapsed && (
               <CollapsibleContent className="ml-6 mt-1 space-y-1">
-                <Link
-                  to="/faq"
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    location.pathname === '/faq'
-                      ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
-                  }`}
-                >
-                  Todos os Tópicos
-                </Link>
-                {faqSections.map((section) => (
-                  <Link
-                    key={section.id}
-                    to={`/faq?section=${section.id}`}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                      location.search.includes(`section=${section.id}`)
-                        ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
-                    }`}
-                  >
-                    {section.title}
-                  </Link>
-                ))}
+                {faqSections
+                  .filter(section => !section.parent_id)
+                  .map((section) => {
+                    const subsections = faqSections.filter(s => s.parent_id === section.id);
+                    const hasSubsections = subsections.length > 0;
+                    
+                    return (
+                      <div key={section.id} className="space-y-1">
+                        <Link
+                          to={`/faq?section=${section.id}`}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                            location.search.includes(`section=${section.id}`)
+                              ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
+                          }`}
+                        >
+                          {section.title}
+                        </Link>
+                        {hasSubsections && (
+                          <div className="ml-4 space-y-1">
+                            {subsections.map((subsection) => (
+                              <Link
+                                key={subsection.id}
+                                to={`/faq?section=${subsection.id}`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                                  location.search.includes(`section=${subsection.id}`)
+                                    ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
+                                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/30'
+                                }`}
+                              >
+                                {subsection.title}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </CollapsibleContent>
             )}
           </Collapsible>
