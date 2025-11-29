@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Award, Users, LogOut, Moon, Sun, Shield, Library, User, HelpCircle } from 'lucide-react';
+import { Home, BookOpen, Award, Users, LogOut, Moon, Sun, Shield, Library, User, HelpCircle, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -9,8 +9,14 @@ import { useLeader } from '@/hooks/useLeader';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import logoNewStandard from '@/assets/logo-newstandard.png';
 import logoNewStandardDark from '@/assets/logo-newstandard-dark.png';
+
+interface FAQSection {
+  id: string;
+  title: string;
+}
 
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(() => {
@@ -19,6 +25,8 @@ export const Sidebar = () => {
   });
   const [userName, setUserName] = useState('Usuário');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [faqSections, setFaqSections] = useState<FAQSection[]>([]);
+  const [faqExpanded, setFaqExpanded] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,6 +43,7 @@ export const Sidebar = () => {
 
   useEffect(() => {
     loadUserProfile();
+    loadFAQSections();
     
     // Listen for profile changes in realtime
     const channel = supabase
@@ -83,6 +92,37 @@ export const Sidebar = () => {
     }
   };
 
+  const loadFAQSections = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', user.id)
+        .single();
+
+      const userType = profile?.user_type || 'colaborador';
+
+      const { data, error } = await supabase
+        .from('faqs' as any)
+        .select('id, title')
+        .eq('is_section', true)
+        .in('target_audience', [userType, 'ambos'])
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        console.error('Error loading FAQ sections:', error);
+        return;
+      }
+
+      setFaqSections((data as any) as FAQSection[] || []);
+    } catch (error) {
+      console.error('Error loading FAQ sections:', error);
+    }
+  };
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -102,7 +142,6 @@ export const Sidebar = () => {
     { icon: Library, label: 'Meus Cursos', path: '/my-courses' },
     { icon: BookOpen, label: 'Todos os Cursos', path: '/courses' },
     { icon: Award, label: 'Certificados', path: '/certificates' },
-    { icon: HelpCircle, label: 'Base de Conhecimento', path: '/faq' },
     { icon: User, label: 'Meu Perfil', path: '/profile' },
   ];
 
@@ -164,7 +203,7 @@ export const Sidebar = () => {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -183,6 +222,54 @@ export const Sidebar = () => {
               </Link>
             );
           })}
+
+          {/* Base de Conhecimento - Expandable Menu */}
+          <Collapsible open={faqExpanded} onOpenChange={setFaqExpanded}>
+            <CollapsibleTrigger asChild>
+              <button
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full ${
+                  location.pathname === '/faq' || location.pathname.startsWith('/faq/')
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                }`}
+              >
+                <HelpCircle size={20} />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left">Base de Conhecimento</span>
+                    <ChevronDown size={16} className={`transition-transform ${faqExpanded ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+            </CollapsibleTrigger>
+            {!collapsed && (
+              <CollapsibleContent className="ml-6 mt-1 space-y-1">
+                <Link
+                  to="/faq"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                    location.pathname === '/faq'
+                      ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
+                  }`}
+                >
+                  Todos os Tópicos
+                </Link>
+                {faqSections.map((section) => (
+                  <Link
+                    key={section.id}
+                    to={`/faq?section=${section.id}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      location.search.includes(`section=${section.id}`)
+                        ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
+                        : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
+                    }`}
+                  >
+                    {section.title}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            )}
+          </Collapsible>
 
           {isLeader && !isAdmin && (
             <>

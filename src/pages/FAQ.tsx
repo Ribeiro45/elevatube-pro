@@ -39,6 +39,13 @@ export default function FAQ() {
   useEffect(() => {
     loadUserType();
     loadFAQs();
+    
+    // Check if there's a section parameter in URL
+    const params = new URLSearchParams(window.location.search);
+    const sectionId = params.get('section');
+    if (sectionId) {
+      setSelectedSection(sectionId);
+    }
   }, []);
 
   const loadUserType = async () => {
