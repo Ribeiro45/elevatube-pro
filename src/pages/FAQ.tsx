@@ -235,20 +235,24 @@ export default function FAQ() {
                     Nenhum documento disponível
                   </p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {recentDocs.map((doc) => (
                       <Card
                         key={doc.id}
-                        className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 bg-card border-border/50"
+                        className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card border-border/50 overflow-hidden"
                         onClick={() => setSelectedFaq(doc)}
                       >
-                        <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[140px]">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                            <FileText className="w-6 h-6 text-primary" />
+                        {doc.pdf_url && (
+                          <div className="w-full h-40 bg-muted/50 flex items-center justify-center border-b border-border/50 group-hover:bg-muted transition-colors">
+                            <FileText className="w-16 h-16 text-primary/60 group-hover:text-primary transition-colors" />
                           </div>
-                          <h3 className="font-semibold text-sm line-clamp-2 mb-2">{doc.title}</h3>
+                        )}
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                            {doc.title}
+                          </h3>
                           {doc.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">{doc.description}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-3">{doc.description}</p>
                           )}
                         </CardContent>
                       </Card>
