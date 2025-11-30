@@ -9,6 +9,7 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ youtubeUrl, title, onProgress90 }: VideoPlayerProps) => {
   const [hasReached90, setHasReached90] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  
   // Extract video ID from YouTube URL
   const getYouTubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -16,14 +17,30 @@ export const VideoPlayer = ({ youtubeUrl, title, onProgress90 }: VideoPlayerProp
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  const videoId = getYouTubeId(youtubeUrl);
+  // Extract Google Drive file ID
+  const getGoogleDriveId = (url: string) => {
+    const regExp = /drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/;
+    const match = url.match(regExp);
+    return match ? match[1] : null;
+  };
+
+  // Detect video type
+  const getVideoType = (url: string): 'youtube' | 'drive' | 'direct' => {
+    if (getYouTubeId(url)) return 'youtube';
+    if (getGoogleDriveId(url)) return 'drive';
+    return 'direct';
+  };
+
+  const videoType = getVideoType(youtubeUrl);
+  const videoId = videoType === 'youtube' ? getYouTubeId(youtubeUrl) : null;
+  const driveId = videoType === 'drive' ? getGoogleDriveId(youtubeUrl) : null;
 
   useEffect(() => {
     setHasReached90(false);
-  }, [videoId]);
+  }, [youtubeUrl]);
 
   useEffect(() => {
-    if (!videoId || !onProgress90) return;
+    if (videoType !== 'youtube' || !videoId || !onProgress90) return;
 
     const checkProgress = () => {
       if (!iframeRef.current || hasReached90) return;
@@ -68,28 +85,65 @@ export const VideoPlayer = ({ youtubeUrl, title, onProgress90 }: VideoPlayerProp
       clearInterval(interval);
       window.removeEventListener('message', handleMessage);
     };
-  }, [videoId, onProgress90, hasReached90]);
+  }, [videoId, videoType, onProgress90, hasReached90]);
 
-  if (!videoId) {
+  // Render YouTube video
+  if (videoType === 'youtube' && videoId) {
     return (
-      <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center">
-        <p className="text-muted-foreground">URL de vídeo inválida</p>
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+        <iframe
+          ref={iframeRef}
+          width="100%"
+          height="100%"
+          src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        />
+      </div>
+    );
+  }
+
+  // Render Google Drive video
+  if (videoType === 'drive' && driveId) {
+    return (
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+        <iframe
+          ref={iframeRef}
+          width="100%"
+          height="100%"
+          src={`https://drive.google.com/file/d/${driveId}/preview`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        />
+      </div>
+    );
+  }
+
+  // Render direct video URL
+  if (videoType === 'direct') {
+    return (
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+        <iframe
+          ref={iframeRef}
+          width="100%"
+          height="100%"
+          src={youtubeUrl}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        />
       </div>
     );
   }
 
   return (
-    <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-      <iframe
-        ref={iframeRef}
-        width="100%"
-        height="100%"
-        src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
-        title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        className="w-full h-full"
-      />
+    <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center">
+      <p className="text-muted-foreground">URL de vídeo inválida</p>
     </div>
   );
 };
