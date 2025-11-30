@@ -26,7 +26,7 @@ const courseSchema = z.object({
 
 const lessonSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
-  youtube_url: z.string().url('URL do YouTube inválida'),
+  youtube_url: z.string().url('URL inválida'),
   duration_minutes: z.number().min(1, 'Duração deve ser maior que 0').optional(),
   module_id: z.string().optional(),
 });
@@ -655,9 +655,9 @@ function AdminCourses() {
                                 name="youtube_url"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>URL do YouTube</FormLabel>
+                                    <FormLabel>URL do Vídeo</FormLabel>
                                     <FormControl>
-                                      <Input {...field} placeholder="https://www.youtube.com/watch?v=..." />
+                                      <Input {...field} placeholder="https://..." />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -776,17 +776,17 @@ function AdminCourses() {
                         
                         {/* Aulas dentro do módulo */}
                         {moduleLessons.length > 0 && (
-                          <div className="ml-4 space-y-2 mt-3">
+                          <div className="space-y-2 mt-3 border-l-2 border-border/50 pl-4">
                             {moduleLessons.map((lesson) => (
                               <div key={lesson.id} className="p-3 bg-muted/50 rounded-md">
-                                <div className="flex justify-between items-start">
-                                  <div className="flex-1">
-                                    <h5 className="font-medium text-sm">{lesson.title}</h5>
+                                <div className="flex justify-between items-center gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className="font-medium text-sm truncate">{lesson.title}</h5>
                                     <p className="text-xs text-muted-foreground mt-1">
                                       {lesson.duration_minutes} minutos
                                     </p>
                                   </div>
-                                  <div className="flex gap-1">
+                                  <div className="flex gap-1 shrink-0">
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -844,14 +844,14 @@ function AdminCourses() {
                       <h4 className="font-semibold text-sm text-muted-foreground">Aulas sem módulo</h4>
                       {lessons.filter(l => !l.module_id).map((lesson) => (
                         <div key={lesson.id} className="p-4 border rounded-lg">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-medium">{lesson.title}</h4>
+                          <div className="flex justify-between items-center gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium truncate">{lesson.title}</h4>
                               <p className="text-sm text-muted-foreground mt-1">
                                 {lesson.duration_minutes} minutos
                               </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 shrink-0">
                               <Button
                                 variant="outline"
                                 size="sm"
