@@ -243,8 +243,16 @@ export default function FAQ() {
                         onClick={() => setSelectedFaq(doc)}
                       >
                         {doc.pdf_url && (
-                          <div className="w-full h-40 bg-muted/50 flex items-center justify-center border-b border-border/50 group-hover:bg-muted transition-colors">
-                            <FileText className="w-16 h-16 text-primary/60 group-hover:text-primary transition-colors" />
+                          <div className="w-full h-40 bg-muted/50 border-b border-border/50 flex items-center justify-center overflow-hidden">
+                            <Document file={doc.pdf_url} loading={null}>
+                              <Page
+                                pageNumber={1}
+                                width={260}
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                                className="mx-auto scale-95 group-hover:scale-100 transition-transform origin-center"
+                              />
+                            </Document>
                           </div>
                         )}
                         <CardContent className="p-4">
@@ -276,14 +284,6 @@ export default function FAQ() {
                   <p className="text-muted-foreground mt-2 text-sm">{selectedFaq.description}</p>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedFaq(null)}
-                className="shrink-0 hover:bg-muted"
-              >
-                <X className="w-5 h-5" />
-              </Button>
             </div>
           </DialogHeader>
           
