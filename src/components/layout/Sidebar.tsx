@@ -19,6 +19,69 @@ interface FAQSection {
   parent_id: string | null;
 }
 
+interface SectionItemProps {
+  section: FAQSection;
+  allSections: FAQSection[];
+  level?: number;
+  currentSearch: string;
+}
+
+const SectionItem = ({ section, allSections, level = 0, currentSearch }: SectionItemProps) => {
+  const [expanded, setExpanded] = useState(false);
+  const subsections = allSections.filter(s => s.parent_id === section.id);
+  const hasSubsections = subsections.length > 0;
+  const isActive = currentSearch.includes(`section=${section.id}`);
+
+  if (!hasSubsections) {
+    return (
+      <Link
+        to={`/faq?section=${section.id}`}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          isActive
+            ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
+            : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
+        }`}
+        style={{ marginLeft: `${level * 0.5}rem` }}
+      >
+        {section.title}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <Collapsible open={expanded} onOpenChange={setExpanded}>
+        <div className="flex items-center gap-1">
+          <CollapsibleTrigger asChild>
+            <button
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors flex-1 ${
+                isActive
+                  ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
+              }`}
+              style={{ marginLeft: `${level * 0.5}rem` }}
+            >
+              <ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <span className="flex-1 text-left">{section.title}</span>
+            </button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="space-y-1 mt-1">
+          {subsections.map((subsection) => (
+            <SectionItem
+              key={subsection.id}
+              section={subsection}
+              allSections={allSections}
+              level={level + 1}
+              currentSearch={currentSearch}
+            />
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+};
+
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
@@ -248,42 +311,14 @@ export const Sidebar = () => {
               <CollapsibleContent className="ml-6 mt-1 space-y-1">
                 {faqSections
                   .filter(section => !section.parent_id)
-                  .map((section) => {
-                    const subsections = faqSections.filter(s => s.parent_id === section.id);
-                    const hasSubsections = subsections.length > 0;
-                    
-                    return (
-                      <div key={section.id} className="space-y-1">
-                        <Link
-                          to={`/faq?section=${section.id}`}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                            location.search.includes(`section=${section.id}`)
-                              ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
-                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/30'
-                          }`}
-                        >
-                          {section.title}
-                        </Link>
-                        {hasSubsections && (
-                          <div className="ml-4 space-y-1">
-                            {subsections.map((subsection) => (
-                              <Link
-                                key={subsection.id}
-                                to={`/faq?section=${subsection.id}`}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors ${
-                                  location.search.includes(`section=${subsection.id}`)
-                                    ? 'bg-sidebar-accent/50 text-sidebar-accent-foreground'
-                                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/30'
-                                }`}
-                              >
-                                {subsection.title}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  .map((section) => (
+                    <SectionItem
+                      key={section.id}
+                      section={section}
+                      allSections={faqSections}
+                      currentSearch={location.search}
+                    />
+                  ))}
               </CollapsibleContent>
             )}
           </Collapsible>
