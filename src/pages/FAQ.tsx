@@ -181,44 +181,79 @@ export default function FAQ() {
           {/* Main Content */}
           {selectedSection ? (
             /* Selected Topic Documents */
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  {selectedSectionData?.title}
-                </CardTitle>
-                <CardDescription>
-                  {selectedSectionItems.length} {selectedSectionItems.length === 1 ? 'documento' : 'documentos'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedSectionItems.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhum documento neste tópico
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {selectedSectionItems.map((item) => (
-                      <Card
-                        key={item.id}
-                        className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 bg-card border-border/50"
-                        onClick={() => setSelectedFaq(item)}
-                      >
-                        <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full min-h-[140px]">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                            <FileText className="w-6 h-6 text-primary" />
-                          </div>
-                          <h3 className="font-semibold text-sm line-clamp-2 mb-2">{item.title}</h3>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+            <div className="space-y-6">
+              {/* Section Overview */}
+              {selectedSectionData && (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Folder className="w-6 h-6 text-primary" />
+                      {selectedSectionData.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedSectionData.description && (
+                      <div 
+                        className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-a:text-primary mb-6"
+                        dangerouslySetInnerHTML={{ __html: selectedSectionData.description }}
+                      />
+                    )}
+                    <div className="text-sm text-muted-foreground pt-4 border-t border-border/50">
+                      {selectedSectionItems.length} {selectedSectionItems.length === 1 ? 'documento' : 'documentos'} nesta seção
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Documents Grid */}
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Documentos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedSectionItems.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Nenhum documento neste tópico
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {selectedSectionItems.map((item) => (
+                        <Card
+                          key={item.id}
+                          className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card border-border/50 overflow-hidden"
+                          onClick={() => setSelectedFaq(item)}
+                        >
+                          {item.pdf_url && (
+                            <div className="w-full h-40 bg-muted/50 border-b border-border/50 flex items-center justify-center overflow-hidden">
+                              <Document file={item.pdf_url} loading={null}>
+                                <Page
+                                  pageNumber={1}
+                                  width={260}
+                                  renderTextLayer={false}
+                                  renderAnnotationLayer={false}
+                                  className="mx-auto scale-95 group-hover:scale-100 transition-transform origin-center"
+                                />
+                              </Document>
+                            </div>
                           )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                              {item.title}
+                            </h3>
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-3">{item.description}</p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             /* Recent Documents */
             <Card className="border-border/50">
