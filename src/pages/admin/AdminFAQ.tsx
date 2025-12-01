@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Edit, Upload } from 'lucide-react';
+import { Loader2, Plus, Trash2, Edit, Upload, Image as ImageIcon, Bold, Italic, Link as LinkIcon } from 'lucide-react';
 interface FAQ {
   id: string;
   title: string;
@@ -44,6 +44,8 @@ export default function AdminFAQ() {
     is_section: false
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     loadFAQs();
   }, []);
@@ -95,6 +97,87 @@ export default function AdminFAQ() {
       toast.error('Erro ao fazer upload do PDF');
       return null;
     }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `faq-images/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Erro ao fazer upload da imagem');
+      return null;
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem');
+        return;
+      }
+
+      setUploadingImage(true);
+      try {
+        const imageUrl = await uploadImage(file);
+        if (imageUrl && textareaRef.current) {
+          const textarea = textareaRef.current;
+          const cursorPos = textarea.selectionStart;
+          const textBefore = formData.description.substring(0, cursorPos);
+          const textAfter = formData.description.substring(cursorPos);
+          const newText = `${textBefore}<img src="${imageUrl}" alt="Imagem" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;" />${textAfter}`;
+          
+          setFormData({ ...formData, description: newText });
+          toast.success('Imagem inserida com sucesso');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      } finally {
+        setUploadingImage(false);
+        e.target.value = '';
+      }
+    }
+  };
+
+  const insertTag = (tag: string, hasClosing: boolean = true) => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = formData.description.substring(start, end);
+    const beforeText = formData.description.substring(0, start);
+    const afterText = formData.description.substring(end);
+    
+    let newText = '';
+    if (hasClosing) {
+      newText = `${beforeText}<${tag}>${selectedText}</${tag}>${afterText}`;
+    } else {
+      newText = `${beforeText}<${tag}>${afterText}`;
+    }
+    
+    setFormData({ ...formData, description: newText });
+    
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + tag.length + 2 + selectedText.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -369,11 +452,97 @@ export default function AdminFAQ() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" value={formData.description} onChange={e => setFormData({
-                ...formData,
-                description: e.target.value
-              })} placeholder="Digite uma descrição (opcional)" rows={3} />
+                <Label htmlFor="description">
+                  Descrição {formData.is_section && "(com suporte a HTML e imagens)"}
+                </Label>
+                
+                {formData.is_section && (
+                  <div className="flex gap-2 mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertTag('strong')}
+                      title="Negrito"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertTag('em')}
+                      title="Itálico"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertTag('h3')}
+                      title="Título"
+                    >
+                      H3
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertTag('p')}
+                      title="Parágrafo"
+                    >
+                      P
+                    </Button>
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploadingImage}
+                        asChild
+                      >
+                        <span>
+                          {uploadingImage ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <ImageIcon className="w-4 h-4" />
+                          )}
+                        </span>
+                      </Button>
+                    </Label>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+                
+                <Textarea 
+                  ref={textareaRef}
+                  id="description" 
+                  value={formData.description} 
+                  onChange={e => setFormData({
+                    ...formData,
+                    description: e.target.value
+                  })} 
+                  placeholder={formData.is_section ? "Digite HTML ou use os botões acima para formatar..." : "Digite uma descrição (opcional)"} 
+                  rows={formData.is_section ? 8 : 3}
+                  className="font-mono text-sm"
+                />
+                
+                {formData.is_section && formData.description && (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Preview:</Label>
+                    <div 
+                      className="prose prose-sm max-w-none dark:prose-invert"
+                      dangerouslySetInnerHTML={{ __html: formData.description }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
