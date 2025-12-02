@@ -21,12 +21,11 @@ export const hasRole = (roles: string[]) => {
   };
 };
 
-export const isAdmin = hasRole(['admin', 'admin_master']);
-export const isAdminMaster = hasRole(['admin_master']);
-export const isEditor = hasRole(['admin', 'admin_master', 'editor']);
+export const isAdmin = hasRole(['admin']);
+export const isEditor = hasRole(['admin', 'editor']);
 export const isLeader = hasRole(['lider']);
 
-export const isAdminOrLeader = hasRole(['admin', 'admin_master', 'lider']);
+export const isAdminOrLeader = hasRole(['admin', 'lider']);
 
 export const checkRole = async (userId: string, role: string): Promise<boolean> => {
   const userRole = await prisma.userRole.findFirst({

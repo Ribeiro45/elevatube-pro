@@ -123,7 +123,7 @@ router.get('/user/:userId', authenticate, async (req: AuthRequest, res: Response
   try {
     const { userId } = req.params;
 
-    const isAdminUser = await checkRole(req.userId!, 'admin') || await checkRole(req.userId!, 'admin_master');
+    const isAdminUser = await checkRole(req.userId!, 'admin');
     
     if (!isAdminUser) {
       // Check if leader
