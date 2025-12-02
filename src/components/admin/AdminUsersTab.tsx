@@ -50,7 +50,6 @@ interface UserWithRole {
   created_at: string;
   is_admin: boolean;
   is_editor: boolean;
-  is_admin_master: boolean;
   completed_lessons: number;
   total_certificates: number;
 }
@@ -108,7 +107,6 @@ export function AdminUsersTab() {
 
       const adminIds = new Set(roles?.filter(r => r.role === 'admin').map((r) => r.user_id) || []);
       const editorIds = new Set(roles?.filter(r => r.role === 'editor').map((r) => r.user_id) || []);
-      const adminMasterIds = new Set(roles?.filter(r => r.role === 'admin_master').map((r) => r.user_id) || []);
 
       const usersWithRoles: UserWithRole[] = profiles?.map((profile) => {
         const userProgress = progressData?.filter(p => p.user_id === profile.id && p.completed) || [];
@@ -122,7 +120,6 @@ export function AdminUsersTab() {
           created_at: profile.created_at,
           is_admin: adminIds.has(profile.id),
           is_editor: editorIds.has(profile.id),
-          is_admin_master: adminMasterIds.has(profile.id),
           completed_lessons: userProgress.length,
           total_certificates: userCerts.length,
         };
@@ -500,7 +497,7 @@ export function AdminUsersTab() {
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={user.is_admin_master ? "admin_master" : user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
+                        value={user.is_admin ? "admin" : user.is_editor ? "editor" : "user"}
                         onValueChange={(value) => handleRoleChange(user.id, value)}
                       >
                         <SelectTrigger className="w-[140px]">
@@ -521,14 +518,8 @@ export function AdminUsersTab() {
                           </SelectItem>
                           <SelectItem value="admin">
                             <div className="flex items-center gap-2">
-                              <Shield className="w-3 h-3" />
-                              Admin
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="admin_master">
-                            <div className="flex items-center gap-2">
                               <Shield className="w-3 h-3 text-primary" />
-                              Admin Master
+                              Admin
                             </div>
                           </SelectItem>
                         </SelectContent>

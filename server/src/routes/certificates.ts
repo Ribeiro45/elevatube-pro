@@ -53,7 +53,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     // Check access
-    const isAdminUser = await checkRole(req.userId!, 'admin') || await checkRole(req.userId!, 'admin_master');
+    const isAdminUser = await checkRole(req.userId!, 'admin');
     if (certificate.userId !== req.userId && !isAdminUser) {
       res.status(403).json({ error: 'Access denied' });
       return;

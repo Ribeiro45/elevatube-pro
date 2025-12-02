@@ -89,7 +89,7 @@ docker-compose exec postgres psql -U academy -d academy_db
 
 # Inserir admin (após registrar usuário via interface)
 INSERT INTO user_roles (user_id, role) 
-VALUES ('UUID_DO_USUARIO', 'admin_master');
+VALUES ('UUID_DO_USUARIO', 'admin');
 ```
 
 ## Comandos Úteis

@@ -132,7 +132,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     // Check access
-    const isAdminUser = await checkRole(req.userId!, 'admin') || await checkRole(req.userId!, 'admin_master');
+    const isAdminUser = await checkRole(req.userId!, 'admin');
     const isMember = group.members.some(m => m.userId === req.userId);
     const isLeader = group.leaderId === req.userId;
 
@@ -306,7 +306,7 @@ router.get('/:id/progress', authenticate, async (req: AuthRequest, res: Response
     const { id } = req.params;
 
     // Check access
-    const isAdminUser = await checkRole(req.userId!, 'admin') || await checkRole(req.userId!, 'admin_master');
+    const isAdminUser = await checkRole(req.userId!, 'admin');
     const isLeader = await isGroupLeader(req.userId!, id);
 
     if (!isAdminUser && !isLeader) {

@@ -68,7 +68,7 @@ router.get('/', authenticate, isAdmin, async (req: AuthRequest, res: Response) =
 router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const isAdminUser = await checkRole(req.userId!, 'admin') || await checkRole(req.userId!, 'admin_master');
+    const isAdminUser = await checkRole(req.userId!, 'admin');
 
     if (id !== req.userId && !isAdminUser) {
       // Check if user is a leader and can view this profile
